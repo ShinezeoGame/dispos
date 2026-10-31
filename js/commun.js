@@ -78,6 +78,9 @@ export async function api(chemin, { methode = 'GET', corps, jeton } = {}) {
    Les try/catch : en navigation privée, ou si le visiteur a bloqué le
    stockage, localStorage peut refuser de lire ou d'écrire. Le site
    marche alors quand même, il oubliera juste tout à la fermeture. */
+// « dispos » : l'ancien nom du site. NE PAS le remplacer par « allready » :
+// tous ceux qui ont déjà rejoint un groupe perdraient leur jeton, donc
+// l'accès à leur profil.
 const CLE = 'dispos';
 
 export function lireGroupes() {

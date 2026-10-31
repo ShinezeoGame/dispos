@@ -76,7 +76,7 @@ boutonProfil.addEventListener('click', ouvrirProfil);
 // Redessiné à chaque changement, comme le reste de la page.
 quandCaChange(() => {
   document.getElementById('titre-groupe').textContent = etat.groupe.nom;
-  document.title = `${etat.groupe.nom} · dispos`;
+  document.title = `${etat.groupe.nom} · AllReady`;
   document.getElementById('bouton-inviter').hidden = false;
 
   // Inscrit : ton avatar et ton pseudo. Simple visiteur : « Rejoindre ».

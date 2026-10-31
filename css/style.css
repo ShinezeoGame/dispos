@@ -1,10 +1,10 @@
-/* LA MISE EN FORME DE DISPOS
+/* LA MISE EN FORME D'ALLREADY
 
    Un seul fichier pour les trois pages. L'ambiance « gaming » tient à
-   peu de choses : un fond presque noir, une seule couleur vive (le
-   vert citron, celui du point « en ligne »), une police de titres
-   anguleuse, et une lueur sur ce qui compte. Tout le reste reste
-   sobre, pour que l'agenda se lise d'un coup d'œil.
+   peu de choses : une nuit indigo, une couleur vive pour l'action (le
+   violet électrique), une autre pour les soirées (l'orange), une police
+   de titres anguleuse, et une lueur sur ce qui compte. Tout le reste
+   reste sobre, pour que l'agenda se lise d'un coup d'œil.
 
    Ordre du fichier : polices, couleurs, bases, puis chaque partie de
    l'écran dans l'ordre où on la rencontre. */
@@ -36,25 +36,35 @@
 /* 2. LES COULEURS ET LES RÉGLAGES
 
    Toutes les couleurs passent par ces variables : pour changer
-   l'ambiance, c'est ici et nulle part ailleurs.
+   l'ambiance, c'est ici et nulle part ailleurs. Même les lueurs en
+   dépendent : elles sont calculées à partir de --accent avec
+   color-mix(), jamais écrites en dur.
 
-   Contrastes mesurés sur --surface (#151924) : --texte 15:1,
-   --texte-doux 6,7:1, --accent 13:1. Le minimum recommandé pour du
-   texte est 4,5:1. */
+   Direction artistique depuis le 31 octobre 2026 (avant : vert citron,
+   abandonné parce qu'il ne plaisait pas) : une nuit indigo, un violet
+   électrique pour tout ce qui est action et dispo, un orange chaud pour
+   tout ce qui touche aux soirées. Le violet et l'orange sont presque
+   opposés sur le cercle des couleurs : une soirée se repère tout de
+   suite au milieu de l'agenda violet.
+
+   Contrastes mesurés sur --surface : --texte 15,6:1, --texte-doux
+   7,4:1, --accent 6,7:1, --soiree 8,6:1. Texte sombre sur --accent :
+   7,3:1. Le minimum recommandé pour du texte est 4,5:1. Toute retouche
+   d'une couleur doit être suivie d'un nouveau calcul. */
 :root {
-  --fond: #0b0d12;
-  --surface: #151924;        /* les cartes */
-  --surface-haute: #1d2231;  /* ce qui passe au-dessus : fenêtres, survols */
-  --case: #1a1f2c;           /* une case vide de l'agenda */
-  --bordure: #262c3d;
-  --texte: #edf0f7;
-  --texte-doux: #9ba3b8;
+  --fond: #0d0b18;
+  --surface: #16132a;        /* les cartes */
+  --surface-haute: #201c3a;  /* ce qui passe au-dessus : fenêtres, survols */
+  --case: #1c1832;           /* une case vide de l'agenda */
+  --bordure: #2d2850;
+  --texte: #efecff;
+  --texte-doux: #a7a1c9;
 
-  --accent: #b5f23d;         /* vert citron : dispo, en ligne, action */
-  --accent-vif: #c8ff5a;     /* au survol */
-  --sur-accent: #0b0d12;     /* le texte posé sur l'accent */
-  --soiree: #ff5fd2;         /* rose : ce qui concerne une soirée */
-  --peutetre: #ffb547;       /* ambre : peut-être */
+  --accent: #a98bff;         /* violet électrique : dispo, prêt, action */
+  --accent-vif: #c3adff;     /* au survol */
+  --sur-accent: #0d0b18;     /* le texte posé sur l'accent */
+  --soiree: #ff9a52;         /* orange : ce qui concerne une soirée */
+  --peutetre: #ffd166;       /* jaune : peut-être */
   --non: #ff5d73;            /* rouge : pas dispo, erreur */
 
   --police-titre: 'Chakra Petch', system-ui, sans-serif;
@@ -86,10 +96,12 @@ body {
   flex-direction: column;
   font: 1rem/1.55 var(--police);
   color: var(--texte);
-  /* Deux couches de fond : une lueur verte tout en haut, et une trame
-     de points très discrète, comme un écran de jeu. */
+  /* Deux couches de fond : une lueur violette tout en haut, et une trame
+     de points très discrète, comme un écran de jeu.
+     color-mix(in srgb, var(--accent) 14%, transparent) = la couleur
+     d'accent à 14 % d'opacité. */
   background:
-    radial-gradient(60rem 28rem at 50% -12rem, rgb(181 242 61 / 0.09), transparent 70%),
+    radial-gradient(60rem 28rem at 50% -12rem, color-mix(in srgb, var(--accent) 14%, transparent), transparent 70%),
     radial-gradient(rgb(255 255 255 / 0.035) 1px, transparent 1px) 0 0 / 22px 22px,
     var(--fond);
 }
@@ -124,39 +136,76 @@ a { color: var(--accent); }
 
 /* 4. LE LOGO
 
-   Le mot « dispos » précédé d'un point vert qui pulse doucement : le
-   voyant « en ligne » des applis de jeu. */
+   L'icône : une coche (le « prêt » qu'on valide avant une partie)
+   dessinée par quatre ronds, les joueurs de la team. Le sens caché :
+   la validation, c'est le groupe au complet. Puis le nom, « All » en
+   blanc et « Ready » en violet, qui se lit aussi « Already ». */
 .logo {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.55rem;
   min-height: 44px;
   font: 700 1.35rem var(--police-titre);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   color: var(--texte);
   text-decoration: none;
 }
 
-.logo-point {
-  width: 0.7rem;
-  height: 0.7rem;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 0 0 rgb(181 242 61 / 0.6);
-  animation: pouls 2.4s ease-out infinite;
+/* overflow: visible : les ronds touchent presque le bord du dessin,
+   leur léger rebond à l'apparition ne doit pas être rogné. */
+.logo-icone { width: 2.1rem; height: 2.1rem; flex: none; overflow: visible; }
+.logo-icone circle { fill: var(--accent); }
+.logo-ready { color: var(--accent); }
+
+/* Le trait qui relie les ronds, plus discret qu'eux. */
+.logo-trait {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.45;
 }
 
-/* L'anneau qui s'élargit et s'efface autour du point. box-shadow
-   plutôt qu'un second élément : rien à ajouter dans le HTML. */
-@keyframes pouls {
-  0% { box-shadow: 0 0 0 0 rgb(181 242 61 / 0.55); }
-  70%, 100% { box-shadow: 0 0 0 0.6rem rgb(181 242 61 / 0); }
+/* À L'ARRIVÉE SUR LA PAGE, les quatre ronds s'allument l'un après
+   l'autre, comme quatre joueurs qui se mettent « prêts », puis le
+   trait se dessine entre eux. Une seule fois, en moins d'une seconde.
+
+   — transform-box: fill-box + transform-origin: center : chaque rond
+     grossit depuis son propre centre, et non depuis le coin du dessin ;
+   — animation-delay : 0,1 s d'écart entre chaque joueur ;
+   — « backwards » : pendant son attente, chaque rond reste à l'état
+     de départ (invisible) au lieu de s'afficher puis disparaître.
+
+   Le trait utilise pathLength="1" (dans le HTML) : sa longueur vaut 1
+   quelle que soit sa taille réelle. Un pointillé de 1 décalé de 1 le
+   cache entièrement ; ramener le décalage à 0 le dessine. */
+.logo-icone circle {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: joueur-pret 0.45s cubic-bezier(0.3, 1.5, 0.5, 1) backwards;
+}
+.logo-icone circle:nth-of-type(2) { animation-delay: 0.1s; }
+.logo-icone circle:nth-of-type(3) { animation-delay: 0.2s; }
+.logo-icone circle:nth-of-type(4) { animation-delay: 0.3s; }
+
+@keyframes joueur-pret {
+  from { transform: scale(0); opacity: 0; }
+}
+
+.logo-trait {
+  stroke-dasharray: 1;
+  animation: trait-pret 0.4s 0.45s ease-out backwards;
+}
+
+@keyframes trait-pret {
+  from { stroke-dashoffset: 1; }
 }
 
 
 /* 5. LES BOUTONS
 
-   .bouton : l'action principale, vert citron. Une seule par écran,
+   .bouton : l'action principale, en violet. Une seule par écran,
    pour qu'on sache toujours où cliquer.
    .bouton-second : les autres actions, en contour.
    Hauteur minimale de 44 px : la taille d'un doigt. */
@@ -180,7 +229,7 @@ a { color: var(--accent); }
 
 .bouton:hover {
   background: var(--accent-vif);
-  box-shadow: 0 0 0 4px rgb(181 242 61 / 0.15), 0 8px 24px -8px rgb(181 242 61 / 0.6);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 15%, transparent), 0 8px 24px -8px color-mix(in srgb, var(--accent) 60%, transparent);
 }
 
 .bouton:disabled { opacity: 0.55; cursor: wait; }
@@ -263,10 +312,10 @@ textarea { resize: vertical; }
 input:focus, textarea:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgb(181 242 61 / 0.18);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
-input::placeholder, textarea::placeholder { color: #6b7389; }
+input::placeholder, textarea::placeholder { color: #7c7699; }
 
 /* Chrome et Safari ajoutent une croix bleue aux champs de recherche,
    qui jure avec le reste : on la masque (on efface au clavier). */
@@ -431,7 +480,7 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
   border: 1px solid var(--bordure);
   border-radius: 18px;
   background: var(--surface);
-  box-shadow: 0 30px 60px -30px rgb(0 0 0 / 0.8), 0 0 80px -40px rgb(181 242 61 / 0.5);
+  box-shadow: 0 30px 60px -30px rgb(0 0 0 / 0.8), 0 0 80px -40px color-mix(in srgb, var(--accent) 50%, transparent);
 }
 
 @media (min-width: 52rem) {
@@ -513,7 +562,7 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 .mes-groupes a:hover { border-color: var(--accent); }
 .mes-groupes .code { color: var(--texte-doux); font: 600 0.8rem var(--police-titre); letter-spacing: 0.08em; }
 
-/* Les trois étapes, numérotées en gros chiffres verts. */
+/* Les trois étapes, numérotées en gros chiffres violets. */
 .etapes ol {
   display: grid;
   gap: 1rem;
@@ -531,7 +580,7 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
   counter-increment: etape;
   padding: 1.25rem;
   border-left: 2px solid var(--accent);
-  background: linear-gradient(90deg, rgb(181 242 61 / 0.06), transparent);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 6%, transparent), transparent);
   color: var(--texte-doux);
 }
 
@@ -610,9 +659,10 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 .bouton-profil:not(.bouton):hover { border-color: var(--bordure); background: var(--surface); }
 .bouton-profil.bouton { border-radius: var(--rayon-petit); font-family: var(--police-titre); }
 
-/* Sur téléphone : le logo réduit à son point, le pseudo à l'avatar. */
+/* Sur téléphone, dans l'en-tête d'un groupe : le logo réduit à son
+   icône, le pseudo à l'avatar. (.barre : l'accueil, lui, garde le nom.) */
 @media (max-width: 40rem) {
-  .logo-texte, .bouton-profil-nom { display: none; }
+  .barre .logo-texte, .bouton-profil-nom { display: none; }
   .titre-groupe { padding-left: 0.5rem; }
 }
 
@@ -634,7 +684,7 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 .onglets [role="tab"]:hover { color: var(--texte); }
 .onglets [role="tab"][aria-selected="true"] { color: var(--texte); }
 
-/* Le trait vert sous l'onglet actif, avec sa lueur. */
+/* Le trait violet sous l'onglet actif, avec sa lueur. */
 .onglets [role="tab"][aria-selected="true"]::after {
   content: '';
   position: absolute;
@@ -647,7 +697,7 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
   box-shadow: 0 0 12px var(--accent);
 }
 
-/* La pastille rose : les soirées auxquelles tu n'as pas répondu. */
+/* La pastille orange : les soirées auxquelles tu n'as pas répondu. */
 .pastille {
   min-width: 1.3rem;
   height: 1.3rem;
@@ -710,7 +760,7 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 .semaine-libelle span { color: var(--texte-doux); font-size: 0.9rem; }
 
 /* La bascule « Le groupe / Mes dispos » : deux boutons collés, celui
-   qui est enfoncé (aria-pressed="true") est rempli de vert. */
+   qui est enfoncé (aria-pressed="true") est rempli de violet. */
 .bascule {
   display: inline-flex;
   padding: 4px;
@@ -834,8 +884,8 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 /* UNE CASE
 
    Sa couleur dépend de --niveau, posé par agenda.js entre 0,2 et 1 :
-   color-mix mélange le vert et le gris des cases vides dans cette
-   proportion. 0 = case vide, 1 = vert plein. */
+   color-mix mélange le violet et le gris des cases vides dans cette
+   proportion. 0 = case vide, 1 = violet plein. */
 .case {
   position: relative;
   height: 1.9rem;
@@ -876,14 +926,17 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
   background: currentColor;
 }
 
-/* Une soirée commence à cette heure-là : un cadre rose. */
+/* Une soirée commence à cette heure-là : un cadre orange, séparé de
+   la case par un fin liseré sombre (inset). Sans lui, sur une case
+   violette très vive, l'orange et le violet ont presque la même
+   luminosité et le cadre se verrait mal. */
 .case.avec-soiree::after {
   content: '';
   position: absolute;
   inset: 0;
   border: 2px solid var(--soiree);
   border-radius: 6px;
-  box-shadow: 0 0 10px -2px var(--soiree);
+  box-shadow: inset 0 0 0 1px var(--fond), 0 0 10px -2px var(--soiree);
 }
 
 .case.choisie { box-shadow: inset 0 0 0 2px var(--texte); }
@@ -894,7 +947,7 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 /* MODE « MES DISPOS »
 
    Les cases oublient le nombre de dispos : vides en gris, cochées en
-   vert. touch-action: none : sur écran tactile, glisser le doigt sur
+   violet. touch-action: none : sur écran tactile, glisser le doigt sur
    une case coche au lieu de faire défiler la page. On fait défiler en
    glissant sur la colonne des heures. */
 .grille.edition .case {
@@ -920,7 +973,7 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
   min-height: 1.5rem;
 }
 
-/* La légende : le dégradé, le cadre rose, le point. */
+/* La légende : le dégradé, le cadre orange, le point. */
 .legende {
   display: flex;
   flex-wrap: wrap;
@@ -1005,7 +1058,7 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
   background: var(--surface);
 }
 
-/* La soirée du jour ressort, en rose. */
+/* La soirée du jour ressort, en orange. */
 .soiree.aujourdhui {
   border-color: var(--soiree);
   box-shadow: 0 0 34px -16px var(--soiree);
@@ -1053,7 +1106,7 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 }
 
 /* Les trois réponses, en bascule. La réponse choisie prend sa couleur :
-   vert, ambre ou rouge. */
+   violet, jaune ou rouge. */
 .choix { display: inline-flex; flex-wrap: wrap; gap: 0.4rem; }
 
 .choix button {
@@ -1203,7 +1256,7 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
   padding: 0.2rem;
   border: 1px solid var(--accent);
   border-radius: 9px;
-  background: rgb(181 242 61 / 0.08);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
   font-weight: 600;
   font-size: 0.92rem;
 }
@@ -1382,10 +1435,11 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 /* 14. MOINS DE MOUVEMENT
 
    Si le visiteur a demandé à son système de limiter les animations
-   (réglage d'accessibilité), le point du logo cesse de pulser et le
-   message du bas apparaît sans glisser. Rien ne disparaît pour autant. */
+   (réglage d'accessibilité), le logo apparaît d'un coup, déjà dessiné,
+   et le message du bas apparaît sans glisser. Rien ne disparaît pour
+   autant. */
 @media (prefers-reduced-motion: reduce) {
-  .logo-point { animation: none; }
+  .logo-icone circle, .logo-trait { animation: none; }
   .annonce, .case, .bouton { transition: none; }
   .apercu { transform: none; }
 }

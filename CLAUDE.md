@@ -1,10 +1,17 @@
-# Dispos
+# AllReady
 
 ## Le projet
 
 Site pour savoir quand ses amis sont dispos et à quoi jouer ensemble.
 Ambiance gaming, mais simple à utiliser. Commencé le 31 octobre 2026.
 D'autres idées viendront une fois le site en ligne.
+
+**Le site s'appelle AllReady** depuis le 31 octobre 2026 (avant :
+« dispos »). « All ready » = tout le monde est prêt, caché dans
+« already ». Choisi parmi des noms anglais à double sens, vérifié comme
+libre (aucune appli de ce nom trouvée). Le dépôt GitHub, le projet
+Cloudflare et l'adresse `dispos.pages.dev` gardent l'ancien nom ; un
+nom de domaine à part reste à choisir.
 
 - Un **groupe** = une bande d'amis, rejoint par un lien d'invitation.
 - **L'agenda commun** : chacun coche ses heures dispos de la semaine ; la
@@ -39,8 +46,19 @@ D'autres idées viendront une fois le site en ligne.
   github.com/settings/installations → Configure → donner accès à
   `dispos`. Arrivé le 31 oct. 2026 ; *Retry deployment* ne fait que
   relancer l'ancien commit.
-- Thème sombre seulement. Accent vert citron `#b5f23d` (dispo, action),
-  rose `#ff5fd2` pour tout ce qui touche aux soirées.
+- **Direction artistique (31 oct. 2026, le vert ne plaisait pas)** :
+  thème sombre seulement, nuit indigo `#0d0b18`, **violet électrique
+  `#a98bff`** pour l'action, les dispos et le « prêt », **orange
+  `#ff9a52`** pour tout ce qui touche aux soirées (presque opposé au
+  violet : une soirée se repère dans l'agenda). Toutes les couleurs et
+  les lueurs passent par les variables de `:root` (les lueurs par
+  `color-mix()`), jamais en dur. Contrastes notés en tête de `:root`.
+- **Le logo** : une coche dessinée par quatre ronds (les joueurs de la
+  team : la validation, c'est le groupe au complet), puis « All » en
+  blanc et « Ready » en violet. Écrit en SVG directement dans les trois
+  pages, pour suivre les couleurs du CSS et s'animer (les ronds
+  s'allument un par un à l'arrivée). `assets/favicon.svg` en est la
+  version icône, couleurs écrites en dur.
 - Police des titres **Chakra Petch**, hébergée dans `fonts/` (OFL,
   2 × 10 Ko). Texte courant : police du système. Jamais de Google Fonts.
 - **Jamais d'`innerHTML`** : tout texte écrit par un membre passe par
@@ -120,6 +138,10 @@ D'autres idées viendront une fois le site en ligne.
   31 oct. 2026 y ont un texte « Among Us, Minecraft » : `jeuxStockes()`
   le convertit à la lecture. Garder cette conversion. Une soirée stocke
   `jeu` (le nom) et `jeu_cover`.
+- **La clé du localStorage reste `dispos`**, l'ancien nom. La renommer
+  ferait perdre à tout le monde son jeton, donc l'accès à son profil.
+- **Le logo est écrit trois fois** (index.html, groupe.html, 404.html) :
+  le modifier aux trois endroits, et dans `assets/favicon.svg`.
 - **« Tes groupes » (accueil) vient du navigateur, pas de la base.**
   Supprimer un groupe dans D1 ne l'enlève de cette liste qu'au moment où
   on l'ouvre : le serveur répond 404 et groupe.js appelle

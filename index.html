@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dispos · qui est chaud ce soir ?</title>
+  <title>AllReady · qui est chaud ce soir ?</title>
   <meta name="description" content="Partage tes dispos avec tes potes, trouve le créneau où tout le monde est là et lance la soirée de jeu.">
-  <meta name="theme-color" content="#0b0d12">
+  <meta name="theme-color" content="#0d0b18">
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
   <!-- preload : la police des titres part tout de suite, sans attendre
        que le navigateur la découvre dans la feuille de style. -->
@@ -15,7 +15,20 @@
 </head>
 <body>
   <header class="entete-accueil">
-    <a class="logo" href="/"><span class="logo-point" aria-hidden="true"></span>dispos</a>
+    <!-- LE LOGO : une coche (le « prêt » des jeux en ligne) dessinée par
+         quatre ronds, les joueurs de la team. Tout le monde est prêt.
+         Écrit directement dans la page (et non dans un fichier image)
+         pour que ses couleurs suivent les variables du CSS et que ses
+         ronds puissent s'allumer un par un (voir « Le logo » dans
+         style.css). Le même dessin est répété dans groupe.html et
+         404.html : le modifier aux trois endroits. -->
+    <a class="logo" href="/">
+      <svg class="logo-icone" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+        <path class="logo-trait" d="M12.5 33.5 26 47 53 18" pathLength="1"/>
+        <circle cx="12.5" cy="33.5" r="7.5"/><circle cx="26" cy="47" r="7.5"/><circle cx="39.5" cy="32.5" r="7.5"/><circle cx="53" cy="18" r="7.5"/>
+      </svg>
+      <span class="logo-texte">All<span class="logo-ready">Ready</span></span>
+    </a>
   </header>
 
   <main class="accueil">
