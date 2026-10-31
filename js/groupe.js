@@ -6,7 +6,7 @@
    le premier chargement et le rafraîchissement. */
 
 import { etat, charger, quandCaChange, lienGroupe } from './etat.js';
-import { lireGroupes, retenirGroupe, oublierGroupe, avatar, copier, creer } from './commun.js';
+import { lireGroupes, retenirGroupe, oublierGroupe, avatar, copier, creer, animerEntree } from './commun.js';
 import { ouvrirProfil } from './profil.js';
 import './agenda.js';
 import './soirees.js';
@@ -48,7 +48,10 @@ function afficherOnglet(choisi) {
     // Seul l'onglet actif est atteignable avec Tab ; les flèches
     // servent à passer aux autres (convention des onglets).
     onglet.tabIndex = actif ? 0 : -1;
-    document.getElementById(onglet.getAttribute('aria-controls')).hidden = !actif;
+    const panneau = document.getElementById(onglet.getAttribute('aria-controls'));
+    panneau.hidden = !actif;
+    // Le panneau qui apparaît joue son animation d'arrivée (commun.js).
+    if (actif) animerEntree(panneau);
   }
 }
 

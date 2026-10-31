@@ -270,7 +270,7 @@ a { color: var(--accent); }
   letter-spacing: 0.02em;
   text-decoration: none;
   cursor: pointer;
-  transition: background-color 0.15s, box-shadow 0.15s, border-color 0.15s;
+  transition: background-color 0.15s, box-shadow 0.15s, border-color 0.15s, transform 0.1s;
 }
 
 .bouton:hover {
@@ -1662,6 +1662,164 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 .theme-option:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 
+/* 14 BIS. LES ANIMATIONS
+
+   Du mouvement qui a un sens, rapide et discret. Uniquement sur
+   transform (déplacement, taille) et opacity (transparence) : ce sont
+   les deux propriétés que le navigateur anime sans redessiner la page,
+   donc sans saccade, même sur un vieux téléphone.
+
+   « backwards » (dans les animations d'arrivée) : pendant son délai
+   d'attente, l'élément reste à l'état de départ (invisible) au lieu de
+   s'afficher, disparaître, puis apparaître.
+
+   Tout s'arrête si l'appareil demande moins d'animations (section 14). */
+
+/* Les mouvements de base, réutilisés plus bas. Une étape « from » seule :
+   l'arrivée est l'état normal de l'élément. */
+@keyframes monter { from { opacity: 0; transform: translateY(14px); } }
+@keyframes apparaitre { from { opacity: 0; } }
+@keyframes zoomer { from { opacity: 0; transform: translateY(8px) scale(0.97); } }
+@keyframes allumer { from { opacity: 0; transform: scale(0.6); } }
+@keyframes surgir { from { opacity: 0; transform: translateY(10px) scale(0.85); } }
+/* Un petit rebond : grossit à 40 % du temps, revient à sa taille. */
+@keyframes rebond { 40% { transform: scale(1.12); } }
+@keyframes souligner { from { transform: scaleX(0); } }
+
+/* La courbe des arrivées : démarre vite, freine en douceur. */
+:root { --arrivee: cubic-bezier(0.2, 0.7, 0.2, 1); }
+
+
+/* L'ACCUEIL, à l'ouverture de la page.
+   Le titre monte ligne par ligne… */
+.hero-texte > * { animation: monter 0.6s var(--arrivee) backwards; }
+.hero-texte > :nth-child(2) { animation-delay: 0.08s; }
+.hero-texte > :nth-child(3) { animation-delay: 0.16s; }
+
+/* …puis l'aperçu d'agenda s'allume colonne par colonne, comme une
+   vraie carte de chaleur qui se remplit. La grille a 8 colonnes (les
+   heures, puis L à D) : :nth-child(8n + 2) désigne la colonne du lundi
+   sur toutes les lignes, 8n + 3 celle du mardi, et ainsi de suite.
+   Seule la transparence de l'aperçu lui-même est animée : sur grand
+   écran, son transform sert déjà à l'incliner en perspective. */
+.apercu { animation: apparaitre 0.6s 0.1s ease-out backwards; }
+.apercu > span { animation: allumer 0.5s cubic-bezier(0.2, 0.8, 0.3, 1.25) 0.3s backwards; }
+.apercu > span:nth-child(8n + 2) { animation-delay: 0.38s; }
+.apercu > span:nth-child(8n + 3) { animation-delay: 0.45s; }
+.apercu > span:nth-child(8n + 4) { animation-delay: 0.52s; }
+.apercu > span:nth-child(8n + 5) { animation-delay: 0.59s; }
+.apercu > span:nth-child(8n + 6) { animation-delay: 0.66s; }
+.apercu > span:nth-child(8n + 7) { animation-delay: 0.73s; }
+.apercu > span:nth-child(8n + 8) { animation-delay: 0.8s; }
+/* La bulle « Ven. 21h · 5 sur 5 » surgit une fois l'agenda allumé. */
+.apercu-bulle { animation: surgir 0.45s cubic-bezier(0.3, 1.5, 0.5, 1) 1.05s backwards; }
+
+.cartes-accueil > * { animation: monter 0.6s var(--arrivee) 0.25s backwards; }
+.cartes-accueil > :nth-child(2) { animation-delay: 0.33s; }
+.mes-groupes { animation: monter 0.6s var(--arrivee) 0.4s backwards; }
+
+/* Les messages centrés (page 404, groupe introuvable). */
+.message-centre > * { animation: monter 0.5s var(--arrivee) backwards; }
+.message-centre > :nth-child(2) { animation-delay: 0.08s; }
+.message-centre > :nth-child(3) { animation-delay: 0.16s; }
+.message-centre > :nth-child(4) { animation-delay: 0.24s; }
+
+/* Les étapes « Comment ça marche » apparaissent au fil du défilement.
+   animation-timeline: view() relie l'animation à la position de
+   l'élément dans l'écran au lieu du temps : elle avance quand on fait
+   défiler. Récent (Chrome, Edge, Safari 26) : @supports ne l'active que
+   là où le navigateur sait faire, les autres affichent les étapes
+   directement. animation-timeline est écrit APRÈS animation, que le
+   raccourci remettrait sinon à zéro. */
+@supports (animation-timeline: view()) {
+  .etapes li {
+    animation: monter linear both;
+    animation-timeline: view();
+    animation-range: entry 10% cover 35%;
+  }
+}
+
+
+/* LA PAGE GROUPE
+
+   Les animations d'arrivée n'existent que sous la classe « entree »,
+   posée au bon moment par animerEntree() (commun.js) : ouverture d'un
+   onglet, changement de semaine. Sans ça, elles se rejoueraient à
+   chaque modification, la page redessinant ses listes à chaque fois. */
+.vue.entree { animation: apparaitre 0.3s ease-out; }
+
+/* Les cartes arrivent l'une après l'autre, 60 ms d'écart. */
+.entree :is(.creneau, .soiree, .membre) { animation: monter 0.45s var(--arrivee) backwards; }
+.entree :is(.creneau, .soiree, .membre):nth-child(2) { animation-delay: 60ms; }
+.entree :is(.creneau, .soiree, .membre):nth-child(3) { animation-delay: 120ms; }
+.entree :is(.creneau, .soiree, .membre):nth-child(4) { animation-delay: 180ms; }
+.entree :is(.creneau, .soiree, .membre):nth-child(5) { animation-delay: 240ms; }
+.entree :is(.creneau, .soiree, .membre):nth-child(n + 6) { animation-delay: 300ms; }
+
+/* L'agenda s'allume en vague : chaque case part d'autant plus tard
+   qu'elle est à droite (--j, la colonne) et en bas (--rang, la ligne),
+   deux variables posées par agenda.js. Dernière case partie au bout
+   d'environ 0,5 s. Une case qui brille garde son reflet : ses deux
+   animations sont listées ensemble, chacune avec son délai. */
+.entree .case {
+  animation: allumer 0.4s cubic-bezier(0.2, 0.8, 0.3, 1.3) backwards;
+  animation-delay: calc(var(--j, 0) * 45ms + var(--rang, 0) * 12ms);
+}
+.entree .case.brille {
+  animation: allumer 0.4s cubic-bezier(0.2, 0.8, 0.3, 1.3) backwards, reflet 3.2s ease-in-out infinite;
+  animation-delay: calc(var(--j, 0) * 45ms + var(--rang, 0) * 12ms), var(--decalage, 0s);
+}
+
+/* Le trait sous l'onglet actif se dessine depuis son centre. */
+.onglets [role="tab"][aria-selected="true"]::after { animation: souligner 0.3s var(--arrivee); }
+
+/* Le panneau de détail d'une case glisse en place à son apparition. */
+.detail-case:not([hidden]) { animation: monter 0.3s var(--arrivee); }
+
+/* LES PETITS REBONDS : une case qu'on coche, la réponse qu'on choisit,
+   la pastille des soirées sans réponse quand elle apparaît. Ils se
+   rejouent à chaque fois que l'élément prend cet état. */
+.grille.edition .case.cochee { animation: rebond 0.28s ease-out; }
+.choix button[aria-pressed="true"] { animation: rebond 0.3s ease-out; }
+.pastille:not([hidden]) { animation: rebond 0.4s ease-out; }
+
+
+/* LES FENÊTRES s'ouvrent en zoomant légèrement pendant que le fond
+   s'assombrit ; la palette des couleurs part de son coin haut droit,
+   sous le rond qui l'ouvre. */
+.dialogue[open] { animation: zoomer 0.25s var(--arrivee); }
+.dialogue[open]::backdrop { animation: apparaitre 0.25s ease-out; }
+.choix-theme:popover-open { animation: zoomer 0.2s var(--arrivee); transform-origin: top right; }
+
+
+/* LES BOUTONS s'enfoncent légèrement au clic. */
+.bouton-icone, .choix button, .bascule button, .bouton-theme, .jeu-team {
+  transition: transform 0.1s, background-color 0.15s, color 0.15s;
+}
+:is(.bouton, .bouton-icone, .choix button, .bascule button, .bouton-theme, .jeu-team):active {
+  transform: scale(0.96);
+}
+
+/* AU SURVOL (souris seulement) : les cartes se soulèvent de 3 px, et les
+   quatre joueurs du logo se lèvent en vague, l'un après l'autre, puis
+   se rasseyent. Une transition plutôt qu'une animation : remplacer
+   l'animation des ronds rejouerait leur apparition au départ de la
+   souris. */
+@media (hover: hover) {
+  .soiree, .membre, .creneau { transition: transform 0.2s ease, border-color 0.2s ease; }
+  :is(.soiree, .membre, .creneau):hover { transform: translateY(-3px); }
+  .membre:hover, .soiree:not(.aujourdhui):hover, .creneau:not(.complet):hover {
+    border-color: color-mix(in srgb, var(--accent) 35%, var(--bordure));
+  }
+
+  .logo-icone circle { transition: transform 0.25s cubic-bezier(0.3, 1.6, 0.5, 1); }
+  .logo-icone circle:nth-of-type(2) { transition-delay: 0.05s; }
+  .logo-icone circle:nth-of-type(3) { transition-delay: 0.1s; }
+  .logo-icone circle:nth-of-type(4) { transition-delay: 0.15s; }
+  .logo:hover .logo-icone circle { transform: translateY(-4px); }
+}
+
+
 /* 14. MOINS DE MOUVEMENT
 
    Si le visiteur a demandé à son système de limiter les animations
@@ -1674,4 +1832,17 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
   .case.brille { animation: none; background-image: none; }
   .annonce, .case, .bouton { transition: none; }
   .apercu { transform: none; }
+
+  /* Et toutes les animations de la section 14 bis d'un coup : durée
+     quasi nulle, aucun délai, une seule fois. Chaque élément arrive
+     directement à son état final, rien ne reste caché. Les étapes de
+     l'accueil, animées au défilement, sont simplement affichées. */
+  *, *::before, *::after, ::backdrop {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+  }
+  .etapes li { animation: none !important; }
 }

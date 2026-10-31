@@ -29,6 +29,11 @@ nom de domaine à part reste à choisir.
   monde, plus elle rayonne (« probabilité de monter une soirée »). Seul,
   pas de lueur. À partir de 75 % de la team, un reflet balaie la case
   (« soirée très probable »). Toucher une case affiche la chance en clair.
+- **Des animations** (31 oct. 2026) : l'accueil qui s'allume (titre,
+  aperçu d'agenda colonne par colonne, bulle), l'agenda en vague à
+  l'ouverture et au changement de semaine, les cartes l'une après
+  l'autre, les fenêtres qui zooment, les boutons qui s'enfoncent, les
+  cartes qui se soulèvent, les joueurs du logo qui se lèvent au survol.
 - **Un jeu de mots sur le nom du groupe**, en petit à droite des
   onglets, quand le nom s'y prête (« Les potes du jeudi » → « Jeudi, jeu
   dit : on joue. »). Rien sinon. Règles dans `js/jeu-de-mots.js`.
@@ -190,6 +195,12 @@ nom de domaine à part reste à choisir.
   reflet est `TRES_PROBABLE` (0,75) dans agenda.js. La lueur est rangée
   dans `--lueur` : tout autre `box-shadow` sur `.case` doit la reprendre
   (`…, var(--lueur)`), sinon il l'efface.
+- **Les animations d'arrivée passent par la classe `entree`**, posée par
+  `animerEntree()` (commun.js) puis retirée après 1,2 s. Ne jamais mettre
+  une animation d'arrivée directement sur une carte ou une case : la page
+  redessine ses listes à chaque modification, elle se rejouerait sans
+  cesse. N'animer que `transform` et `opacity`. « Moins d'animations »
+  (prefers-reduced-motion) coupe tout d'un coup, en fin de style.css.
 - **12 jeux par profil au plus** : écrit dans `functions/_outils.js`
   (`MAX_JEUX`) ET dans `js/profil.js`. Changer les deux ensemble.
 - **Limites de D1 (offre gratuite)** : 50 requêtes SQL par appel, 100

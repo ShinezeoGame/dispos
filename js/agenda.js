@@ -19,7 +19,7 @@ import {
 } from './etat.js';
 import {
   HEURE_DEBUT, HEURE_FIN, ajouterJours, lundiDe, versTexte, formater,
-  libelleHeure, avatar, annoncer, copier, creer, majuscule,
+  libelleHeure, avatar, annoncer, copier, creer, majuscule, animerEntree,
 } from './commun.js';
 import { proposerSoiree } from './soirees.js';
 import { ouvrirProfil } from './profil.js';
@@ -225,6 +225,10 @@ function dessinerGrille() {
       const bouton = creer('button', 'case');
       bouton.type = 'button';
       bouton.dataset.cle = cle;
+      // Sa colonne et sa ligne : elles règlent le départ de chaque case
+      // dans la vague d'apparition (« Les animations », style.css).
+      bouton.style.setProperty('--j', jour);
+      bouton.style.setProperty('--rang', heure - HEURE_DEBUT);
       bouton.classList.toggle('minuit', heure === 24);
       const passee = estPassee(jour, heure);
       bouton.classList.toggle('passee', passee);
@@ -488,6 +492,8 @@ async function changerSemaine(nouvelle) {
   statut.textContent = '';
   try {
     await charger();
+    // La nouvelle semaine s'allume en vague, colonne après colonne.
+    animerEntree(grille);
   } catch (probleme) {
     etat.semaine = ancienne;
     annoncer(probleme.message, 'erreur');

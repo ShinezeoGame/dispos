@@ -218,6 +218,31 @@ export function annoncer(message, type = 'info') {
   minuterieAnnonce = setTimeout(() => zone.classList.remove('visible'), 4000);
 }
 
+/* LES ANIMATIONS D'ARRIVÉE
+
+   La page redessine ses listes à chaque modification (une réponse, une
+   case cochée…). Si les animations d'entrée étaient posées directement
+   sur les cartes et les cases, elles se rejoueraient à chaque fois et
+   tout clignoterait.
+
+   Elles sont donc attachées à une classe, « entree », qu'on ne pose
+   qu'aux vrais moments d'arrivée (ouverture d'un onglet, changement de
+   semaine) puis qu'on retire 1,2 seconde plus tard, une fois les
+   animations finies (voir « Les animations » dans style.css).
+
+   Retirer puis remettre la classe, avec une lecture d'offsetWidth entre
+   les deux, oblige le navigateur à repartir de zéro si on rappelle la
+   fonction alors qu'une animation est encore en cours. */
+const minuteriesEntree = new WeakMap();
+
+export function animerEntree(element) {
+  clearTimeout(minuteriesEntree.get(element));
+  element.classList.remove('entree');
+  void element.offsetWidth; // force le navigateur à prendre en compte le retrait
+  element.classList.add('entree');
+  minuteriesEntree.set(element, setTimeout(() => element.classList.remove('entree'), 1200));
+}
+
 // Copie un texte dans le presse-papiers. Si le navigateur refuse, on
 // affiche le texte dans une petite fenêtre pour le copier à la main.
 export async function copier(texte, message) {
