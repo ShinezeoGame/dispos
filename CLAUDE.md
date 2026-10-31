@@ -67,11 +67,14 @@ nom de domaine à part reste à choisir.
   Ajouter un thème : un bloc CSS + une ligne dans `THEMES`, puis
   mesurer ses contrastes.
 - **Le logo** (« exceptionnel », à garder tel quel) : une coche dessinée par quatre ronds (les joueurs de la
-  team : la validation, c'est le groupe au complet), puis « All » en
+  team : la validation, c'est le groupe au complet), reliés par un trait
+  plein, puis « All » en
   blanc et « Ready » en orange. Écrit en SVG directement dans les trois
   pages, pour suivre les couleurs du CSS et s'animer (les ronds
   s'allument un par un à l'arrivée). `assets/favicon.svg` en est la
-  version icône, couleurs écrites en dur.
+  version icône, couleurs écrites en dur. **Proportions à garder** : ronds
+  de rayon 5,5 et trait plein de 4,5 (sur 64). Avec des ronds de 7,5 et un
+  trait transparent (première version), la coche disparaissait.
 - Police des titres **Chakra Petch**, hébergée dans `fonts/` (OFL,
   2 × 10 Ko). Texte courant : police du système. Jamais de Google Fonts.
 - **Jamais d'`innerHTML`** : tout texte écrit par un membre passe par

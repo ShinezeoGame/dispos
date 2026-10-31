@@ -196,18 +196,21 @@ a { color: var(--accent); }
 
 /* overflow: visible : les ronds touchent presque le bord du dessin,
    leur léger rebond à l'apparition ne doit pas être rogné. */
-.logo-icone { width: 2.1rem; height: 2.1rem; flex: none; overflow: visible; }
+.logo-icone { width: 2.25rem; height: 2.25rem; flex: none; overflow: visible; }
 .logo-icone circle { fill: var(--accent); }
 .logo-ready { color: var(--accent); }
 
-/* Le trait qui relie les ronds, plus discret qu'eux. */
+/* Le trait qui relie les ronds, plein et de la même couleur : c'est lui
+   qui dessine la coche. Les ronds (rayon 5,5 sur une zone de 64) sont
+   juste assez gros pour qu'on voie quatre joueurs, mais laissent le
+   trait apparaître entre eux. Première version : ronds de 7,5 et trait
+   à moitié transparent, la coche disparaissait (corrigé le 31 oct. 2026). */
 .logo-trait {
   fill: none;
   stroke: var(--accent);
-  stroke-width: 4;
+  stroke-width: 4.5;
   stroke-linecap: round;
   stroke-linejoin: round;
-  opacity: 0.45;
 }
 
 /* À L'ARRIVÉE SUR LA PAGE, les quatre ronds s'allument l'un après
