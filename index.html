@@ -6,6 +6,9 @@
   <title>AllReady · qui est chaud ce soir ?</title>
   <meta name="description" content="Partage tes dispos avec tes potes, trouve le créneau où tout le monde est là et lance la soirée de jeu.">
   <meta name="theme-color" content="#110f0e">
+  <!-- La couleur choisie par le visiteur, appliquée avant l'affichage
+       (js/theme.js) : doit rester ici, avant tout le reste. -->
+  <script src="/js/theme.js"></script>
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
   <!-- preload : la police des titres part tout de suite, sans attendre
        que le navigateur la découvre dans la feuille de style. -->
@@ -29,6 +32,12 @@
       </svg>
       <span class="logo-texte">All<span class="logo-ready">Ready</span></span>
     </a>
+    <!-- LE CHOIX DE LA COULEUR (js/apparence.js) : le rond montre le
+         thème en cours ; popovertarget ouvre la palette. -->
+    <button class="bouton-theme" type="button" popovertarget="choix-theme" aria-label="Changer la couleur du site"><span class="echantillon" aria-hidden="true"></span></button>
+    <div id="choix-theme" class="choix-theme" popover>
+      <p id="titre-choix-theme" class="choix-theme-titre">Couleur du site</p>
+    </div>
   </header>
 
   <main class="accueil">

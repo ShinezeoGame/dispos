@@ -67,10 +67,8 @@
   --texte: #f7f0eb;
   --texte-doux: #b5aaa3;
 
-  --accent: #ff7a3d;         /* orange braise : dispo, prêt, action */
-  --accent-vif: #ff9a66;     /* au survol */
+  /* --accent, --accent-vif et --soiree : voir « Les thèmes » juste après. */
   --sur-accent: #110f0e;     /* le texte posé sur l'accent */
-  --soiree: #ff4f8b;         /* rose néon : ce qui concerne une soirée */
   --peutetre: #ffd166;       /* jaune : peut-être */
   --non: #ff5d73;            /* rouge : pas dispo, erreur */
 
@@ -81,6 +79,39 @@
   --largeur: 72rem;          /* largeur maximale du contenu */
   --marge: clamp(1rem, 4vw, 2rem);
 }
+
+
+/* LES THÈMES
+
+   Chaque visiteur choisit la couleur du site (le rond coloré de
+   l'en-tête, voir js/apparence.js). Un thème = trois couleurs :
+   --accent (action, dispos, logo, agenda), --accent-vif (au survol) et
+   --soiree (tout ce qui touche aux soirées, choisie pour bien se
+   distinguer de l'accent). Le fond, le texte et le reste ne changent pas.
+
+   js/apparence.js pose data-theme="neon" (par exemple) sur <html> :
+   tout le site prend alors ces couleurs. Le même attribut posé sur un
+   petit rond de la palette lui donne SES couleurs à lui : c'est
+   comme ça que chaque échantillon montre son thème sans les recopier.
+
+   Braise est le thème de base, pour tout le monde, choix de la maison
+   (« que des couleurs chaudes »). Les autres sont là pour qui préfère.
+
+   Contrastes mesurés (accent sur les cartes / texte sombre sur
+   l'accent / soirée sur les cartes), minimum recommandé 4,5:1 :
+   Braise 6,8 / 7,4 / 5,7 — Néon 13,2 / 14,3 / 6,6 — Plasma 6,6 / 7,1 /
+   8,4 — Glace 9,8 / 10,6 / 7,2 — Sakura 7,5 / 8,1 / 11,4 — Or 11,4 /
+   12,4 / 6,1.
+
+   Ajouter un thème : un bloc ici, et une ligne dans THEMES
+   (js/apparence.js). Puis mesurer ses contrastes. */
+:root,
+[data-theme="braise"] { --accent: #ff7a3d; --accent-vif: #ff9a66; --soiree: #ff4f8b; }
+[data-theme="neon"]   { --accent: #b5f23d; --accent-vif: #c8ff5a; --soiree: #ff5fd2; }
+[data-theme="plasma"] { --accent: #a98bff; --accent-vif: #c3adff; --soiree: #ff9a52; }
+[data-theme="glace"]  { --accent: #4fd1e8; --accent-vif: #85e3f2; --soiree: #ff7a9e; }
+[data-theme="sakura"] { --accent: #ff7eb6; --accent-vif: #ffa3cb; --soiree: #ffc845; }
+[data-theme="or"]     { --accent: #ffc845; --accent-vif: #ffd97a; --soiree: #ff5f8f; }
 
 
 /* 3. LES BASES */
@@ -95,6 +126,11 @@
 [hidden] { display: none !important; }
 
 html { -webkit-text-size-adjust: 100%; }
+
+/* Sur téléphone, le navigateur recouvre d'office tout élément touché
+   d'un carré bleuté : il jure avec les ronds et les couleurs du site.
+   Nos boutons ont déjà leurs propres états (enfoncé, survol, focus). */
+a, button, label { -webkit-tap-highlight-color: transparent; }
 
 body {
   margin: 0;
@@ -432,7 +468,13 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
   padding-inline: var(--marge);
 }
 
-.entete-accueil { padding-block: 1rem; }
+/* Le logo à gauche, le choix de la couleur à droite. */
+.entete-accueil {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-block: 1rem;
+}
 
 .accueil {
   flex: 1;
@@ -638,14 +680,23 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 }
 
 /* Le nom du groupe prend toute la place libre ; trop long, il se
-   termine par « … » au lieu de pousser les boutons hors de l'écran. */
+   termine par « … » au lieu de pousser les boutons hors de l'écran.
+
+   Même taille que le nom du site (1.35rem, comme .logo) : c'est ce qui
+   met les deux textes sur la même ligne de base, celle que l'œil
+   compare quand deux textes sont côte à côte. Avec deux tailles
+   différentes, chacun est centré dans sa boîte, mais le plus petit
+   paraît flotter 2 px trop haut (mesuré le 31 oct. 2026). La graisse
+   600 au lieu de 700 laisse le nom du site plus fort : changer de
+   graisse ne déplace pas la ligne de base. */
 .titre-groupe {
   flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 1.15rem;
+  font-size: 1.35rem;
+  font-weight: 600;
   padding-left: 0.75rem;
   border-left: 1px solid var(--bordure);
 }
@@ -1438,6 +1489,102 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 }
 .lien-perso h3 { font-size: 1rem; }
 .lien-perso p { margin: 0.35rem 0 0.75rem; color: var(--texte-doux); font-size: 0.9rem; }
+
+
+/* 13 BIS. LE CHOIX DE LA COULEUR (js/apparence.js)
+
+   Un échantillon : un rond coupé en biais, la couleur d'accent d'un
+   côté, celle des soirées de l'autre. Il prend les couleurs du thème
+   où il se trouve : dans l'en-tête, celui du site ; dans la palette,
+   chacun le sien (data-theme posé sur lui, voir « Les thèmes »). */
+.echantillon {
+  display: block;
+  flex: none;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent) 55%, var(--soiree) 55%);
+}
+
+.bouton-theme {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+}
+.bouton-theme:hover { border-color: var(--bordure); background: var(--surface); }
+
+/* LA PALETTE
+
+   Une « popover » : l'attribut popover du HTML la fait passer
+   au-dessus de tout, la ferme d'un clic à côté ou avec Échap, sans une
+   ligne de JavaScript pour ça. Le navigateur la centre par défaut : on
+   la place nous-mêmes sous l'en-tête, alignée sur le bord droit du
+   contenu (le même calcul que la marge des pages). */
+.choix-theme {
+  position: fixed;
+  inset: auto;
+  top: 4.25rem;
+  right: max(var(--marge), calc((100vw - var(--largeur)) / 2 + var(--marge)));
+  width: 15rem;
+  margin: 0;
+  padding: 0.9rem;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--surface-haute);
+  color: var(--texte);
+  box-shadow: 0 20px 50px -15px rgb(0 0 0 / 0.7);
+}
+
+.choix-theme-titre {
+  margin-bottom: 0.5rem;
+  color: var(--texte-doux);
+  font: 600 0.78rem var(--police-titre);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.choix-theme-liste {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.25rem;
+}
+
+/* Une option : le bouton radio est caché sous toute l'option (même
+   principe que les pastilles du profil) : le clavier et les lecteurs
+   d'écran s'en servent normalement, les flèches passent d'un thème à
+   l'autre. */
+.theme-option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 44px;
+  margin: 0;
+  padding: 0.3rem 0.5rem;
+  border-radius: var(--rayon-petit);
+  font-weight: 600;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+.theme-option input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.theme-option:hover { background: var(--surface); }
+.theme-option:has(input:checked) { background: var(--surface); box-shadow: inset 0 0 0 1px var(--bordure); }
+.theme-option:has(input:checked) .echantillon { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--texte); }
+.theme-option:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 
 /* 14. MOINS DE MOUVEMENT

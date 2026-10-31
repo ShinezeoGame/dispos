@@ -55,6 +55,17 @@ nom de domaine à part reste à choisir.
   touche aux soirées. Toutes les couleurs et les lueurs passent par les
   variables de `:root` (les lueurs par `color-mix()`), jamais en dur.
   Contrastes notés en tête de `:root`.
+- **Chaque visiteur peut choisir la couleur du site** (demandé le
+  31 oct. 2026) : le rond coloré de l'en-tête ouvre une palette de six
+  thèmes, Braise (l'orange, par défaut pour tout le monde), Néon,
+  Plasma, Glace, Sakura, Or. Un thème = `--accent`, `--accent-vif`,
+  `--soiree` dans un bloc `[data-theme="…"]` de style.css. Le choix est
+  propre à l'appareil : localStorage, clé `allready-theme`.
+  `js/theme.js` l'applique dans `<head>` avant l'affichage (pas de
+  flash orange) ; `js/apparence.js` fabrique la palette (attribut
+  `popover` : ouverture, fermeture et Échap gérés par le navigateur).
+  Ajouter un thème : un bloc CSS + une ligne dans `THEMES`, puis
+  mesurer ses contrastes.
 - **Le logo** (« exceptionnel », à garder tel quel) : une coche dessinée par quatre ronds (les joueurs de la
   team : la validation, c'est le groupe au complet), puis « All » en
   blanc et « Ready » en orange. Écrit en SVG directement dans les trois
@@ -94,6 +105,8 @@ nom de domaine à part reste à choisir.
     js/team.js                 les cartes des membres
     js/profil.js               rejoindre / modifier son profil
     js/jeux.js                 le sélecteur de jeux et les couvertures
+    js/theme.js                applique la couleur choisie (dans <head>)
+    js/apparence.js            la palette des couleurs du site
     functions/_outils.js       code SERVEUR partagé : schéma, vérifs, jetons
     functions/api/_middleware.js   crée les tables, les met à jour, rattrape les erreurs
     functions/api/groupes/…    une route par fichier (voir leurs en-têtes)
@@ -149,6 +162,12 @@ nom de domaine à part reste à choisir.
   on l'ouvre : le serveur répond 404 et groupe.js appelle
   `oublierGroupe()`. Seul un 404 efface : une coupure réseau ne doit
   jamais faire perdre un jeton.
+- **`js/theme.js` doit rester un script classique dans `<head>`**, avant
+  la feuille de style : en module ou en `defer`, la page s'afficherait
+  d'abord en orange puis changerait de couleur.
+- **Le nom du groupe a la même taille que le nom du site** (1.35rem) :
+  c'est ce qui aligne leurs lignes de base dans l'en-tête. Avec une
+  taille plus petite, il paraît flotter 2 px trop haut.
 - **12 jeux par profil au plus** : écrit dans `functions/_outils.js`
   (`MAX_JEUX`) ET dans `js/profil.js`. Changer les deux ensemble.
 - **Limites de D1 (offre gratuite)** : 50 requêtes SQL par appel, 100

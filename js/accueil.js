@@ -2,6 +2,7 @@
    ceux qu'on a déjà ouverts sur cet appareil. */
 
 import { api, lireGroupes, retenirGroupe, creer } from './commun.js';
+import './apparence.js'; // le choix de la couleur du site
 
 const formCreer = document.getElementById('form-creer');
 const formRejoindre = document.getElementById('form-rejoindre');

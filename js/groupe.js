@@ -11,6 +11,7 @@ import { ouvrirProfil } from './profil.js';
 import './agenda.js';
 import './soirees.js';
 import './team.js';
+import './apparence.js'; // le choix de la couleur du site
 
 
 /* 1. LE CODE DU GROUPE
