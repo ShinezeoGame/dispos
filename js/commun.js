@@ -21,15 +21,6 @@ export const COULEURS = [
   '#4dd4e8', '#748ffc', '#b197fc', '#f783ac',
 ];
 
-// Proposés dans le formulaire de soirée, après les jeux que les
-// membres ont mis dans leur profil. On peut toujours écrire autre chose.
-export const JEUX_CONNUS = [
-  'Among Us', 'Fortnite', 'Minecraft', 'Valorant', 'League of Legends',
-  'Rocket League', 'Mario Kart', 'Fall Guys', 'Apex Legends',
-  'Overwatch 2', 'Counter-Strike 2', 'Lethal Company', 'Gartic Phone',
-  'Jeux de société en ligne',
-];
-
 
 /* PARLER AU SERVEUR
 

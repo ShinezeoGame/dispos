@@ -268,6 +268,10 @@ input:focus, textarea:focus {
 
 input::placeholder, textarea::placeholder { color: #6b7389; }
 
+/* Chrome et Safari ajoutent une croix bleue aux champs de recherche,
+   qui jure avec le reste : on la masque (on efface au clavier). */
+input[type="search"]::-webkit-search-cancel-button { display: none; }
+
 /* Le calendrier et l'horloge natifs, en version sombre. */
 input[type="date"], input[type="time"] { color-scheme: dark; }
 
@@ -1022,7 +1026,10 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 .soiree.aujourdhui .soiree-jour { color: var(--soiree); }
 
 .soiree-corps { display: grid; gap: 0.6rem; min-width: 0; }
-.soiree-titre { font-size: 1.3rem; }
+/* La couverture du jeu à gauche, le titre et les infos à droite. */
+.soiree-tete { display: flex; align-items: center; gap: 0.9rem; }
+.soiree-tete > div { min-width: 0; }
+.soiree-titre { font-size: 1.3rem; overflow-wrap: anywhere; }
 .soiree-infos { color: var(--texte-doux); font-size: 0.9rem; }
 /* white-space: pre-line : les retours à la ligne du petit mot sont gardés. */
 .soiree-note { white-space: pre-line; overflow-wrap: anywhere; }
@@ -1135,6 +1142,154 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 
 .membre-bio { white-space: pre-line; overflow-wrap: anywhere; margin-top: -0.4rem; }
 .membre-bio.vide { color: var(--texte-doux); font-style: italic; }
+
+
+/* 12 BIS. LES JEUX ET LEURS COUVERTURES (js/jeux.js)
+
+   Une couverture garde toujours les proportions d'une jaquette de jeu
+   (3 de large pour 4 de haut, aspect-ratio). object-fit: cover remplit
+   le cadre sans déformer l'image. Seule la largeur change selon
+   l'endroit : .mini dans les listes, .moyenne sur les soirées. */
+.couverture {
+  display: block;
+  flex: none;
+  width: 4rem;
+  height: auto;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: 6px;
+  background: var(--surface-haute);
+}
+.couverture.mini { width: 1.7rem; border-radius: 4px; }
+.couverture.moyenne { width: 3.6rem; }
+
+/* Un jeu sans image : le même cadre, avec son initiale sur un dégradé. */
+.couverture-vide {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(160deg, var(--surface-haute), var(--case));
+  border: 1px solid var(--bordure);
+  color: var(--texte-doux);
+  font: 700 1.1rem var(--police-titre);
+}
+.couverture-vide.mini { font-size: 0.75rem; }
+
+/* Les jeux d'un profil : l'étiquette s'élargit pour la petite jaquette. */
+.tag-jeu {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.2rem 0.6rem 0.2rem 0.2rem;
+  border-radius: 8px;
+}
+
+/* LE SÉLECTEUR
+
+   La liste des propositions s'affiche sous le champ, dans le fil de la
+   fenêtre (et non en surimpression) : rien ne peut la couper, même en
+   bas d'une fenêtre qui défile. */
+.jeux-choisis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.jeu-choisi {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  max-width: 100%;
+  padding: 0.2rem;
+  border: 1px solid var(--accent);
+  border-radius: 9px;
+  background: rgb(181 242 61 / 0.08);
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+.jeu-choisi .jeu-nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* La croix pour retirer un jeu : petite à l'œil, mais une zone de
+   clic de 32 px. */
+.jeu-retirer {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--texte-doux);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.jeu-retirer:hover { background: var(--surface-haute); color: var(--texte); }
+
+.resultats-jeux {
+  max-height: 17rem;
+  overflow-y: auto;
+  margin: 0.4rem 0 0;
+  padding: 0.3rem;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-petit);
+  background: var(--fond);
+  list-style: none;
+}
+
+.resultat-jeu {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 44px;
+  padding: 0.3rem 0.5rem;
+  border-radius: 7px;
+  cursor: pointer;
+}
+/* Survol à la souris, ou proposition surlignée au clavier. */
+.resultat-jeu:hover,
+.resultat-jeu[aria-selected="true"] { background: var(--surface-haute); }
+.resultat-jeu[aria-selected="true"] { box-shadow: inset 3px 0 0 var(--accent); }
+.resultat-jeu .jeu-nom { flex: 1; min-width: 0; font-weight: 600; }
+.jeu-annee { color: var(--texte-doux); font-size: 0.85rem; }
+.resultat-jeu.tel-quel .jeu-nom { color: var(--texte-doux); font-weight: 400; }
+
+/* Les jeux de la team dans le formulaire de soirée : une rangée de
+   jaquettes à cliquer, qui défile à l'horizontale si elle déborde. */
+.jeux-team {
+  display: flex;
+  gap: 0.6rem;
+  overflow-x: auto;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.25rem;
+}
+
+.jeu-team {
+  display: grid;
+  gap: 0.3rem;
+  justify-items: center;
+  width: 4.6rem;
+  flex: none;
+  padding: 0.35rem;
+  border: 1px solid transparent;
+  border-radius: var(--rayon-petit);
+  background: none;
+  color: var(--texte-doux);
+  font: 600 0.72rem/1.2 var(--police);
+  cursor: pointer;
+}
+.jeu-team .couverture { width: 3.4rem; }
+.jeu-team .jeu-nom {
+  /* Deux lignes au plus, puis « … ». */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-align: center;
+}
+.jeu-team:hover { background: var(--surface-haute); color: var(--texte); }
+.jeu-team[aria-pressed="true"] { border-color: var(--accent); color: var(--texte); }
 
 
 /* 13. LES FENÊTRES (<dialog>)

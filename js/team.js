@@ -8,6 +8,7 @@
 import { etat, quandCaChange } from './etat.js';
 import { avatar, creer, formater, lundiDe } from './commun.js';
 import { ouvrirProfil } from './profil.js';
+import { couverture } from './jeux.js';
 
 const liste = document.getElementById('liste-membres');
 const modele = document.getElementById('modele-membre');
@@ -40,11 +41,14 @@ function fabriquerCarte(membre, estMoi) {
     ? `${heures} h cochée${heures > 1 ? 's' : ''} ${quelleSemaine}`
     : `Rien de coché ${quelleSemaine}`;
 
-  // Les jeux, écrits « Among Us, Minecraft », deviennent des étiquettes.
-  const jeux = membre.jeux.split(',').map((jeu) => jeu.trim()).filter(Boolean);
+  // Les jeux : une étiquette par jeu, avec sa petite couverture.
   const listeJeux = carte.querySelector('.membre-jeux');
-  listeJeux.replaceChildren(...jeux.map((jeu) => creer('li', 'tag', jeu)));
-  listeJeux.hidden = jeux.length === 0;
+  listeJeux.replaceChildren(...membre.jeux.map((jeu) => {
+    const etiquette = creer('li', 'tag tag-jeu');
+    etiquette.append(couverture(jeu, 'mini'), creer('span', 'jeu-nom', jeu.nom));
+    return etiquette;
+  }));
+  listeJeux.hidden = membre.jeux.length === 0;
 
   const bio = carte.querySelector('.membre-bio');
   bio.textContent = membre.bio || (estMoi

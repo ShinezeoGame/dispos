@@ -4,8 +4,9 @@
    boutons de réponse, et le formulaire pour en proposer une. */
 
 import { etat, quandCaChange, appeler, charger, trouverMembre, caseDe } from './etat.js';
-import { JEUX_CONNUS, versTexte, depuisTexte, jourRelatif, avatar, annoncer, creer } from './commun.js';
+import { versTexte, depuisTexte, jourRelatif, avatar, annoncer, creer } from './commun.js';
 import { ouvrirProfil } from './profil.js';
+import { selecteurJeux, couverture, memeJeu } from './jeux.js';
 
 const liste = document.getElementById('liste-soirees');
 const aucune = document.getElementById('aucune-soiree');
@@ -13,7 +14,8 @@ const modele = document.getElementById('modele-soiree');
 const pastille = document.getElementById('pastille-soirees');
 const dialogue = document.getElementById('dialogue-soiree');
 const formulaire = document.getElementById('form-soiree');
-// formulaire.elements.jeu = le champ name="jeu", et ainsi de suite.
+// formulaire.elements.jour = le champ name="jour", et ainsi de suite.
+// (Le jeu, lui, passe par le sélecteur de jeux, plus bas.)
 const champs = formulaire.elements;
 
 
@@ -67,10 +69,14 @@ function fabriquerCarte(soiree) {
   remplir('.soiree-jour', jourRelatif(debut));
   remplir('.soiree-heure', joliHoraire(soiree.horaire));
   remplir('.soiree-titre', soiree.titre);
-  remplir('.soiree-jeu', soiree.jeu);
+  // La couverture du jeu, devant le titre.
+  carte.querySelector('.soiree-tete').prepend(couverture({ nom: soiree.jeu, cover: soiree.jeu_cover }, 'moyenne'));
 
+  // « Among Us · proposée par Max », ou le jeu seul si son auteur est parti.
   const auteur = trouverMembre(soiree.createur_id);
-  remplir('.soiree-auteur', auteur ? `proposée par ${auteur.id === moi?.id ? 'toi' : auteur.pseudo}` : '');
+  remplir('.soiree-infos', auteur
+    ? `${soiree.jeu} · proposée par ${auteur.id === moi?.id ? 'toi' : auteur.pseudo}`
+    : soiree.jeu);
 
   const note = carte.querySelector('.soiree-note');
   note.textContent = soiree.note;
@@ -159,7 +165,8 @@ export function proposerSoiree({ jour, horaire } = {}) {
   champs.jour.min = versTexte(new Date()); // pas de soirée dans le passé
   champs.jour.value = jour || versTexte(new Date());
   champs.horaire.value = horaire || '21:00';
-  remplirJeux();
+  selecteur.remplir([]);
+  dessinerJeuxTeam();
   mettreAJourTitre();
   mettreAJourDispos();
   dialogue.showModal();
@@ -167,31 +174,65 @@ export function proposerSoiree({ jour, horaire } = {}) {
 
 document.getElementById('bouton-proposer').addEventListener('click', () => proposerSoiree());
 
-/* Les suggestions du champ « Jeu » (<datalist>) : d'abord les jeux que
-   les membres ont mis dans leur profil, puis la liste de base. new Set
-   enlève les doublons ; on peut toujours taper autre chose. */
-function remplirJeux() {
-  const deLaTeam = etat.membres
-    .flatMap((membre) => membre.jeux.split(','))
-    .map((jeu) => jeu.trim())
-    .filter(Boolean);
-  const options = [...new Set([...deLaTeam, ...JEUX_CONNUS])].map((jeu) => {
-    const option = document.createElement('option');
-    option.value = jeu;
-    return option;
-  });
-  document.getElementById('liste-jeux').replaceChildren(...options);
+// Le sélecteur de jeux (js/jeux.js), en mode « un seul jeu ».
+const selecteur = selecteurJeux(document.getElementById('soiree-jeu'), {
+  auChangement: () => {
+    mettreAJourTitre();
+    dessinerJeuxTeam(); // pour marquer le jeu choisi parmi les raccourcis
+  },
+});
+
+/* Le jeu de la soirée : celui choisi dans le sélecteur ; à défaut, ce
+   qui est tapé dans le champ, pris tel quel (on ne perd pas une saisie
+   parce qu'on a oublié de cliquer sur une proposition). */
+function jeuChoisi() {
+  const texte = selecteur.texte();
+  return selecteur.lire()[0] || (texte ? { id: null, nom: texte, cover: '' } : null);
+}
+
+/* LES JEUX DE LA TEAM
+
+   La plupart des soirées se font sur un jeu que la team connaît déjà.
+   On rassemble donc les jeux de tous les profils, les plus partagés en
+   premier (« 4 potes ont Among Us »), et on en montre huit en
+   raccourcis : un clic, et c'est choisi. */
+function jeuxDeLaTeam() {
+  const compte = []; // [{ jeu, nombre }, …]
+  for (const membre of etat.membres) {
+    for (const jeu of membre.jeux) {
+      const deja = compte.find((entree) => memeJeu(entree.jeu, jeu));
+      if (deja) deja.nombre += 1;
+      else compte.push({ jeu, nombre: 1 });
+    }
+  }
+  return compte.sort((a, b) => b.nombre - a.nombre).slice(0, 8).map((entree) => entree.jeu);
+}
+
+function dessinerJeuxTeam() {
+  const zone = document.getElementById('soiree-jeux-team');
+  const jeux = jeuxDeLaTeam();
+  const choisi = selecteur.lire()[0];
+  zone.replaceChildren(...jeux.map((jeu) => {
+    const bouton = creer('button', 'jeu-team');
+    bouton.type = 'button';
+    // aria-pressed : enfoncé pour le jeu actuellement choisi.
+    bouton.setAttribute('aria-pressed', String(Boolean(choisi && memeJeu(choisi, jeu))));
+    bouton.append(couverture(jeu), creer('span', 'jeu-nom', jeu.nom));
+    bouton.addEventListener('click', () => selecteur.ajouter(jeu));
+    return bouton;
+  }));
+  zone.hidden = jeux.length === 0;
 }
 
 /* Le titre proposé d'office, selon l'heure : « Aprem Fortnite »,
    « Soirée Among Us ». Il s'affiche en gris dans le champ titre
    (placeholder) ; s'il reste vide, c'est lui qui est envoyé. */
 function titreParDefaut() {
-  const jeu = champs.jeu.value.trim();
+  const jeu = jeuChoisi();
   if (!jeu) return '';
   const heure = Number((champs.horaire.value || '21').split(':')[0]);
   const moment = heure < 6 ? 'Nuit' : heure < 12 ? 'Matinée' : heure < 18 ? 'Aprem' : 'Soirée';
-  return `${moment} ${jeu}`;
+  return `${moment} ${jeu.nom}`;
 }
 
 function mettreAJourTitre() {
@@ -213,7 +254,8 @@ function mettreAJourDispos() {
     : "Personne n'a coché cette heure dans l'agenda.";
 }
 
-champs.jeu.addEventListener('input', mettreAJourTitre);
+// Le titre suit aussi ce qu'on tape, avant même de choisir un jeu.
+document.getElementById('soiree-jeu-recherche').addEventListener('input', mettreAJourTitre);
 champs.horaire.addEventListener('input', () => {
   mettreAJourTitre();
   mettreAJourDispos();
@@ -222,13 +264,18 @@ champs.jour.addEventListener('input', mettreAJourDispos);
 
 formulaire.addEventListener('submit', async (evenement) => {
   evenement.preventDefault();
+  const jeu = jeuChoisi();
+  if (!jeu) {
+    formulaire.querySelector('.erreur').textContent = 'Choisis un jeu.';
+    return;
+  }
   const bouton = formulaire.querySelector('[type="submit"]');
   bouton.disabled = true;
   try {
     await appeler('/soirees', {
       methode: 'POST',
       corps: {
-        jeu: champs.jeu.value,
+        jeu,
         titre: champs.titre.value.trim() || titreParDefaut(),
         jour: champs.jour.value,
         horaire: champs.horaire.value,

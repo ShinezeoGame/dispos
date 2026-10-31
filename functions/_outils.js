@@ -36,6 +36,7 @@ export const COULEURS = [
 export const REPONSES = ['oui', 'peutetre', 'non'];
 
 export const MAX_MEMBRES = 50;
+export const MAX_JEUX = 12; // par profil
 
 
 /* LA STRUCTURE DE LA BASE
@@ -63,8 +64,9 @@ export const SCHEMA = [
   )`,
 
   // Une personne dans un groupe. « jeux » et « bio » forment son
-  // profil : ses jeux préférés et ses dispos habituelles, en texte
-  // libre. jeton_hash : voir genererJeton() plus bas.
+  // profil : ses jeux préférés (une liste en JSON, voir lireJeu plus
+  // bas) et ses dispos habituelles en texte libre. jeton_hash : voir
+  // genererJeton() plus bas.
   `CREATE TABLE IF NOT EXISTS membres (
     id INTEGER PRIMARY KEY,
     groupe_id INTEGER NOT NULL REFERENCES groupes(id) ON DELETE CASCADE,
@@ -89,16 +91,18 @@ export const SCHEMA = [
     PRIMARY KEY (membre_id, semaine)
   )`,
 
-  // Une soirée proposée. « jour » au format 2026-11-07, « horaire »
-  // au format 21:00. Si la personne qui l'a proposée s'en va, la
-  // soirée reste (ON DELETE SET NULL) : les autres y sont peut-être
-  // inscrits.
+  // Une soirée proposée. « jeu » est le nom du jeu, « jeu_cover »
+  // le code de sa couverture chez IGDB (vide pour un jeu ajouté tel
+  // quel). « jour » au format 2026-11-07, « horaire » au format 21:00.
+  // Si la personne qui l'a proposée s'en va, la soirée reste
+  // (ON DELETE SET NULL) : les autres y sont peut-être inscrits.
   `CREATE TABLE IF NOT EXISTS soirees (
     id INTEGER PRIMARY KEY,
     groupe_id INTEGER NOT NULL REFERENCES groupes(id) ON DELETE CASCADE,
     createur_id INTEGER REFERENCES membres(id) ON DELETE SET NULL,
     titre TEXT NOT NULL,
     jeu TEXT NOT NULL,
+    jeu_cover TEXT NOT NULL DEFAULT '',
     jour TEXT NOT NULL,
     horaire TEXT NOT NULL,
     note TEXT NOT NULL DEFAULT '',
@@ -120,17 +124,39 @@ export const SCHEMA = [
 ];
 
 
+/* LES MISES À JOUR DE LA BASE
+
+   Une base déjà en ligne garde ses anciennes tables : les lignes
+   ci-dessus ne les modifient pas. Chaque changement de structure
+   s'ajoute donc ici, à la fin de la liste, sous forme d'ALTER TABLE.
+
+   _middleware.js les lance toutes à chaque démarrage. Une colonne
+   déjà ajoutée fait échouer son ALTER TABLE avec « duplicate column » :
+   c'est le signe qu'elle est déjà là, et l'erreur est ignorée. Sur une
+   base toute neuve, la colonne existe dès le CREATE TABLE, même chose.
+
+   Ne jamais retirer ni modifier une ligne déjà en ligne : seulement en
+   ajouter. */
+export const MIGRATIONS = [
+  // 31 octobre 2026 : la couverture du jeu d'une soirée.
+  "ALTER TABLE soirees ADD COLUMN jeu_cover TEXT NOT NULL DEFAULT ''",
+];
+
+
 /* LES RÉPONSES DU SERVEUR
 
    Toujours du JSON, que le navigateur lit avec reponse.json().
-   no-store : une réponse qui change à chaque modification ne doit être
-   gardée en mémoire par personne, ni le navigateur ni un relais. */
-export function json(statut, donnees) {
+   no-store par défaut : une réponse qui change à chaque modification
+   ne doit être gardée en mémoire par personne, ni le navigateur ni un
+   relais. « entetes » permet de remplacer ce réglage au besoin (la
+   recherche de jeux, elle, peut être gardée un jour). */
+export function json(statut, donnees, entetes = {}) {
   return new Response(JSON.stringify(donnees), {
     status: statut,
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
       'Cache-Control': 'no-store',
+      ...entetes,
     },
   });
 }
@@ -183,20 +209,57 @@ export function estLundi(texte) {
   return estDate(texte) && new Date(texte + 'T00:00:00Z').getUTCDay() === 1;
 }
 
+/* UN JEU
+
+   Un jeu voyage toujours sous la même forme :
+     { id: 1234, nom: "Among Us", cover: "co1r7f" }
+   id et cover viennent d'IGDB (la base de jeux de Twitch, voir
+   api/groupes/[code]/jeux.js). Un jeu ajouté « tel quel », absent
+   d'IGDB, a id: null et cover: "".
+
+   lireJeu vérifie un jeu reçu du navigateur et renvoie sa version
+   propre, ou null s'il est mal formé. Le code de couverture ne peut
+   contenir que des lettres minuscules et des chiffres : il finit dans
+   une adresse, rien d'autre ne doit pouvoir s'y glisser. */
+export function lireJeu(jeu) {
+  if (!jeu || typeof jeu !== 'object') return null;
+  const nom = ligne(jeu.nom);
+  if (nom.length < 1 || nom.length > 60) return null;
+  return {
+    id: Number.isInteger(jeu.id) && jeu.id > 0 ? jeu.id : null,
+    nom,
+    cover: typeof jeu.cover === 'string' && /^[a-z0-9]{1,40}$/.test(jeu.cover) ? jeu.cover : '',
+  };
+}
+
+/* Les jeux d'un membre tels que la base les rend. Jusqu'au 31 octobre
+   2026, c'était un simple texte « Among Us, Minecraft » : on le
+   convertit à la volée en jeux sans image, pour que les profils déjà
+   remplis restent valables sans rien retaper. */
+export function jeuxStockes(texte) {
+  if (texte.startsWith('[')) return JSON.parse(texte);
+  return texte.split(',')
+    .map((nom) => nom.trim())
+    .filter(Boolean)
+    .map((nom) => ({ id: null, nom, cover: '' }));
+}
+
 /* Le profil d'un membre, vérifié au même endroit pour l'inscription
    (membres.js) et pour la modification (moi.js). Renvoie soit
    { profil }, soit { probleme } avec la phrase à afficher. */
 export function lireProfil(corps) {
+  const jeux = Array.isArray(corps.jeux) ? corps.jeux.map(lireJeu) : [];
   const profil = {
     pseudo: ligne(corps.pseudo),
     couleur: COULEURS.includes(corps.couleur) ? corps.couleur : COULEURS[0],
-    jeux: ligne(corps.jeux),
+    jeux,
     bio: bloc(corps.bio),
   };
   if (profil.pseudo.length < 1 || profil.pseudo.length > 24) {
     return { probleme: 'Choisis un pseudo de 1 à 24 caractères.' };
   }
-  if (profil.jeux.length > 200) return { probleme: 'La liste de jeux est trop longue (200 caractères au plus).' };
+  if (jeux.length > MAX_JEUX) return { probleme: `${MAX_JEUX} jeux au plus dans un profil.` };
+  if (jeux.includes(null)) return { probleme: 'Un des jeux est mal formé.' };
   if (profil.bio.length > 500) return { probleme: 'Tes dispos habituelles sont trop longues (500 caractères au plus).' };
   return { profil };
 }

@@ -26,7 +26,7 @@ export async function onRequestPut(context) {
 
   await db
     .prepare('UPDATE membres SET pseudo = ?, couleur = ?, jeux = ?, bio = ? WHERE id = ?')
-    .bind(profil.pseudo, profil.couleur, profil.jeux, profil.bio, moi.id)
+    .bind(profil.pseudo, profil.couleur, JSON.stringify(profil.jeux), profil.bio, moi.id)
     .run();
 
   return json(200, { membre: { id: moi.id, ...profil } });

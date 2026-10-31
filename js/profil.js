@@ -8,10 +8,15 @@
 
 import { etat, appeler, charger } from './etat.js';
 import { COULEURS, retenirGroupe, annoncer, copier } from './commun.js';
+import { selecteurJeux, memeJeu } from './jeux.js';
 
 const dialogue = document.getElementById('dialogue-profil');
 const formulaire = document.getElementById('form-profil');
 const champs = formulaire.elements;
+
+// Tes jeux : le sélecteur de js/jeux.js, en mode « plusieurs jeux ».
+// 12 au plus, comme le vérifie le serveur (MAX_JEUX dans _outils.js).
+const selecteur = selecteurJeux(document.getElementById('profil-jeux'), { multiple: true, max: 12 });
 
 /* LES PASTILLES DE COULEUR
 
@@ -57,10 +62,11 @@ export function ouvrirProfil() {
     const libres = COULEURS.filter((couleur) => !prises.includes(couleur));
     const choix = libres.length ? libres : COULEURS;
     champs.couleur.value = choix[Math.floor(Math.random() * choix.length)];
+    selecteur.remplir([]);
   } else {
     champs.pseudo.value = etat.moi.pseudo;
     champs.couleur.value = etat.moi.couleur;
-    champs.jeux.value = etat.moi.jeux;
+    selecteur.remplir(etat.moi.jeux);
     champs.bio.value = etat.moi.bio;
   }
   dialogue.showModal();
@@ -70,10 +76,17 @@ formulaire.addEventListener('submit', async (evenement) => {
   evenement.preventDefault();
   const bouton = document.getElementById('profil-valider');
   bouton.disabled = true;
+  /* Les jeux choisis, plus ce qui serait resté tapé dans le champ sans
+     être ajouté : on ne perd pas une saisie pour un clic oublié. */
+  const jeux = [...selecteur.lire()];
+  const texte = selecteur.texte();
+  const enPlus = { id: null, nom: texte, cover: '' };
+  if (texte && jeux.length < 12 && !jeux.some((jeu) => memeJeu(jeu, enPlus))) jeux.push(enPlus);
+
   const profil = {
     pseudo: champs.pseudo.value,
     couleur: champs.couleur.value,
-    jeux: champs.jeux.value,
+    jeux,
     bio: champs.bio.value,
   };
   try {

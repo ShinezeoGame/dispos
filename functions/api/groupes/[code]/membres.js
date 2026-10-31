@@ -1,6 +1,7 @@
 /* REJOINDRE UN GROUPE — POST /api/groupes/ABCD2345/membres
 
-   Reçoit : { pseudo, couleur, jeux, bio } (jeux et bio facultatifs)
+   Reçoit : { pseudo, couleur, jeux, bio } (jeux et bio facultatifs ;
+   jeux = liste de jeux, voir lireJeu dans _outils.js)
    Renvoie : { membre: {…}, jeton: "64 caractères" }
 
    Le jeton n'est envoyé qu'UNE fois, ici. Le navigateur le range dans
@@ -32,13 +33,15 @@ export async function onRequestPost(context) {
   }
 
   const jeton = genererJeton();
-  // RETURNING renvoie la ligne tout juste créée, numéro (id) compris.
-  const membre = await db
+  // RETURNING renvoie le numéro (id) que la base vient d'attribuer.
+  // Les jeux sont rangés en texte JSON : la base ne sait pas stocker
+  // une liste telle quelle.
+  const { id } = await db
     .prepare(`INSERT INTO membres (groupe_id, pseudo, couleur, jeux, bio, jeton_hash)
               VALUES (?, ?, ?, ?, ?, ?)
-              RETURNING id, pseudo, couleur, jeux, bio`)
-    .bind(groupe.id, profil.pseudo, profil.couleur, profil.jeux, profil.bio, await hacher(jeton))
+              RETURNING id`)
+    .bind(groupe.id, profil.pseudo, profil.couleur, JSON.stringify(profil.jeux), profil.bio, await hacher(jeton))
     .first();
 
-  return json(201, { membre, jeton });
+  return json(201, { membre: { id, ...profil }, jeton });
 }

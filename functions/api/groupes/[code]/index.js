@@ -11,7 +11,7 @@
    faut bien voir le groupe avant de choisir son pseudo. « moi » vaut
    alors null, et le navigateur sait qu'il doit proposer l'inscription. */
 
-import { json, erreur, estLundi, identifier } from '../../../_outils.js';
+import { json, erreur, estLundi, identifier, jeuxStockes } from '../../../_outils.js';
 
 export async function onRequestGet(context) {
   const { groupe, moi, refus } = await identifier(context, false);
@@ -34,7 +34,7 @@ export async function onRequestGet(context) {
                 WHERE m.groupe_id = ? AND d.semaine = ?`)
       .bind(groupe.id, semaine),
 
-    db.prepare(`SELECT id, createur_id, titre, jeu, jour, horaire, note FROM soirees
+    db.prepare(`SELECT id, createur_id, titre, jeu, jeu_cover, jour, horaire, note FROM soirees
                 WHERE groupe_id = ? AND jour >= MIN(?, date('now', '-1 day'))
                 ORDER BY jour, horaire LIMIT 200`)
       .bind(groupe.id, semaine),
@@ -63,7 +63,8 @@ export async function onRequestGet(context) {
     groupe: { code: groupe.code, nom: groupe.nom },
     moi: moi ? moi.id : null,
     semaine,
-    membres: membres.results,
+    // Les jeux sont stockés en texte : on les rend sous forme de liste.
+    membres: membres.results.map((membre) => ({ ...membre, jeux: jeuxStockes(membre.jeux) })),
     dispos: disposParMembre,
     soirees: soirees.results.map((soiree) => ({
       ...soiree,

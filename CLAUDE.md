@@ -14,6 +14,10 @@ D'autres idées viendront une fois le site en ligne.
   texte libre (la seconde façon de donner ses dispos, demandée).
 - **Les soirées** : « Soirée Among Us », « Aprem Fortnite »… avec les
   réponses Chaud / Peut-être / Pas dispo.
+- **Les jeux se cherchent dans IGDB** (la base de Twitch), avec leurs
+  couvertures, au lieu d'être tapés à la main (demandé le 31 oct. 2026).
+  Dans le formulaire de soirée, les jeux des profils de la team sont
+  proposés en un clic, les plus partagés en premier.
 
 ## Décisions déjà prises
 
@@ -38,6 +42,14 @@ D'autres idées viendront une fois le site en ligne.
   style écrit dans le HTML, aucun attribut `style="…"`. Les couleurs
   dynamiques passent par `element.style.setProperty('--variable', …)`,
   que la règle autorise.
+- **IGDB, jamais appelé depuis le navigateur.** La recherche passe par
+  `functions/api/groupes/[code]/jeux.js` (identifiants Twitch dans les
+  variables Cloudflare), réservée à ceux qui ont un lien de groupe. Les
+  couvertures passent par `functions/api/couverture/[id].js` : aucun
+  visiteur n'est signalé à Twitch (RGPD), et la CSP reste en `'self'`.
+  Ne pas « simplifier » en chargeant les images depuis images.igdb.com.
+- Un jeu absent d'IGDB s'ajoute « tel quel » (sans image), et le site
+  reste utilisable si la recherche est en panne ou pas configurée.
 - Pas de README avant que le site soit terminé (demandé le 31 oct. 2026).
 
 ## Les fichiers
@@ -54,9 +66,12 @@ D'autres idées viendront une fois le site en ligne.
     js/soirees.js              la liste des soirées et le formulaire
     js/team.js                 les cartes des membres
     js/profil.js               rejoindre / modifier son profil
+    js/jeux.js                 le sélecteur de jeux et les couvertures
     functions/_outils.js       code SERVEUR partagé : schéma, vérifs, jetons
-    functions/api/_middleware.js   crée les tables, rattrape les erreurs
+    functions/api/_middleware.js   crée les tables, les met à jour, rattrape les erreurs
     functions/api/groupes/…    une route par fichier (voir leurs en-têtes)
+    functions/api/groupes/[code]/jeux.js   la recherche IGDB
+    functions/api/couverture/[id].js       les couvertures, relayées
     _headers, robots.txt, assets/favicon.svg, fonts/
 
 ## Mise en ligne (à faire une fois)
@@ -68,6 +83,14 @@ D'autres idées viendront une fois le site en ligne.
 3. Dans le projet Pages : Settings → Bindings → D1 database, nom de
    variable **`DB`**, base `dispos`. Redéployer.
 4. Les tables se créent seules à la première visite (_middleware.js).
+5. **La recherche de jeux** : sur dev.twitch.tv/console (compte Twitch
+   avec double authentification obligatoire), *Register Your
+   Application* : un nom, OAuth Redirect URL `http://localhost` (exigée
+   mais inutilisée), catégorie *Website Integration*, type
+   *Confidential*. Puis *Manage* → copier le Client ID, *New Secret* →
+   copier le secret. Dans le projet Pages : Settings → Variables and
+   Secrets → `TWITCH_CLIENT_ID` et `TWITCH_CLIENT_SECRET` (type
+   *Secret*), puis redéployer. Sans elles, on ajoute les jeux tels quels.
 
 ## Ce qui casse si on n'y fait pas attention
 
@@ -79,9 +102,19 @@ D'autres idées viendront une fois le site en ligne.
   `caseDe()` (etat.js) font la conversion dans les deux sens.
 - **Dates toujours à l'heure locale** : `versTexte()`, jamais
   `toISOString()` (qui donne la date de Londres, fausse après minuit).
-- **Le schéma est en `CREATE TABLE IF NOT EXISTS`** : ajouter une colonne
-  à une table existante demande un `ALTER TABLE` tapé une fois dans la
-  console D1. Modifier `SCHEMA` seul ne change rien aux tables déjà là.
+- **Le schéma est en `CREATE TABLE IF NOT EXISTS`** : modifier `SCHEMA`
+  seul ne change rien aux tables déjà en ligne. Pour une nouvelle
+  colonne : l'ajouter dans `SCHEMA` (bases neuves) ET un `ALTER TABLE` à
+  la fin de `MIGRATIONS` (bases existantes), tous deux dans `_outils.js`.
+  _middleware.js les lance au démarrage et ignore « duplicate column ».
+  Ne jamais retirer ni modifier une migration déjà en ligne.
+- **Les jeux d'un profil sont une liste JSON** dans la colonne texte
+  `membres.jeux` : `[{ id, nom, cover }]`. Les profils d'avant le
+  31 oct. 2026 y ont un texte « Among Us, Minecraft » : `jeuxStockes()`
+  le convertit à la lecture. Garder cette conversion. Une soirée stocke
+  `jeu` (le nom) et `jeu_cover`.
+- **12 jeux par profil au plus** : écrit dans `functions/_outils.js`
+  (`MAX_JEUX`) ET dans `js/profil.js`. Changer les deux ensemble.
 - **Limites de D1 (offre gratuite)** : 50 requêtes SQL par appel, 100
   paramètres par requête. C'est pour ça que les dispos d'une semaine
   tiennent en UNE ligne JSON (`[[jour, heure], …]`) et non une ligne par case.
@@ -95,7 +128,9 @@ D'autres idées viendront une fois le site en ligne.
 
 Pas de wrangler installé (demander avant). Les tests de la première
 session utilisaient un petit serveur Node hors dépôt qui imitait Pages,
-Functions et D1 (`node:sqlite`), et Playwright pour les captures.
+Functions et D1 (`node:sqlite`), et Playwright pour les captures. IGDB y
+était imité (fausse liste de jeux, fausses jaquettes) : la vraie
+recherche ne se teste qu'en ligne, une fois les identifiants Twitch posés.
 
 ## Comment travailler avec moi
 

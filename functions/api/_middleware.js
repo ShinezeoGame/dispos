@@ -10,7 +10,7 @@
    3. rattraper n'importe quelle erreur imprévue pour renvoyer un
       message lisible plutôt qu'une page d'erreur brute. */
 
-import { SCHEMA, erreur } from '../_outils.js';
+import { SCHEMA, MIGRATIONS, erreur } from '../_outils.js';
 
 /* Cette variable vit tant que le serveur de Cloudflare reste allumé
    (quelques minutes à quelques heures). Les tables ne sont donc
@@ -32,6 +32,17 @@ export async function onRequest(context) {
     if (!basePrete) {
       // batch() envoie toutes les lignes d'un coup, en un seul aller-retour.
       await db.batch(SCHEMA.map((instruction) => db.prepare(instruction)));
+      /* Les mises à jour, une par une : dans un batch, la première qui
+         échoue annulerait toutes les autres. « duplicate column » veut
+         dire « déjà faite » (voir MIGRATIONS dans _outils.js) ; toute
+         autre erreur est une vraie panne et remonte. */
+      for (const instruction of MIGRATIONS) {
+        try {
+          await db.prepare(instruction).run();
+        } catch (probleme) {
+          if (!/duplicate column/i.test(String(probleme.message))) throw probleme;
+        }
+      }
       basePrete = true;
     }
     // next() passe la main à la route demandée (groupes/index.js, etc.).

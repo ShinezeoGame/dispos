@@ -121,8 +121,13 @@
         <span class="soiree-heure"></span>
       </div>
       <div class="soiree-corps">
-        <h3 class="soiree-titre"></h3>
-        <p class="soiree-infos"><span class="tag soiree-jeu"></span> <span class="soiree-auteur"></span></p>
+        <!-- La couverture du jeu (posée par js/soirees.js) à côté du titre. -->
+        <div class="soiree-tete">
+          <div>
+            <h3 class="soiree-titre"></h3>
+            <p class="soiree-infos"></p>
+          </div>
+        </div>
         <p class="soiree-note"></p>
         <div class="soiree-equipe">
           <div class="avatars soiree-avatars"></div>
@@ -170,11 +175,26 @@
         <button type="button" class="bouton-icone" data-fermer aria-label="Fermer">×</button>
       </div>
 
-      <label for="soiree-jeu">Jeu</label>
-      <!-- autofocus : à l'ouverture de la fenêtre, le curseur se place
-           ici plutôt que sur la croix de fermeture. -->
-      <input id="soiree-jeu" name="jeu" list="liste-jeux" required maxlength="40" placeholder="Among Us" autocomplete="off" autofocus>
-      <datalist id="liste-jeux"></datalist>
+      <label for="soiree-jeu-recherche">Jeu</label>
+
+      <!-- Les jeux des profils de la team, en un clic (js/soirees.js).
+           Caché tant que personne n'a mis de jeu dans son profil. -->
+      <div id="soiree-jeux-team" class="jeux-team" hidden></div>
+
+      <!-- LE SÉLECTEUR DE JEUX (js/jeux.js) : le jeu choisi, le champ
+           de recherche, la liste des propositions, et une note qui
+           crédite IGDB (ou explique un souci de recherche).
+           role="combobox" : un lecteur d'écran annonce un champ qui
+           ouvre une liste de choix. aria-controls la désigne. -->
+      <div id="soiree-jeu" class="selecteur-jeux">
+        <div class="jeux-choisis" hidden></div>
+        <!-- autofocus : à l'ouverture de la fenêtre, le curseur se place
+             ici plutôt que sur la croix de fermeture. -->
+        <input id="soiree-jeu-recherche" type="search" placeholder="Cherche un jeu : Among Us, Fortnite…" autocomplete="off" autofocus
+               role="combobox" aria-controls="soiree-jeu-resultats" aria-expanded="false" aria-autocomplete="list">
+        <ul id="soiree-jeu-resultats" class="resultats-jeux" role="listbox" aria-label="Jeux trouvés" hidden></ul>
+        <p class="indice jeux-note">Jeux et couvertures : IGDB.com</p>
+      </div>
 
       <div class="champs-cote">
         <div>
@@ -218,8 +238,14 @@
         <div id="profil-couleurs" class="couleurs-liste"></div>
       </fieldset>
 
-      <label for="profil-jeux">Tes jeux <span class="facultatif">séparés par des virgules</span></label>
-      <input id="profil-jeux" name="jeux" maxlength="200" placeholder="Among Us, Minecraft, Valorant" autocomplete="off">
+      <label for="profil-jeux-recherche">Tes jeux <span class="facultatif">facultatif</span></label>
+      <div id="profil-jeux" class="selecteur-jeux">
+        <div class="jeux-choisis" hidden></div>
+        <input id="profil-jeux-recherche" type="search" placeholder="Cherche un jeu et ajoute-le" autocomplete="off"
+               role="combobox" aria-controls="profil-jeux-resultats" aria-expanded="false" aria-autocomplete="list">
+        <ul id="profil-jeux-resultats" class="resultats-jeux" role="listbox" aria-label="Jeux trouvés" hidden></ul>
+        <p class="indice jeux-note">Jeux et couvertures : IGDB.com</p>
+      </div>
 
       <label for="profil-bio">Tes dispos habituelles <span class="facultatif">facultatif</span></label>
       <textarea id="profil-bio" name="bio" maxlength="500" rows="3" placeholder="En semaine après 20h, le week-end l'aprèm. Jamais le dimanche matin."></textarea>
