@@ -727,7 +727,31 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
   .titre-groupe { padding-left: 0.5rem; }
 }
 
+.onglets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 1rem;
+}
 .onglets [role="tablist"] { display: flex; gap: 0.25rem; }
+
+/* Le jeu de mots sur le nom du groupe (js/jeu-de-mots.js), en petit à
+   droite des onglets. Entre guillemets français, le premier dans la
+   couleur du thème. L'italique est celle de la police du système
+   (Chakra Petch n'a pas la sienne dans fonts/). */
+.jeu-de-mots {
+  margin-left: auto;
+  color: var(--texte-doux);
+  font-size: 0.88rem;
+  font-style: italic;
+}
+.jeu-de-mots::before { content: '« '; color: var(--accent); font-style: normal; }
+.jeu-de-mots::after { content: ' »'; color: var(--texte-doux); font-style: normal; }
+
+/* Sur téléphone, pas la place à côté des onglets : il passe dessous. */
+@media (max-width: 40rem) {
+  .jeu-de-mots { width: 100%; margin: 0; padding-bottom: 0.55rem; }
+}
 
 .onglets [role="tab"] {
   position: relative;
@@ -959,20 +983,55 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
   font: 700 0.78rem var(--police-titre);
   cursor: pointer;
   transition: background-color 0.12s;
+
+  /* LA LUEUR : plus la soirée a de chances de se monter, plus la case
+     rayonne. --eclat (de 0 à 1, posé par agenda.js : la part de la team
+     dispo, 0 si on est seul) règle à la fois la taille de la lueur et
+     son intensité. À 0, la lueur est nulle et transparente.
+     Rangée dans --lueur pour que le survol et la case choisie puissent
+     ajouter leur propre cadre sans l'effacer. */
+  --eclat: 0;
+  --lueur: 0 0 calc(var(--eclat) * 18px) calc(var(--eclat) * 3px - 2px)
+           color-mix(in srgb, var(--accent) calc(var(--eclat) * 85%), transparent);
+  box-shadow: var(--lueur);
 }
 
 /* Le survol, seulement avec une souris (hover: hover). Sur un écran
    tactile, le navigateur « survole » la dernière case touchée et l'y
    laisse : un cadre fantôme resterait collé sur une case au hasard. */
 @media (hover: hover) {
-  .case:hover { box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.3); }
+  .case:hover { box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.3), var(--lueur); }
   .grille.edition .case:not(:disabled):hover { box-shadow: inset 0 0 0 2px var(--accent); }
 }
 .case.forte { color: var(--sur-accent); }
 .case.passee { opacity: 0.35; }
 
-/* Tout le monde est dispo : la case brille. */
-.case.complete { box-shadow: 0 0 14px -2px var(--accent); }
+/* LE REFLET : à partir de « soirée très probable » (75 % de la team,
+   voir TRES_PROBABLE dans agenda.js), un éclat de lumière balaie la
+   case toutes les 3 secondes environ, comme un objet rare dans un jeu.
+
+   C'est une bande blanche en dégradé, 2,5 fois plus large que la case,
+   qu'on fait glisser de la gauche (150 %) vers la droite (-50 %) en
+   déplaçant le fond. Le balayage occupe les 45 premiers pour cent de
+   l'animation, puis la case reste calme le temps restant.
+   --decalage (posé par agenda.js) fait partir chaque jour un peu plus
+   tard : une vague de gauche à droite.
+
+   z-index: 1 : la lueur d'une case qui brille passe au-dessus des
+   cases voisines au lieu d'être coupée par elles. */
+.case.brille {
+  z-index: 1;
+  background-image: linear-gradient(115deg, transparent 30%, rgb(255 255 255 / 0.5) 50%, transparent 70%);
+  background-size: 250% 100%;
+  background-repeat: no-repeat;
+  background-position: 150% 0;
+  animation: reflet 3.2s ease-in-out var(--decalage, 0s) infinite;
+}
+
+@keyframes reflet {
+  0% { background-position: 150% 0; }
+  45%, 100% { background-position: -50% 0; }
+}
 
 /* Le petit point en haut à gauche : tu fais partie des dispos.
    currentColor reprend la couleur du chiffre, lisible sur toutes les
@@ -1001,7 +1060,7 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
   box-shadow: inset 0 0 0 1px var(--fond), 0 0 10px -2px var(--soiree);
 }
 
-.case.choisie { box-shadow: inset 0 0 0 2px var(--texte); }
+.case.choisie { box-shadow: inset 0 0 0 2px var(--texte), var(--lueur); }
 
 /* Minuit ouvre la nuit : un petit espace la sépare de la soirée. */
 .case.minuit, .grille-heure.minuit { margin-top: 0.5rem; }
@@ -1064,6 +1123,14 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
   border-radius: 50%;
   background: var(--texte);
 }
+/* Une petite case pleine qui rayonne, comme celles de l'agenda. */
+.legende-brille {
+  width: 1rem;
+  height: 0.8rem;
+  border-radius: 3px;
+  background: var(--accent);
+  box-shadow: 0 0 10px 1px color-mix(in srgb, var(--accent) 80%, transparent);
+}
 
 .statut { color: var(--accent); font-size: 0.88rem; font-weight: 600; }
 
@@ -1103,6 +1170,11 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 
 .detail-soiree { color: var(--soiree); font-weight: 600; }
 .detail-soiree::before { content: '◆ '; }
+
+/* « 80 % de la team · soirée très probable » : en couleur du thème
+   quand c'est très probable. */
+.detail-chance { color: var(--texte-doux); font-weight: 600; margin-top: -0.3rem; }
+.detail-chance.tres-probable { color: var(--accent); }
 
 
 /* 11. LES SOIRÉES
@@ -1594,10 +1666,12 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 
    Si le visiteur a demandé à son système de limiter les animations
    (réglage d'accessibilité), le logo apparaît d'un coup, déjà dessiné,
-   et le message du bas apparaît sans glisser. Rien ne disparaît pour
-   autant. */
+   le reflet des cases ne balaie plus (leur lueur reste : elle ne bouge
+   pas) et le message du bas apparaît sans glisser. Rien ne disparaît
+   pour autant. */
 @media (prefers-reduced-motion: reduce) {
   .logo-icone circle, .logo-trait { animation: none; }
+  .case.brille { animation: none; background-image: none; }
   .annonce, .case, .bouton { transition: none; }
   .apercu { transform: none; }
 }

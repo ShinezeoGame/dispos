@@ -25,6 +25,13 @@ nom de domaine à part reste à choisir.
   couvertures, au lieu d'être tapés à la main (demandé le 31 oct. 2026).
   Dans le formulaire de soirée, les jeux des profils de la team sont
   proposés en un clic, les plus partagés en premier.
+- **La brillance de l'agenda** (31 oct. 2026) : plus une case réunit de
+  monde, plus elle rayonne (« probabilité de monter une soirée »). Seul,
+  pas de lueur. À partir de 75 % de la team, un reflet balaie la case
+  (« soirée très probable »). Toucher une case affiche la chance en clair.
+- **Un jeu de mots sur le nom du groupe**, en petit à droite des
+  onglets, quand le nom s'y prête (« Les potes du jeudi » → « Jeudi, jeu
+  dit : on joue. »). Rien sinon. Règles dans `js/jeu-de-mots.js`.
 
 ## Décisions déjà prises
 
@@ -110,6 +117,7 @@ nom de domaine à part reste à choisir.
     js/jeux.js                 le sélecteur de jeux et les couvertures
     js/theme.js                applique la couleur choisie (dans <head>)
     js/apparence.js            la palette des couleurs du site
+    js/jeu-de-mots.js          le jeu de mots sur le nom du groupe
     functions/_outils.js       code SERVEUR partagé : schéma, vérifs, jetons
     functions/api/_middleware.js   crée les tables, les met à jour, rattrape les erreurs
     functions/api/groupes/…    une route par fichier (voir leurs en-têtes)
@@ -171,6 +179,17 @@ nom de domaine à part reste à choisir.
 - **Le nom du groupe a la même taille que le nom du site** (1.35rem) :
   c'est ce qui aligne leurs lignes de base dans l'en-tête. Avec une
   taille plus petite, il paraît flotter 2 px trop haut.
+- **Les jeux de mots** : l'ordre de `REGLES` est la priorité (la première
+  règle qui reconnaît un mot du nom gagne), du plus précis au plus
+  général. Les motifs portent sur le nom en minuscules et sans accents.
+  La phrase choisie dépend du code du groupe : elle ne change pas d'une
+  visite à l'autre.
+- **La brillance** passe par deux variables posées par agenda.js sur
+  chaque case : `--eclat` (0 à 1, part de la team dispo, 0 si seul) et
+  `--decalage` (le départ du reflet, en vague par jour). Le seuil du
+  reflet est `TRES_PROBABLE` (0,75) dans agenda.js. La lueur est rangée
+  dans `--lueur` : tout autre `box-shadow` sur `.case` doit la reprendre
+  (`…, var(--lueur)`), sinon il l'efface.
 - **12 jeux par profil au plus** : écrit dans `functions/_outils.js`
   (`MAX_JEUX`) ET dans `js/profil.js`. Changer les deux ensemble.
 - **Limites de D1 (offre gratuite)** : 50 requêtes SQL par appel, 100

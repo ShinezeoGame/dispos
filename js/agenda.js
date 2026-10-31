@@ -90,6 +90,24 @@ function soireesParCase() {
 }
 
 
+/* LA CHANCE DE MONTER UNE SOIRÉE
+
+   La part de la team dispo sur une case : 4 sur 5 = 0,8. C'est elle
+   qui fait briller l'agenda. Seul, la chance est nulle : une soirée se
+   joue au moins à deux (et un groupe d'une personne n'a personne à
+   inviter). Les seuils des mots sont ceux qu'on donnerait à l'oral. */
+const TRES_PROBABLE = 0.75;
+
+function chanceDeSoiree(nombre, total) {
+  if (nombre < 2 || total < 2) return { part: 0, libelle: '' };
+  const part = nombre / total;
+  let libelle = 'soirée peu probable';
+  if (part >= TRES_PROBABLE) libelle = 'soirée très probable';
+  else if (part >= 0.5) libelle = 'soirée possible';
+  return { part, libelle };
+}
+
+
 /* LES MEILLEURS CRÉNEAUX
 
    On parcourt chaque jour heure par heure, et on regroupe les heures
@@ -231,12 +249,22 @@ function dessinerGrille() {
           bouton.textContent = ids.length;
           // Sur une case très vive, le chiffre passe en sombre.
           bouton.classList.toggle('forte', niveau > 0.6);
-          bouton.classList.toggle('complete', ids.length === total && total > 1);
         }
+        /* LA BRILLANCE : --eclat (de 0 à 1) règle la lueur autour de la
+           case dans le CSS, d'autant plus forte que la soirée a de
+           chances de se monter. « brille » ajoute un reflet qui la
+           balaie, à partir de « très probable ». --decalage fait partir
+           le reflet un peu plus tard à chaque jour : une vague de
+           gauche à droite plutôt que des éclairs simultanés. */
+        const chance = chanceDeSoiree(ids.length, total);
+        bouton.style.setProperty('--eclat', chance.part);
+        bouton.style.setProperty('--decalage', `${jour * 0.18}s`);
+        bouton.classList.toggle('brille', chance.part >= TRES_PROBABLE);
         bouton.classList.toggle('moi', miennes.has(cle));
         bouton.classList.toggle('avec-soiree', lesSoirees.length > 0);
         bouton.classList.toggle('choisie', cle === caseChoisie);
         bouton.setAttribute('aria-label', `${nomDeCase(jour, heure)} : ${ids.length ? `${ids.length} sur ${total}` : 'personne'}`
+          + (chance.part ? `, ${chance.libelle}` : '')
           + (lesSoirees.length ? `, soirée ${lesSoirees.map((s) => s.titre).join(', ')}` : ''));
       }
       brouillon.append(bouton);
@@ -304,6 +332,16 @@ function dessinerDetail() {
 
   // « Vendredi 6 novembre, 21h → 22h », « Nuit de vendredi… ».
   detail.replaceChildren(creer('h3', 'detail-titre', majuscule(`${nomDeCase(jour, heure)} → ${libelleHeure(heure + 1)}`)));
+
+  // La chance de monter une soirée, en clair : « 80 % de la team · soirée très probable ».
+  const chance = chanceDeSoiree(ids.length, etat.membres.length);
+  if (chance.part) {
+    const ligne = creer('p', 'detail-chance', `${Math.round(chance.part * 100)} % de la team · ${chance.libelle}`);
+    ligne.classList.toggle('tres-probable', chance.part >= TRES_PROBABLE);
+    detail.append(ligne);
+  } else if (ids.length === 1) {
+    detail.append(creer('p', 'detail-chance', 'Une seule personne : il faut être au moins deux pour une soirée.'));
+  }
 
   if (ids.length > 0) {
     const liste = creer('ul', 'detail-membres');

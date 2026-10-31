@@ -12,6 +12,7 @@ import './agenda.js';
 import './soirees.js';
 import './team.js';
 import './apparence.js'; // le choix de la couleur du site
+import { jeuDeMots } from './jeu-de-mots.js';
 
 
 /* 1. LE CODE DU GROUPE
@@ -78,6 +79,12 @@ boutonProfil.addEventListener('click', ouvrirProfil);
 quandCaChange(() => {
   document.getElementById('titre-groupe').textContent = etat.groupe.nom;
   document.title = `${etat.groupe.nom} · AllReady`;
+
+  // Le petit jeu de mots à droite des onglets, s'il y en a un.
+  const blague = jeuDeMots(etat.groupe.nom, etat.code);
+  const zoneBlague = document.getElementById('jeu-de-mots');
+  zoneBlague.textContent = blague || '';
+  zoneBlague.hidden = !blague;
   document.getElementById('bouton-inviter').hidden = false;
 
   // Inscrit : ton avatar et ton pseudo. Simple visiteur : « Rejoindre ».

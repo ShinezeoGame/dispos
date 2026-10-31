@@ -50,6 +50,9 @@
         <button role="tab" type="button" id="onglet-soirees" aria-controls="vue-soirees" aria-selected="false" tabindex="-1">Soirées <span id="pastille-soirees" class="pastille" hidden></span></button>
         <button role="tab" type="button" id="onglet-team" aria-controls="vue-team" aria-selected="false" tabindex="-1">La team</button>
       </div>
+      <!-- Le jeu de mots sur le nom du groupe (js/jeu-de-mots.js), en
+           petit. Reste caché quand le nom ne s'y prête pas. -->
+      <p id="jeu-de-mots" class="jeu-de-mots" hidden></p>
     </nav>
   </header>
 
@@ -94,6 +97,7 @@
           <span class="legende-degrade"><span>Personne</span><i aria-hidden="true"></i><span>Tout le monde</span></span>
           <span><i class="legende-soiree" aria-hidden="true"></i>Soirée prévue</span>
           <span><i class="legende-moi" aria-hidden="true"></i>Tu es dispo</span>
+          <span><i class="legende-brille" aria-hidden="true"></i>Brille : soirée probable</span>
         </div>
         <p id="statut-sauvegarde" class="statut" aria-live="polite"></p>
       </div>
