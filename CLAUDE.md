@@ -33,7 +33,8 @@ nom de domaine à part reste à choisir.
   aperçu d'agenda colonne par colonne, bulle), l'agenda en vague à
   l'ouverture et au changement de semaine, les cartes l'une après
   l'autre, les fenêtres qui zooment, les boutons qui s'enfoncent, les
-  cartes qui se soulèvent, les ronds du logo qui grossissent un peu au survol (1,2 fois, demandé).
+  cartes qui se soulèvent, les ronds du logo qui grossissent un peu au survol, de gauche à droite
+  (1,2 fois, 60 ms d'écart, demandé).
 - **Un jeu de mots sur le nom du groupe**, en petit à droite des
   onglets, quand le nom s'y prête (« Les potes du jeudi » → « Jeudi, jeu
   dit : on joue. »). Rien sinon. Règles dans `js/jeu-de-mots.js`.

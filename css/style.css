@@ -1802,8 +1802,10 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 
 /* AU SURVOL (souris seulement) : les cartes se soulèvent de 3 px, et les
    quatre ronds du logo grossissent un peu (1,2 fois), chacun depuis son
-   centre (transform-box et transform-origin, posés dans « Le logo »).
-   Pas plus : à cette taille, le trait qui les relie reste visible.
+   centre (transform-box et transform-origin, posés dans « Le logo »),
+   l'un après l'autre de gauche à droite : 60 ms d'écart, comme des
+   joueurs qui se mettent prêts. Ils se dégonflent dans le même ordre.
+   Pas plus gros : à cette taille, le trait qui les relie reste visible.
    Une transition plutôt qu'une animation : remplacer l'animation des
    ronds rejouerait leur apparition au départ de la souris. */
 @media (hover: hover) {
@@ -1814,6 +1816,9 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
   }
 
   .logo-icone circle { transition: transform 0.2s ease-out; }
+  .logo-icone circle:nth-of-type(2) { transition-delay: 0.06s; }
+  .logo-icone circle:nth-of-type(3) { transition-delay: 0.12s; }
+  .logo-icone circle:nth-of-type(4) { transition-delay: 0.18s; }
   .logo:hover .logo-icone circle { transform: scale(1.2); }
 }
 
