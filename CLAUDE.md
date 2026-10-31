@@ -28,10 +28,17 @@ D'autres idées viendront une fois le site en ligne.
   `localStorage` (clé `dispos`). La base ne stocke que l'empreinte SHA-256
   du jeton. Le « lien perso » (`…#moi=jeton`) sert à se retrouver sur un
   autre appareil ; groupe.js l'efface de la barre d'adresse.
-- **Hébergement prévu : Cloudflare Pages + Functions + D1** (base SQLite
-  de Cloudflare), comme le portfolio pour la partie Pages. Pas encore
-  branché. KV écarté : ses écritures mettent jusqu'à une minute à se
-  propager, trop lent pour un agenda partagé.
+- **Hébergement : Cloudflare Pages + Functions + D1** (base SQLite de
+  Cloudflare), en ligne sur `dispos.pages.dev` depuis le 31 octobre 2026.
+  Chaque push sur `main` déclenche un déploiement. KV écarté : ses
+  écritures mettent jusqu'à une minute à se propager, trop lent pour un
+  agenda partagé.
+- **Si un push ne se déploie pas** : bandeau « This project is
+  disconnected from your Git account » dans Cloudflare. L'application
+  GitHub *Cloudflare Workers and Pages* a perdu l'accès au dépôt :
+  github.com/settings/installations → Configure → donner accès à
+  `dispos`. Arrivé le 31 oct. 2026 ; *Retry deployment* ne fait que
+  relancer l'ancien commit.
 - Thème sombre seulement. Accent vert citron `#b5f23d` (dispo, action),
   rose `#ff5fd2` pour tout ce qui touche aux soirées.
 - Police des titres **Chakra Petch**, hébergée dans `fonts/` (OFL,
