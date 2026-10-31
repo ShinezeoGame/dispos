@@ -31,9 +31,9 @@ export async function onRequestPost(context) {
 
   const db = context.env.DB;
   const soiree = await db
-    .prepare(`INSERT INTO soirees (groupe_id, createur_id, titre, jeu, jeu_cover, jour, horaire, note)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`)
-    .bind(groupe.id, moi.id, titre, jeu.nom, jeu.cover, corps.jour, corps.horaire, note)
+    .prepare(`INSERT INTO soirees (groupe_id, createur_id, titre, jeu, jeu_cover, jeu_id, jour, horaire, note)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`)
+    .bind(groupe.id, moi.id, titre, jeu.nom, jeu.cover, jeu.id, corps.jour, corps.horaire, note)
     .first();
 
   await db

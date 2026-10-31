@@ -29,6 +29,14 @@ nom de domaine à part reste à choisir.
   monde, plus elle rayonne (« probabilité de monter une soirée »). Seul,
   pas de lueur. À partir de 75 % de la team, un reflet balaie la case
   (« soirée très probable »). Toucher une case affiche la chance en clair.
+- **La fiche d'un jeu** au survol (au toucher sur téléphone, au focus
+  au clavier) : jaquette, année, tags traduits en français (modes, mots-
+  clés comme Roguelike, thèmes comme Horreur, genres) et résumé IGDB, en
+  anglais (IGDB n'en a pas d'autre ; traduire demanderait un service en
+  plus). Demandée à IGDB au moment voulu (`jeu/[id].js`), jamais stockée.
+- **La personnalisation des profils** : avatar emoji, statut, style de
+  jeu, plateformes, Discord (copiable d'un clic), autres pseudos. Cachée
+  à l'inscription pour rejoindre vite, modifiable ensuite.
 - **Des animations** (31 oct. 2026) : l'accueil qui s'allume (titre,
   aperçu d'agenda colonne par colonne, bulle), l'agenda en vague à
   l'ouverture et au changement de semaine, les cartes l'une après
@@ -133,11 +141,14 @@ nom de domaine à part reste à choisir.
     js/theme.js                applique la couleur choisie (dans <head>)
     js/apparence.js            la palette des couleurs du site
     js/jeu-de-mots.js          le jeu de mots sur le nom du groupe
+    js/fiche-jeu.js            la fiche d'un jeu au survol
     functions/_outils.js       code SERVEUR partagé : schéma, vérifs, jetons
     functions/api/_middleware.js   crée les tables, les met à jour, rattrape les erreurs
     functions/api/groupes/…    une route par fichier (voir leurs en-têtes)
     functions/api/groupes/[code]/jeux.js   la recherche IGDB
+    functions/api/groupes/[code]/jeu/[id].js   la fiche d'un jeu (IGDB)
     functions/api/couverture/[id].js       les couvertures, relayées
+    functions/_igdb.js         code SERVEUR : jeton Twitch, requêtes IGDB
     _headers, robots.txt, assets/favicon.svg, fonts/
 
 ## Mise en ligne (à faire une fois)
@@ -211,6 +222,16 @@ nom de domaine à part reste à choisir.
   redessine ses listes à chaque modification, elle se rejouerait sans
   cesse. N'animer que `transform` et `opacity`. « Moins d'animations »
   (prefers-reduced-motion) coupe tout d'un coup, en fin de style.css.
+- **La personnalisation est en JSON dans `membres.perso`** (une seule
+  colonne) : `{ emoji, statut, style, plateformes, discord, pseudos }`.
+  Ajouter une option = un champ dans `lirePerso()` (_outils.js), pas de
+  migration. Les listes `EMOJIS`, `PLATEFORMES`, `STYLES` existent en
+  double (commun.js et _outils.js) : les changer ensemble.
+- **La connexion IGDB vit dans `functions/_igdb.js`** (jeton Twitch,
+  envoi des requêtes), partagée par la recherche et la fiche. Les tags :
+  tables de traduction en tête de `jeu/[id].js` ; un nom absent des
+  tables est ignoré plutôt qu'affiché en anglais. Les soirées retiennent
+  `jeu_id` depuis le 31 oct. 2026 (les plus anciennes n'ont pas de fiche).
 - **12 jeux par profil au plus** : écrit dans `functions/_outils.js`
   (`MAX_JEUX`) ET dans `js/profil.js`. Changer les deux ensemble.
 - **Limites de D1 (offre gratuite)** : 50 requêtes SQL par appel, 100

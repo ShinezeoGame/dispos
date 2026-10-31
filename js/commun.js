@@ -21,6 +21,18 @@ export const COULEURS = [
   '#4dd4e8', '#748ffc', '#b197fc', '#f783ac',
 ];
 
+// La personnalisation des profils : avatars possibles, plateformes,
+// styles de jeu. À garder identiques à functions/_outils.js, qui refuse
+// tout ce qui n'est pas dans ces listes.
+export const EMOJIS = ['🎮', '🕹️', '👾', '🤖', '👻', '💀', '🐉', '🦊', '🐸', '🐼', '🦄', '🔥', '⚡', '🌙', '🍕', '🎧'];
+export const PLATEFORMES = [
+  { id: 'pc', nom: 'PC' }, { id: 'playstation', nom: 'PlayStation' }, { id: 'xbox', nom: 'Xbox' },
+  { id: 'switch', nom: 'Switch' }, { id: 'mobile', nom: 'Mobile' },
+];
+export const STYLES = [
+  { id: 'chill', nom: 'Chill' }, { id: 'tryhard', nom: 'Tryhard' }, { id: 'les-deux', nom: 'Un peu des deux' },
+];
+
 
 /* PARLER AU SERVEUR
 
@@ -197,7 +209,9 @@ export function creer(balise, classe, texte) {
    commence par un émoji garde son émoji entier, alors que pseudo[0]
    n'en prendrait que la moitié. */
 export function avatar(membre) {
-  const rond = creer('span', 'avatar', Array.from(membre.pseudo)[0].toUpperCase());
+  // L'emoji choisi dans le profil, sinon l'initiale du pseudo.
+  const emoji = membre.perso && membre.perso.emoji;
+  const rond = creer('span', emoji ? 'avatar avatar-emoji' : 'avatar', emoji || Array.from(membre.pseudo)[0].toUpperCase());
   rond.title = membre.pseudo;
   // La couleur passe par une variable CSS : la feuille de style
   // décide de l'usage (fond du rond, bordure…).

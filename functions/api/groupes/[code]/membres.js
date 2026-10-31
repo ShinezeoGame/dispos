@@ -37,10 +37,11 @@ export async function onRequestPost(context) {
   // Les jeux sont rangés en texte JSON : la base ne sait pas stocker
   // une liste telle quelle.
   const { id } = await db
-    .prepare(`INSERT INTO membres (groupe_id, pseudo, couleur, jeux, bio, jeton_hash)
-              VALUES (?, ?, ?, ?, ?, ?)
+    .prepare(`INSERT INTO membres (groupe_id, pseudo, couleur, jeux, bio, perso, jeton_hash)
+              VALUES (?, ?, ?, ?, ?, ?, ?)
               RETURNING id`)
-    .bind(groupe.id, profil.pseudo, profil.couleur, JSON.stringify(profil.jeux), profil.bio, await hacher(jeton))
+    .bind(groupe.id, profil.pseudo, profil.couleur, JSON.stringify(profil.jeux), profil.bio,
+      JSON.stringify(profil.perso), await hacher(jeton))
     .first();
 
   return json(201, { membre: { id, ...profil }, jeton });

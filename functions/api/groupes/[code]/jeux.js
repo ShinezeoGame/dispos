@@ -23,54 +23,9 @@
    quota de requêtes accordé par Twitch. */
 
 import { json, erreur, identifier } from '../../../_outils.js';
-
-
-/* LE JETON TWITCH
-
-   Pour interroger IGDB, il faut un jeton d'accès, que Twitch délivre
-   en échange de l'identifiant et du secret. Il vaut environ deux mois :
-   on le garde en mémoire tant que le serveur reste allumé, au lieu
-   d'en redemander un à chaque recherche. */
-let jetonTwitch = null; // { valeur, expire } — expire en millisecondes
-
-async function obtenirJeton(env) {
-  if (jetonTwitch && jetonTwitch.expire > Date.now()) return jetonTwitch.valeur;
-
-  const parametres = new URLSearchParams({
-    client_id: env.TWITCH_CLIENT_ID,
-    client_secret: env.TWITCH_CLIENT_SECRET,
-    grant_type: 'client_credentials',
-  });
-  const reponse = await fetch('https://id.twitch.tv/oauth2/token?' + parametres, { method: 'POST' });
-  if (!reponse.ok) throw new Error(`Twitch refuse les identifiants (${reponse.status}).`);
-
-  const { access_token, expires_in } = await reponse.json();
-  // expires_in est en secondes ; une minute de marge pour ne jamais
-  // envoyer un jeton qui expire en chemin.
-  jetonTwitch = { valeur: access_token, expire: Date.now() + (expires_in - 60) * 1000 };
-  return access_token;
-}
-
-/* Une question à IGDB. Si IGDB répond 401 (« jeton refusé »), le jeton
-   a été révoqué entre-temps : on l'oublie et on réessaie une fois avec
-   un neuf. */
-async function interrogerIGDB(env, requete) {
-  const envoyer = async () => fetch('https://api.igdb.com/v4/games', {
-    method: 'POST',
-    headers: {
-      'Client-ID': env.TWITCH_CLIENT_ID,
-      Authorization: 'Bearer ' + await obtenirJeton(env),
-      Accept: 'application/json',
-    },
-    body: requete,
-  });
-  let reponse = await envoyer();
-  if (reponse.status === 401) {
-    jetonTwitch = null;
-    reponse = await envoyer();
-  }
-  return reponse;
-}
+// La connexion à IGDB (jeton Twitch, envoi des requêtes) est partagée
+// avec la fiche d'un jeu (jeu/[id].js) : elle vit dans _igdb.js.
+import { igdbConfigure, interrogerIGDB } from '../../../_igdb.js';
 
 
 export async function onRequestGet(context) {
@@ -80,7 +35,7 @@ export async function onRequestGet(context) {
   const { env } = context;
   // 503 = « service indisponible ». La page propose alors d'ajouter le
   // jeu tel quel : le site reste utilisable sans IGDB.
-  if (!env.TWITCH_CLIENT_ID || !env.TWITCH_CLIENT_SECRET) {
+  if (!igdbConfigure(env)) {
     return erreur(503, "La recherche de jeux n'est pas encore configurée. Ajoute le jeu tel quel.");
   }
 

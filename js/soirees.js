@@ -7,6 +7,7 @@ import { etat, quandCaChange, appeler, charger, trouverMembre, caseDe } from './
 import { versTexte, depuisTexte, jourRelatif, avatar, annoncer, creer } from './commun.js';
 import { ouvrirProfil } from './profil.js';
 import { selecteurJeux, couverture, memeJeu } from './jeux.js';
+import { brancherFiche } from './fiche-jeu.js';
 
 const liste = document.getElementById('liste-soirees');
 const aucune = document.getElementById('aucune-soiree');
@@ -69,8 +70,20 @@ function fabriquerCarte(soiree) {
   remplir('.soiree-jour', jourRelatif(debut));
   remplir('.soiree-heure', joliHoraire(soiree.horaire));
   remplir('.soiree-titre', soiree.titre);
-  // La couverture du jeu, devant le titre.
-  carte.querySelector('.soiree-tete').prepend(couverture({ nom: soiree.jeu, cover: soiree.jeu_cover }, 'moyenne'));
+  /* La couverture du jeu, devant le titre. Si le jeu vient d'IGDB (les
+     soirées créées depuis le 31 oct. 2026 retiennent son numéro), elle
+     devient un bouton qui ouvre la fiche du jeu au survol. */
+  const jeu = { id: soiree.jeu_id, nom: soiree.jeu, cover: soiree.jeu_cover };
+  let visuel = couverture(jeu, 'moyenne');
+  if (jeu.id) {
+    const bouton = creer('button', 'jeu-fiche');
+    bouton.type = 'button';
+    bouton.setAttribute('aria-label', `Infos sur ${jeu.nom}`);
+    bouton.append(visuel);
+    brancherFiche(bouton, jeu);
+    visuel = bouton;
+  }
+  carte.querySelector('.soiree-tete').prepend(visuel);
 
   // « Among Us · proposée par Max », ou le jeu seul si son auteur est parti.
   const auteur = trouverMembre(soiree.createur_id);

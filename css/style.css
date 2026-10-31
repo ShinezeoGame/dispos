@@ -1438,6 +1438,133 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 .jeu-team[aria-pressed="true"] { border-color: var(--accent); color: var(--texte); }
 
 
+/* 12 TER. LA FICHE D'UN JEU (js/fiche-jeu.js)
+
+   Une petite carte flottante, placée par JavaScript sous (ou au-dessus
+   du) jeu survolé : position: fixed, left et top posés par le script.
+   pointer-events: none : la fiche ne capte pas la souris, qui peut
+   passer d'un jeu à l'autre sans qu'elle fasse écran. */
+.fiche-jeu {
+  position: fixed;
+  z-index: 30;
+  display: flex;
+  gap: 0.8rem;
+  width: min(21rem, calc(100vw - 16px));
+  padding: 0.8rem;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--surface-haute);
+  box-shadow: 0 18px 40px -12px rgb(0 0 0 / 0.75);
+  pointer-events: none;
+  animation: zoomer 0.18s var(--arrivee, ease-out);
+}
+.fiche-texte { display: grid; gap: 0.45rem; align-content: start; min-width: 0; }
+.fiche-titre { font: 700 1rem var(--police-titre); }
+.fiche-annee { color: var(--texte-doux); font-weight: 600; font-size: 0.85rem; }
+.fiche-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin: 0; padding: 0; list-style: none; }
+.fiche-tags .tag { padding: 0.05rem 0.45rem; font-size: 0.75rem; color: var(--accent); }
+/* Le résumé, sur 5 lignes au plus, puis « … ». */
+.fiche-resume {
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--texte-doux);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+/* Les jeux qui ont une fiche sont des boutons : on les remet à plat
+   (un bouton a par défaut un fond, une bordure et une police à lui). */
+button.tag-jeu, .jeu-fiche {
+  font: inherit;
+  color: inherit;
+  cursor: help; /* le curseur « ? » : il y a quelque chose à lire */
+}
+button.tag-jeu { font-size: 0.82rem; font-weight: 600; }
+button.tag-jeu:hover { border-color: var(--accent); }
+.jeu-fiche { flex: none; padding: 0; border: 0; background: none; border-radius: 6px; }
+
+
+/* 12 QUATER. LA PERSONNALISATION DES PROFILS */
+
+/* Un avatar emoji : un peu plus grand que l'initiale, l'emoji étant
+   dessiné plus petit que les lettres à taille égale. */
+.avatar-emoji { font-size: 1.15em; line-height: 1; }
+
+/* Sur la carte : le statut sous le pseudo, les étiquettes de style et
+   de plateformes, les pseudos pour se retrouver en jeu. */
+.membre-statut { color: var(--texte); font-size: 0.9rem; font-style: italic; overflow-wrap: anywhere; }
+.membre-badges { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0; padding: 0; list-style: none; }
+.tag-style { border-color: var(--accent); color: var(--accent); }
+.tag-plateforme { background: none; }
+
+.membre-contacts { display: grid; gap: 0.25rem; font-size: 0.88rem; }
+.contact-discord {
+  justify-self: start;
+  min-height: 32px;
+  padding: 0 0.6rem;
+  border: 1px solid var(--bordure);
+  border-radius: 8px;
+  background: none;
+  color: var(--texte);
+  font: 600 0.88rem var(--police);
+  cursor: copy; /* le curseur « copier » : un clic copie le pseudo */
+}
+.contact-discord:hover { border-color: var(--accent); }
+.contact-label { color: var(--texte-doux); font-weight: 400; }
+.contact-pseudos { color: var(--texte-doux); overflow-wrap: anywhere; }
+
+/* Dans la fenêtre du profil : les emojis en ronds (comme les couleurs),
+   le style et les plateformes en étiquettes à cocher. Chaque fois, le
+   vrai bouton radio ou la vraie case est caché sous le dessin. */
+.emojis-liste, .puces-liste { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.choix-emoji, .puce-choix {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  margin: 0;
+  cursor: pointer;
+}
+.choix-emoji input, .puce-choix input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.choix-emoji {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--bordure);
+  border-radius: 50%;
+  background: var(--fond);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+/* « Aa » (l'initiale du pseudo) : en lettres, plus petites qu'un emoji. */
+.choix-initiale span { font: 700 0.9rem var(--police-titre); }
+.puce-choix {
+  min-height: 40px;
+  padding: 0 0.85rem;
+  border: 1px solid var(--bordure);
+  border-radius: 99px;
+  background: var(--fond);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+/* Coché : contour et fond dans la couleur du thème. :has() regarde
+   l'état du bouton caché à l'intérieur. */
+.choix-emoji:has(input:checked), .puce-choix:has(input:checked) {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, var(--fond));
+}
+.choix-emoji:has(input:focus-visible), .puce-choix:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+
 /* 13. LES FENÊTRES (<dialog>)
 
    Le formulaire remplit toute la fenêtre (padding sur lui, pas sur le

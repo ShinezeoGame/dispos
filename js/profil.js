@@ -7,7 +7,7 @@
      ton lien perso pour te retrouver sur un autre appareil. */
 
 import { etat, appeler, charger } from './etat.js';
-import { COULEURS, retenirGroupe, annoncer, copier } from './commun.js';
+import { COULEURS, EMOJIS, PLATEFORMES, STYLES, retenirGroupe, annoncer, copier } from './commun.js';
 import { selecteurJeux, memeJeu } from './jeux.js';
 
 const dialogue = document.getElementById('dialogue-profil');
@@ -41,6 +41,51 @@ COULEURS.forEach((couleur, numero) => {
   zoneCouleurs.append(pastille);
 });
 
+/* LA PERSONNALISATION : avatar, style de jeu, plateformes.
+
+   Même principe que les pastilles de couleur : de vrais boutons radio
+   (un seul choix) ou cases à cocher (plusieurs), cachés sous une
+   étiquette dessinée. Le clavier et les lecteurs d'écran s'en servent
+   normalement. creerChoix fabrique l'un ou l'autre. */
+function creerChoix(zone, type, nom, valeur, texte, classe, aria) {
+  const etiquette = document.createElement('label');
+  etiquette.className = classe;
+  const entree = document.createElement('input');
+  entree.type = type;
+  entree.name = nom;
+  entree.value = valeur;
+  const visible = document.createElement('span');
+  visible.textContent = texte;
+  if (aria) entree.setAttribute('aria-label', aria);
+  etiquette.append(entree, visible);
+  zone.append(etiquette);
+}
+
+// L'avatar : « Aa » (valeur vide) = l'initiale du pseudo, puis les emojis.
+const zoneEmojis = document.getElementById('profil-emojis');
+creerChoix(zoneEmojis, 'radio', 'emoji', '', 'Aa', 'choix-emoji choix-initiale', 'Initiale du pseudo');
+for (const emoji of EMOJIS) creerChoix(zoneEmojis, 'radio', 'emoji', emoji, emoji, 'choix-emoji');
+
+// Le style de jeu (un seul) et les plateformes (plusieurs).
+const zoneStyles = document.getElementById('profil-styles');
+for (const style of STYLES) creerChoix(zoneStyles, 'radio', 'style', style.id, style.nom, 'puce-choix');
+const zonePlateformes = document.getElementById('profil-plateformes');
+for (const plateforme of PLATEFORMES) creerChoix(zonePlateformes, 'checkbox', 'plateformes', plateforme.id, plateforme.nom, 'puce-choix');
+
+/* Un clic sur le style déjà choisi le décoche : sans ça, un bouton radio
+   ne se décoche jamais, et on ne pourrait plus revenir à « aucun style ».
+   Le clic coche toujours ; on regarde donc l'état d'avant le clic,
+   noté au moment où le pointeur (ou la touche) s'enfonce. */
+let styleAvant = '';
+zoneStyles.addEventListener('pointerdown', () => { styleAvant = champs.style.value; });
+zoneStyles.addEventListener('keydown', () => { styleAvant = champs.style.value; });
+zoneStyles.addEventListener('click', (evenement) => {
+  if (evenement.target.name === 'style' && evenement.target.value === styleAvant) {
+    evenement.target.checked = false;
+    styleAvant = '';
+  }
+});
+
 export function ouvrirProfil() {
   const inscription = !etat.moi;
   formulaire.reset();
@@ -50,6 +95,8 @@ export function ouvrirProfil() {
     ? `Rejoins ${etat.groupe.nom}`
     : 'Ton profil';
   document.getElementById('profil-lien-perso').hidden = inscription;
+  // La personnalisation, une fois inscrit : rejoindre doit aller vite.
+  document.getElementById('profil-plus').hidden = inscription;
   document.getElementById('profil-valider').textContent = inscription ? 'Rejoindre le groupe' : 'Enregistrer';
   document.getElementById('profil-annuler').textContent = inscription ? 'Juste regarder' : 'Annuler';
 
@@ -59,12 +106,22 @@ export function ouvrirProfil() {
     const libres = COULEURS.filter((couleur) => !prises.includes(couleur));
     const choix = libres.length ? libres : COULEURS;
     champs.couleur.value = choix[Math.floor(Math.random() * choix.length)];
+    champs.emoji.value = '';
     selecteur.remplir([]);
   } else {
     champs.pseudo.value = etat.moi.pseudo;
     champs.couleur.value = etat.moi.couleur;
     selecteur.remplir(etat.moi.jeux);
     champs.bio.value = etat.moi.bio;
+    const perso = etat.moi.perso;
+    champs.emoji.value = perso.emoji;
+    champs.statut.value = perso.statut;
+    champs.style.value = perso.style;
+    champs.discord.value = perso.discord;
+    champs.pseudos.value = perso.pseudos;
+    for (const caseACocher of zonePlateformes.querySelectorAll('input')) {
+      caseACocher.checked = perso.plateformes.includes(caseACocher.value);
+    }
   }
   dialogue.showModal();
 }
@@ -85,6 +142,15 @@ formulaire.addEventListener('submit', async (evenement) => {
     couleur: champs.couleur.value,
     jeux,
     bio: champs.bio.value,
+    perso: {
+      emoji: champs.emoji.value,
+      statut: champs.statut.value,
+      style: champs.style.value,
+      // Les cases cochées, dans l'ordre de la liste.
+      plateformes: [...zonePlateformes.querySelectorAll('input:checked')].map((caseCochee) => caseCochee.value),
+      discord: champs.discord.value,
+      pseudos: champs.pseudos.value,
+    },
   };
   try {
     if (etat.moi) {

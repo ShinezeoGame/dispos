@@ -7,7 +7,7 @@
    PUT veut dire « remplace par ceci » : on envoie le profil complet,
    pas seulement ce qui change.
 
-   Reçoit : { pseudo, couleur, jeux, bio }
+   Reçoit : { pseudo, couleur, jeux, bio, perso }
    Renvoie : { membre: {…} } */
 
 import { json, erreur, lireCorps, lireProfil, pseudoPris, identifier } from '../../../_outils.js';
@@ -25,8 +25,8 @@ export async function onRequestPut(context) {
   }
 
   await db
-    .prepare('UPDATE membres SET pseudo = ?, couleur = ?, jeux = ?, bio = ? WHERE id = ?')
-    .bind(profil.pseudo, profil.couleur, JSON.stringify(profil.jeux), profil.bio, moi.id)
+    .prepare('UPDATE membres SET pseudo = ?, couleur = ?, jeux = ?, bio = ?, perso = ? WHERE id = ?')
+    .bind(profil.pseudo, profil.couleur, JSON.stringify(profil.jeux), profil.bio, JSON.stringify(profil.perso), moi.id)
     .run();
 
   return json(200, { membre: { id: moi.id, ...profil } });

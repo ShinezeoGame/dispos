@@ -6,9 +6,10 @@
    bouton pour la modifier. */
 
 import { etat, quandCaChange } from './etat.js';
-import { avatar, creer, formater, lundiDe } from './commun.js';
+import { avatar, creer, formater, lundiDe, copier, PLATEFORMES, STYLES } from './commun.js';
 import { ouvrirProfil } from './profil.js';
 import { couverture } from './jeux.js';
+import { brancherFiche } from './fiche-jeu.js';
 
 const liste = document.getElementById('liste-membres');
 const modele = document.getElementById('modele-membre');
@@ -31,6 +32,23 @@ function fabriquerCarte(membre, estMoi) {
   carte.querySelector('.membre-tete').prepend(avatar(membre));
   carte.querySelector('.membre-pseudo').textContent = membre.pseudo;
   carte.querySelector('.membre-toi').hidden = !estMoi;
+  const perso = membre.perso;
+
+  // Le statut, sous le pseudo (caché s'il est vide, comme tout le reste).
+  const statut = carte.querySelector('.membre-statut');
+  statut.textContent = perso.statut;
+  statut.hidden = !perso.statut;
+
+  // Le style de jeu puis les plateformes, en petites étiquettes.
+  const badges = [];
+  const style = STYLES.find((s) => s.id === perso.style);
+  if (style) badges.push(creer('li', 'tag tag-style', style.nom));
+  for (const plateforme of PLATEFORMES.filter((p) => perso.plateformes.includes(p.id))) {
+    badges.push(creer('li', 'tag tag-plateforme', plateforme.nom));
+  }
+  const zoneBadges = carte.querySelector('.membre-badges');
+  zoneBadges.replaceChildren(...badges);
+  zoneBadges.hidden = badges.length === 0;
 
   // « 12 h cochées cette semaine » ou « … semaine du 9 nov. »
   const heures = etat.dispos.get(membre.id)?.size || 0;
@@ -42,12 +60,20 @@ function fabriquerCarte(membre, estMoi) {
     ? `${heures} h cochée${heures > 1 ? 's' : ''} ${quelleSemaine}`
     : '';
 
-  // Les jeux : une étiquette par jeu, avec sa petite couverture.
+  /* Les jeux : une étiquette par jeu, avec sa petite couverture. Un jeu
+     trouvé dans IGDB (il a un id) devient un bouton : survolé, touché ou
+     atteint au clavier, il ouvre sa fiche (fiche-jeu.js). */
   const listeJeux = carte.querySelector('.membre-jeux');
   listeJeux.replaceChildren(...membre.jeux.map((jeu) => {
-    const etiquette = creer('li', 'tag tag-jeu');
+    const element = creer('li');
+    const etiquette = creer(jeu.id ? 'button' : 'span', 'tag tag-jeu');
     etiquette.append(couverture(jeu, 'mini'), creer('span', 'jeu-nom', jeu.nom));
-    return etiquette;
+    if (jeu.id) {
+      etiquette.type = 'button';
+      brancherFiche(etiquette, jeu);
+    }
+    element.append(etiquette);
+    return element;
   }));
   listeJeux.hidden = membre.jeux.length === 0;
 
@@ -55,6 +81,21 @@ function fabriquerCarte(membre, estMoi) {
   carte.querySelector('.membre-bio').textContent = membre.bio;
   carte.querySelector('.membre-sous-titre').hidden = !membre.bio;
   carte.querySelector('.membre-bio').hidden = !membre.bio;
+
+  /* Les pseudos pour se retrouver en jeu. Discord est un bouton : un
+     clic copie le pseudo, prêt à coller dans « Ajouter un ami ». */
+  const contacts = carte.querySelector('.membre-contacts');
+  contacts.replaceChildren();
+  if (perso.discord) {
+    const discord = creer('button', 'contact-discord', perso.discord);
+    discord.type = 'button';
+    discord.prepend(creer('span', 'contact-label', 'Discord '));
+    discord.setAttribute('aria-label', `Copier le pseudo Discord ${perso.discord}`);
+    discord.addEventListener('click', () => copier(perso.discord, 'Pseudo Discord copié !'));
+    contacts.append(discord);
+  }
+  if (perso.pseudos) contacts.append(creer('p', 'contact-pseudos', perso.pseudos));
+  contacts.hidden = !perso.discord && !perso.pseudos;
 
   if (estMoi) {
     const modifier = carte.querySelector('.membre-modifier');

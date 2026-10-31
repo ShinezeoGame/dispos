@@ -11,7 +11,7 @@
    faut bien voir le groupe avant de choisir son pseudo. « moi » vaut
    alors null, et le navigateur sait qu'il doit proposer l'inscription. */
 
-import { json, erreur, estLundi, identifier, jeuxStockes } from '../../../_outils.js';
+import { json, erreur, estLundi, identifier, jeuxStockes, persoStockee } from '../../../_outils.js';
 
 export async function onRequestGet(context) {
   const { groupe, moi, refus } = await identifier(context, false);
@@ -26,7 +26,7 @@ export async function onRequestGet(context) {
      navigateur fait ensuite le tri exact, à son heure. */
   const db = context.env.DB;
   const [membres, dispos, soirees, reponses] = await db.batch([
-    db.prepare('SELECT id, pseudo, couleur, jeux, bio FROM membres WHERE groupe_id = ? ORDER BY id')
+    db.prepare('SELECT id, pseudo, couleur, jeux, bio, perso FROM membres WHERE groupe_id = ? ORDER BY id')
       .bind(groupe.id),
 
     db.prepare(`SELECT d.membre_id, d.creneaux FROM dispos d
@@ -34,7 +34,7 @@ export async function onRequestGet(context) {
                 WHERE m.groupe_id = ? AND d.semaine = ?`)
       .bind(groupe.id, semaine),
 
-    db.prepare(`SELECT id, createur_id, titre, jeu, jeu_cover, jour, horaire, note FROM soirees
+    db.prepare(`SELECT id, createur_id, titre, jeu, jeu_cover, jeu_id, jour, horaire, note FROM soirees
                 WHERE groupe_id = ? AND jour >= MIN(?, date('now', '-1 day'))
                 ORDER BY jour, horaire LIMIT 200`)
       .bind(groupe.id, semaine),
@@ -63,8 +63,13 @@ export async function onRequestGet(context) {
     groupe: { code: groupe.code, nom: groupe.nom },
     moi: moi ? moi.id : null,
     semaine,
-    // Les jeux sont stockés en texte : on les rend sous forme de liste.
-    membres: membres.results.map((membre) => ({ ...membre, jeux: jeuxStockes(membre.jeux) })),
+    // Les jeux et la personnalisation sont stockés en texte JSON : on
+    // les rend sous forme de vraies listes et de vrais objets.
+    membres: membres.results.map((membre) => ({
+      ...membre,
+      jeux: jeuxStockes(membre.jeux),
+      perso: persoStockee(membre.perso),
+    })),
     dispos: disposParMembre,
     soirees: soirees.results.map((soiree) => ({
       ...soiree,

@@ -165,13 +165,18 @@
       <div class="membre-tete">
         <div>
           <h3 class="membre-pseudo"></h3>
+          <p class="membre-statut"></p>
           <p class="membre-semaine"></p>
         </div>
         <span class="membre-toi" hidden>toi</span>
       </div>
+      <!-- Le style de jeu et les plateformes, en petites étiquettes. -->
+      <ul class="membre-badges"></ul>
       <ul class="membre-jeux"></ul>
       <h4 class="membre-sous-titre">Dispos habituelles</h4>
       <p class="membre-bio"></p>
+      <!-- Discord (copiable d'un clic) et les autres pseudos. -->
+      <div class="membre-contacts"></div>
       <button type="button" class="bouton bouton-second bouton-petit membre-modifier" hidden>Modifier mon profil</button>
     </article>
   </template>
@@ -252,6 +257,13 @@
         <div id="profil-couleurs" class="couleurs-liste"></div>
       </fieldset>
 
+      <!-- L'avatar : un emoji, ou l'initiale du pseudo (« Aa »). Les
+           boutons sont fabriqués par js/profil.js à partir de EMOJIS. -->
+      <fieldset class="couleurs">
+        <legend>Ton avatar</legend>
+        <div id="profil-emojis" class="emojis-liste"></div>
+      </fieldset>
+
       <label for="profil-jeux-recherche">Tes jeux</label>
       <div id="profil-jeux" class="selecteur-jeux">
         <div class="jeux-choisis" hidden></div>
@@ -263,6 +275,34 @@
 
       <label for="profil-bio">Tes dispos habituelles</label>
       <textarea id="profil-bio" name="bio" maxlength="500" rows="3" placeholder="En semaine après 20h, le week-end l'aprèm. Jamais le dimanche matin."></textarea>
+
+      <!-- LA PERSONNALISATION, une fois inscrit seulement (profil.js la
+           cache à l'inscription, pour rejoindre en quelques secondes). -->
+      <div id="profil-plus">
+        <label for="profil-statut">Statut</label>
+        <input id="profil-statut" name="statut" maxlength="60" placeholder="Chaud pour un Among ce soir" autocomplete="off">
+
+        <fieldset class="couleurs">
+          <legend>Style de jeu</legend>
+          <div id="profil-styles" class="puces-liste"></div>
+        </fieldset>
+
+        <fieldset class="couleurs">
+          <legend>Plateformes</legend>
+          <div id="profil-plateformes" class="puces-liste"></div>
+        </fieldset>
+
+        <div class="champs-cote">
+          <div>
+            <label for="profil-discord">Discord</label>
+            <input id="profil-discord" name="discord" maxlength="40" placeholder="max#1234" autocomplete="off">
+          </div>
+          <div>
+            <label for="profil-pseudos">Autres pseudos</label>
+            <input id="profil-pseudos" name="pseudos" maxlength="100" placeholder="Steam : max92" autocomplete="off">
+          </div>
+        </div>
+      </div>
 
       <div id="profil-lien-perso" class="lien-perso" hidden>
         <p>Pour te retrouver sur un autre appareil. Garde-le pour toi : il permet de modifier ton profil.</p>
@@ -276,6 +316,11 @@
       </div>
     </form>
   </dialog>
+
+  <!-- La fiche d'un jeu au survol (js/fiche-jeu.js), unique pour toute
+       la page et déplacée à côté du jeu visé. role="tooltip" : un
+       lecteur d'écran la lit comme la description du jeu. -->
+  <div id="fiche-jeu" class="fiche-jeu" role="tooltip" hidden></div>
 
   <div id="annonce" class="annonce" role="status" aria-live="polite"></div>
 </body>

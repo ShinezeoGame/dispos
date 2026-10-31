@@ -38,6 +38,12 @@ export const REPONSES = ['oui', 'peutetre', 'non'];
 export const MAX_MEMBRES = 50;
 export const MAX_JEUX = 12; // par profil
 
+// La personnalisation des profils (voir lirePerso plus bas). À garder
+// identique aux listes de js/commun.js, qui les affiche.
+export const EMOJIS = ['🎮', '🕹️', '👾', '🤖', '👻', '💀', '🐉', '🦊', '🐸', '🐼', '🦄', '🔥', '⚡', '🌙', '🍕', '🎧'];
+export const PLATEFORMES = ['pc', 'playstation', 'xbox', 'switch', 'mobile'];
+export const STYLES = ['chill', 'tryhard', 'les-deux'];
+
 
 /* LA STRUCTURE DE LA BASE
 
@@ -74,6 +80,7 @@ export const SCHEMA = [
     couleur TEXT NOT NULL,
     jeux TEXT NOT NULL DEFAULT '',
     bio TEXT NOT NULL DEFAULT '',
+    perso TEXT NOT NULL DEFAULT '{}',
     jeton_hash TEXT NOT NULL UNIQUE,
     cree_le TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
@@ -103,6 +110,7 @@ export const SCHEMA = [
     titre TEXT NOT NULL,
     jeu TEXT NOT NULL,
     jeu_cover TEXT NOT NULL DEFAULT '',
+    jeu_id INTEGER,
     jour TEXT NOT NULL,
     horaire TEXT NOT NULL,
     note TEXT NOT NULL DEFAULT '',
@@ -140,6 +148,11 @@ export const SCHEMA = [
 export const MIGRATIONS = [
   // 31 octobre 2026 : la couverture du jeu d'une soirée.
   "ALTER TABLE soirees ADD COLUMN jeu_cover TEXT NOT NULL DEFAULT ''",
+  // 31 octobre 2026 : la personnalisation des profils (avatar, statut,
+  // style, plateformes, pseudos), rangée en JSON dans une seule colonne.
+  "ALTER TABLE membres ADD COLUMN perso TEXT NOT NULL DEFAULT '{}'",
+  // 31 octobre 2026 : le numéro IGDB du jeu d'une soirée, pour sa fiche.
+  "ALTER TABLE soirees ADD COLUMN jeu_id INTEGER",
 ];
 
 
@@ -244,6 +257,42 @@ export function jeuxStockes(texte) {
     .map((nom) => ({ id: null, nom, cover: '' }));
 }
 
+/* LA PERSONNALISATION D'UN PROFIL
+
+   Rangée en JSON dans la seule colonne membres.perso :
+     { emoji: "🐉", statut: "Chaud pour un Among", style: "tryhard",
+       plateformes: ["pc", "switch"], discord: "max#1234",
+       pseudos: "Steam : max92" }
+   Une seule colonne : ajouter une option plus tard ne demandera pas de
+   nouvel ALTER TABLE, juste une ligne ici.
+
+   lirePerso nettoie ce qui arrive du navigateur, champ par champ : un
+   emoji, un style ou une plateforme hors des listes est ignoré, un
+   texte trop long est coupé. Jamais d'erreur : au pire, le champ reste
+   vide. */
+export function lirePerso(valeur) {
+  const v = valeur && typeof valeur === 'object' ? valeur : {};
+  return {
+    emoji: EMOJIS.includes(v.emoji) ? v.emoji : '',
+    statut: ligne(v.statut).slice(0, 60),
+    style: STYLES.includes(v.style) ? v.style : '',
+    // filter sur NOTRE liste : garde l'ordre officiel et écarte l'inconnu.
+    plateformes: Array.isArray(v.plateformes) ? PLATEFORMES.filter((p) => v.plateformes.includes(p)) : [],
+    discord: ligne(v.discord).slice(0, 40),
+    pseudos: ligne(v.pseudos).slice(0, 100),
+  };
+}
+
+// La personnalisation telle que la base la rend (texte JSON), nettoyée
+// au passage. Un texte illisible donne une personnalisation vide.
+export function persoStockee(texte) {
+  try {
+    return lirePerso(JSON.parse(texte));
+  } catch {
+    return lirePerso({});
+  }
+}
+
 /* Le profil d'un membre, vérifié au même endroit pour l'inscription
    (membres.js) et pour la modification (moi.js). Renvoie soit
    { profil }, soit { probleme } avec la phrase à afficher. */
@@ -254,6 +303,7 @@ export function lireProfil(corps) {
     couleur: COULEURS.includes(corps.couleur) ? corps.couleur : COULEURS[0],
     jeux,
     bio: bloc(corps.bio),
+    perso: lirePerso(corps.perso),
   };
   if (profil.pseudo.length < 1 || profil.pseudo.length > 24) {
     return { probleme: 'Choisis un pseudo de 1 à 24 caractères.' };
