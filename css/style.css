@@ -1801,10 +1801,11 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 }
 
 /* AU SURVOL (souris seulement) : les cartes se soulèvent de 3 px, et les
-   quatre joueurs du logo se lèvent en vague, l'un après l'autre, puis
-   se rasseyent. Une transition plutôt qu'une animation : remplacer
-   l'animation des ronds rejouerait leur apparition au départ de la
-   souris. */
+   quatre ronds du logo grossissent un peu (1,2 fois), chacun depuis son
+   centre (transform-box et transform-origin, posés dans « Le logo »).
+   Pas plus : à cette taille, le trait qui les relie reste visible.
+   Une transition plutôt qu'une animation : remplacer l'animation des
+   ronds rejouerait leur apparition au départ de la souris. */
 @media (hover: hover) {
   .soiree, .membre, .creneau { transition: transform 0.2s ease, border-color 0.2s ease; }
   :is(.soiree, .membre, .creneau):hover { transform: translateY(-3px); }
@@ -1812,11 +1813,8 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
     border-color: color-mix(in srgb, var(--accent) 35%, var(--bordure));
   }
 
-  .logo-icone circle { transition: transform 0.25s cubic-bezier(0.3, 1.6, 0.5, 1); }
-  .logo-icone circle:nth-of-type(2) { transition-delay: 0.05s; }
-  .logo-icone circle:nth-of-type(3) { transition-delay: 0.1s; }
-  .logo-icone circle:nth-of-type(4) { transition-delay: 0.15s; }
-  .logo:hover .logo-icone circle { transform: translateY(-4px); }
+  .logo-icone circle { transition: transform 0.2s ease-out; }
+  .logo:hover .logo-icone circle { transform: scale(1.2); }
 }
 
 
