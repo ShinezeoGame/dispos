@@ -6,7 +6,7 @@
    le premier chargement et le rafraîchissement. */
 
 import { etat, charger, quandCaChange, lienGroupe } from './etat.js';
-import { lireGroupes, retenirGroupe, avatar, copier, creer } from './commun.js';
+import { lireGroupes, retenirGroupe, oublierGroupe, avatar, copier, creer } from './commun.js';
 import { ouvrirProfil } from './profil.js';
 import './agenda.js';
 import './soirees.js';
@@ -120,6 +120,11 @@ async function demarrer() {
     document.getElementById('chargement').hidden = true;
     document.getElementById('erreur-groupe-texte').textContent = probleme.message;
     document.getElementById('erreur-groupe').hidden = false;
+    /* 404 : le groupe n'existe plus (ou le lien est faux). On l'efface
+       de la liste « Tes groupes » de l'accueil. Une autre erreur (pas de
+       connexion, serveur en panne) ne prouve pas qu'il a disparu : on le
+       garde, sinon on perdrait son jeton pour une simple coupure réseau. */
+    if (probleme.statut === 404) oublierGroupe(etat.code);
     return;
   }
   document.getElementById('chargement').hidden = true;

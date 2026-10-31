@@ -88,15 +88,29 @@ export function lireGroupes() {
   }
 }
 
-// Fusionne : retenirGroupe(code, { jeton }) garde le nom déjà connu.
-export function retenirGroupe(code, infos) {
-  const groupes = lireGroupes();
-  groupes[code] = { ...groupes[code], ...infos };
+function ecrireGroupes(groupes) {
   try {
     localStorage.setItem(CLE, JSON.stringify(groupes));
   } catch {
     // Rien à faire : voir plus haut.
   }
+}
+
+// Fusionne : retenirGroupe(code, { jeton }) garde le nom déjà connu.
+export function retenirGroupe(code, infos) {
+  const groupes = lireGroupes();
+  groupes[code] = { ...groupes[code], ...infos };
+  ecrireGroupes(groupes);
+}
+
+/* Retire un groupe de la mémoire du navigateur. Appelé quand le serveur
+   répond qu'il n'existe plus (supprimé dans la base) : sans ça, il
+   resterait affiché pour toujours dans « Tes groupes » de l'accueil,
+   cette liste ne venant pas du serveur mais du navigateur. */
+export function oublierGroupe(code) {
+  const groupes = lireGroupes();
+  delete groupes[code];
+  ecrireGroupes(groupes);
 }
 
 

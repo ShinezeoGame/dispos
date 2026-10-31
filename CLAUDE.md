@@ -113,6 +113,11 @@ D'autres idées viendront une fois le site en ligne.
   31 oct. 2026 y ont un texte « Among Us, Minecraft » : `jeuxStockes()`
   le convertit à la lecture. Garder cette conversion. Une soirée stocke
   `jeu` (le nom) et `jeu_cover`.
+- **« Tes groupes » (accueil) vient du navigateur, pas de la base.**
+  Supprimer un groupe dans D1 ne l'enlève de cette liste qu'au moment où
+  on l'ouvre : le serveur répond 404 et groupe.js appelle
+  `oublierGroupe()`. Seul un 404 efface : une coupure réseau ne doit
+  jamais faire perdre un jeton.
 - **12 jeux par profil au plus** : écrit dans `functions/_outils.js`
   (`MAX_JEUX`) ET dans `js/profil.js`. Changer les deux ensemble.
 - **Limites de D1 (offre gratuite)** : 50 requêtes SQL par appel, 100
