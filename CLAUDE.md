@@ -63,7 +63,8 @@ D'autres idées viendront une fois le site en ligne.
 
 1. Cloudflare → Workers & Pages → D1 → créer une base `dispos`.
 2. Workers & Pages → Créer → Pages → connecter le dépôt GitHub `dispos`.
-   Aucune commande de build, dossier de sortie `/`.
+   Branche de production `main`, aucune commande de build, dossier de
+   sortie `/`.
 3. Dans le projet Pages : Settings → Bindings → D1 database, nom de
    variable **`DB`**, base `dispos`. Redéployer.
 4. Les tables se créent seules à la première visite (_middleware.js).
@@ -103,7 +104,8 @@ Functions et D1 (`node:sqlite`), et Playwright pour les captures.
   pourquoi. Commente le code en français.
 - Préviens-moi avant d'installer un outil ou d'ajouter une dépendance.
 - À la fin de chaque bloc : capture d'écran du rendu envoyée, puis
-  commit et push.
+  commit et push. **`main` est la branche de référence** (choisi le
+  31 octobre 2026) : c'est elle que Cloudflare mettra en ligne.
 
 ## Idées pour la suite (rien de décidé)
 
