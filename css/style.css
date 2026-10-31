@@ -1,9 +1,9 @@
 /* LA MISE EN FORME D'ALLREADY
 
    Un seul fichier pour les trois pages. L'ambiance « gaming » tient à
-   peu de choses : une nuit indigo, une couleur vive pour l'action (le
-   violet électrique), une autre pour les soirées (l'orange), une police
-   de titres anguleuse, et une lueur sur ce qui compte. Tout le reste
+   peu de choses : un fond anthracite, une couleur vive pour l'action
+   (l'orange braise), une autre pour les soirées (le rose néon), une
+   police de titres anguleuse, et une lueur sur ce qui compte. Tout le reste
    reste sobre, pour que l'agenda se lise d'un coup d'œil.
 
    Ordre du fichier : polices, couleurs, bases, puis chaque partie de
@@ -40,30 +40,37 @@
    dépendent : elles sont calculées à partir de --accent avec
    color-mix(), jamais écrites en dur.
 
-   Direction artistique depuis le 31 octobre 2026 (avant : vert citron,
-   abandonné parce qu'il ne plaisait pas) : une nuit indigo, un violet
-   électrique pour tout ce qui est action et dispo, un orange chaud pour
-   tout ce qui touche aux soirées. Le violet et l'orange sont presque
-   opposés sur le cercle des couleurs : une soirée se repère tout de
-   suite au milieu de l'agenda violet.
+   Direction artistique depuis le 31 octobre 2026 : que des couleurs
+   CHAUDES. Le vert citron du début ne plaisait pas, le violet qui l'a
+   remplacé faisait trop « médical » : pas de vert, pas de bleu, pas de
+   violet. À la place :
+   — l'orange braise pour l'action, les dispos et le « prêt ». Il fait
+     de l'agenda une vraie carte de chaleur, plus il y a de monde, plus
+     la case brûle : « Qui est chaud ce soir ? » au sens propre ;
+   — le rose néon pour tout ce qui touche aux soirées ;
+   — un fond anthracite à peine chaud, jamais bleuté.
 
-   Contrastes mesurés sur --surface : --texte 15,6:1, --texte-doux
-   7,4:1, --accent 6,7:1, --soiree 8,6:1. Texte sombre sur --accent :
-   7,3:1. Le minimum recommandé pour du texte est 4,5:1. Toute retouche
+   L'orange et le rose ont presque la même luminosité : c'est leur
+   teinte qui les distingue, et le liseré sombre autour du cadre d'une
+   soirée (voir .case.avec-soiree) qui la détache d'une case vive.
+
+   Contrastes mesurés sur --surface : --texte 15,7:1, --texte-doux
+   7,8:1, --accent 6,8:1, --soiree 5,7:1. Texte sombre sur --accent :
+   7,4:1. Le minimum recommandé pour du texte est 4,5:1. Toute retouche
    d'une couleur doit être suivie d'un nouveau calcul. */
 :root {
-  --fond: #0d0b18;
-  --surface: #16132a;        /* les cartes */
-  --surface-haute: #201c3a;  /* ce qui passe au-dessus : fenêtres, survols */
-  --case: #1c1832;           /* une case vide de l'agenda */
-  --bordure: #2d2850;
-  --texte: #efecff;
-  --texte-doux: #a7a1c9;
+  --fond: #110f0e;
+  --surface: #1b1816;        /* les cartes */
+  --surface-haute: #26211e;  /* ce qui passe au-dessus : fenêtres, survols */
+  --case: #221d1b;           /* une case vide de l'agenda */
+  --bordure: #3a322d;
+  --texte: #f7f0eb;
+  --texte-doux: #b5aaa3;
 
-  --accent: #a98bff;         /* violet électrique : dispo, prêt, action */
-  --accent-vif: #c3adff;     /* au survol */
-  --sur-accent: #0d0b18;     /* le texte posé sur l'accent */
-  --soiree: #ff9a52;         /* orange : ce qui concerne une soirée */
+  --accent: #ff7a3d;         /* orange braise : dispo, prêt, action */
+  --accent-vif: #ff9a66;     /* au survol */
+  --sur-accent: #110f0e;     /* le texte posé sur l'accent */
+  --soiree: #ff4f8b;         /* rose néon : ce qui concerne une soirée */
   --peutetre: #ffd166;       /* jaune : peut-être */
   --non: #ff5d73;            /* rouge : pas dispo, erreur */
 
@@ -96,7 +103,7 @@ body {
   flex-direction: column;
   font: 1rem/1.55 var(--police);
   color: var(--texte);
-  /* Deux couches de fond : une lueur violette tout en haut, et une trame
+  /* Deux couches de fond : une lueur orange tout en haut, et une trame
      de points très discrète, comme un écran de jeu.
      color-mix(in srgb, var(--accent) 14%, transparent) = la couleur
      d'accent à 14 % d'opacité. */
@@ -139,7 +146,7 @@ a { color: var(--accent); }
    L'icône : une coche (le « prêt » qu'on valide avant une partie)
    dessinée par quatre ronds, les joueurs de la team. Le sens caché :
    la validation, c'est le groupe au complet. Puis le nom, « All » en
-   blanc et « Ready » en violet, qui se lit aussi « Already ». */
+   blanc et « Ready » en orange, qui se lit aussi « Already ». */
 .logo {
   display: inline-flex;
   align-items: center;
@@ -205,7 +212,7 @@ a { color: var(--accent); }
 
 /* 5. LES BOUTONS
 
-   .bouton : l'action principale, en violet. Une seule par écran,
+   .bouton : l'action principale, en orange. Une seule par écran,
    pour qu'on sache toujours où cliquer.
    .bouton-second : les autres actions, en contour.
    Hauteur minimale de 44 px : la taille d'un doigt. */
@@ -315,7 +322,7 @@ input:focus, textarea:focus {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
-input::placeholder, textarea::placeholder { color: #7c7699; }
+input::placeholder, textarea::placeholder { color: #85796f; }
 
 /* Chrome et Safari ajoutent une croix bleue aux champs de recherche,
    qui jure avec le reste : on la masque (on efface au clavier). */
@@ -562,7 +569,7 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 .mes-groupes a:hover { border-color: var(--accent); }
 .mes-groupes .code { color: var(--texte-doux); font: 600 0.8rem var(--police-titre); letter-spacing: 0.08em; }
 
-/* Les trois étapes, numérotées en gros chiffres violets. */
+/* Les trois étapes, numérotées en gros chiffres orange. */
 .etapes ol {
   display: grid;
   gap: 1rem;
@@ -684,7 +691,7 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 .onglets [role="tab"]:hover { color: var(--texte); }
 .onglets [role="tab"][aria-selected="true"] { color: var(--texte); }
 
-/* Le trait violet sous l'onglet actif, avec sa lueur. */
+/* Le trait orange sous l'onglet actif, avec sa lueur. */
 .onglets [role="tab"][aria-selected="true"]::after {
   content: '';
   position: absolute;
@@ -697,7 +704,7 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
   box-shadow: 0 0 12px var(--accent);
 }
 
-/* La pastille orange : les soirées auxquelles tu n'as pas répondu. */
+/* La pastille rose : les soirées auxquelles tu n'as pas répondu. */
 .pastille {
   min-width: 1.3rem;
   height: 1.3rem;
@@ -760,7 +767,7 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 .semaine-libelle span { color: var(--texte-doux); font-size: 0.9rem; }
 
 /* La bascule « Le groupe / Mes dispos » : deux boutons collés, celui
-   qui est enfoncé (aria-pressed="true") est rempli de violet. */
+   qui est enfoncé (aria-pressed="true") est rempli d'orange. */
 .bascule {
   display: inline-flex;
   padding: 4px;
@@ -884,8 +891,9 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 /* UNE CASE
 
    Sa couleur dépend de --niveau, posé par agenda.js entre 0,2 et 1 :
-   color-mix mélange le violet et le gris des cases vides dans cette
-   proportion. 0 = case vide, 1 = violet plein. */
+   color-mix mélange l'orange et le gris des cases vides dans cette
+   proportion. 0 = case vide, 1 = orange plein : la braise s'allume
+   avec le nombre de dispos. */
 .case {
   position: relative;
   height: 1.9rem;
@@ -926,10 +934,10 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
   background: currentColor;
 }
 
-/* Une soirée commence à cette heure-là : un cadre orange, séparé de
-   la case par un fin liseré sombre (inset). Sans lui, sur une case
-   violette très vive, l'orange et le violet ont presque la même
-   luminosité et le cadre se verrait mal. */
+/* Une soirée commence à cette heure-là : un cadre rose, séparé de la
+   case par un fin liseré sombre (inset). Sans lui, sur une case orange
+   très vive, le rose et l'orange ont presque la même luminosité et le
+   cadre se verrait mal. */
 .case.avec-soiree::after {
   content: '';
   position: absolute;
@@ -947,7 +955,7 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 /* MODE « MES DISPOS »
 
    Les cases oublient le nombre de dispos : vides en gris, cochées en
-   violet. touch-action: none : sur écran tactile, glisser le doigt sur
+   orange. touch-action: none : sur écran tactile, glisser le doigt sur
    une case coche au lieu de faire défiler la page. On fait défiler en
    glissant sur la colonne des heures. */
 .grille.edition .case {
@@ -973,7 +981,7 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
   min-height: 1.5rem;
 }
 
-/* La légende : le dégradé, le cadre orange, le point. */
+/* La légende : le dégradé, le cadre rose, le point. */
 .legende {
   display: flex;
   flex-wrap: wrap;
@@ -1058,7 +1066,7 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
   background: var(--surface);
 }
 
-/* La soirée du jour ressort, en orange. */
+/* La soirée du jour ressort, en rose. */
 .soiree.aujourdhui {
   border-color: var(--soiree);
   box-shadow: 0 0 34px -16px var(--soiree);
@@ -1106,7 +1114,7 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 }
 
 /* Les trois réponses, en bascule. La réponse choisie prend sa couleur :
-   violet, jaune ou rouge. */
+   orange, jaune ou rouge. */
 .choix { display: inline-flex; flex-wrap: wrap; gap: 0.4rem; }
 
 .choix button {

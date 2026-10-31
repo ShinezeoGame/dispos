@@ -46,16 +46,18 @@ nom de domaine à part reste à choisir.
   github.com/settings/installations → Configure → donner accès à
   `dispos`. Arrivé le 31 oct. 2026 ; *Retry deployment* ne fait que
   relancer l'ancien commit.
-- **Direction artistique (31 oct. 2026, le vert ne plaisait pas)** :
-  thème sombre seulement, nuit indigo `#0d0b18`, **violet électrique
-  `#a98bff`** pour l'action, les dispos et le « prêt », **orange
-  `#ff9a52`** pour tout ce qui touche aux soirées (presque opposé au
-  violet : une soirée se repère dans l'agenda). Toutes les couleurs et
-  les lueurs passent par les variables de `:root` (les lueurs par
-  `color-mix()`), jamais en dur. Contrastes notés en tête de `:root`.
-- **Le logo** : une coche dessinée par quatre ronds (les joueurs de la
+- **Direction artistique : que des couleurs chaudes.** Pas de vert
+  (premier essai, refusé), **pas de bleu ni de violet** (deuxième essai,
+  jugé « trop médical »), le 31 oct. 2026. Fond anthracite à peine chaud
+  `#110f0e`, **orange braise `#ff7a3d`** pour l'action, les dispos et le
+  « prêt » (l'agenda devient une carte de chaleur : « Qui est chaud ce
+  soir ? » au sens propre), **rose néon `#ff4f8b`** pour tout ce qui
+  touche aux soirées. Toutes les couleurs et les lueurs passent par les
+  variables de `:root` (les lueurs par `color-mix()`), jamais en dur.
+  Contrastes notés en tête de `:root`.
+- **Le logo** (« exceptionnel », à garder tel quel) : une coche dessinée par quatre ronds (les joueurs de la
   team : la validation, c'est le groupe au complet), puis « All » en
-  blanc et « Ready » en violet. Écrit en SVG directement dans les trois
+  blanc et « Ready » en orange. Écrit en SVG directement dans les trois
   pages, pour suivre les couleurs du CSS et s'animer (les ronds
   s'allument un par un à l'arrivée). `assets/favicon.svg` en est la
   version icône, couleurs écrites en dur.
