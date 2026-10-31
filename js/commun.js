@@ -1,0 +1,222 @@
+/* CE QUI SERT AUX DEUX PAGES
+
+   Ce fichier est un « module » : il range ses outils derrière le mot
+   export, et les autres fichiers vont les chercher avec import. Le
+   HTML le charge avec <script type="module">, ce qui a deux effets :
+   le script attend que la page soit construite avant de démarrer, et
+   chaque fichier n'est téléchargé qu'une fois même si plusieurs
+   l'importent. */
+
+
+/* LES RÉGLAGES — à garder identiques à ceux de functions/_outils.js,
+   qui refuse tout ce qui en sort. */
+
+// L'agenda va de 9 h à 3 h du matin. Au-delà de 23, l'heure appartient
+// à la soirée de la veille : 25 = 1 h du matin la nuit qui suit.
+export const HEURE_DEBUT = 9;
+export const HEURE_FIN = 27; // exclue : la dernière case est 2 h – 3 h
+
+export const COULEURS = [
+  '#ff6b6b', '#ffa94d', '#ffd43b', '#69db7c',
+  '#4dd4e8', '#748ffc', '#b197fc', '#f783ac',
+];
+
+// Proposés dans le formulaire de soirée, après les jeux que les
+// membres ont mis dans leur profil. On peut toujours écrire autre chose.
+export const JEUX_CONNUS = [
+  'Among Us', 'Fortnite', 'Minecraft', 'Valorant', 'League of Legends',
+  'Rocket League', 'Mario Kart', 'Fall Guys', 'Apex Legends',
+  'Overwatch 2', 'Counter-Strike 2', 'Lethal Company', 'Gartic Phone',
+  'Jeux de société en ligne',
+];
+
+
+/* PARLER AU SERVEUR
+
+   Une seule fonction pour toutes les requêtes. Elle ajoute ce qu'il
+   faut à chaque fois (le format JSON, le jeton), et transforme toute
+   réponse d'erreur en exception portant la phrase du serveur. Le code
+   qui l'appelle n'a plus qu'à écrire :
+
+     try { await api(…) } catch (e) { annoncer(e.message) }
+
+   chemin : la fin de l'adresse, après /api (ex. "/groupes")
+   corps  : l'objet à envoyer, transformé en texte JSON
+   jeton  : le secret du membre, s'il en a un */
+export async function api(chemin, { methode = 'GET', corps, jeton } = {}) {
+  const entetes = {};
+  if (corps !== undefined) entetes['Content-Type'] = 'application/json';
+  if (jeton) entetes.Authorization = 'Bearer ' + jeton;
+
+  let reponse;
+  try {
+    reponse = await fetch('/api' + chemin, {
+      method: methode,
+      headers: entetes,
+      body: corps === undefined ? undefined : JSON.stringify(corps),
+      // keepalive : l'envoi va au bout même si la page se ferme juste
+      // après (dernières cases cochées avant de quitter l'onglet).
+      keepalive: methode !== 'GET',
+    });
+  } catch {
+    // fetch n'échoue de lui-même que si le serveur est injoignable.
+    throw new Error('Impossible de joindre le serveur. Vérifie ta connexion.');
+  }
+
+  // .catch(() => ({})) : une réponse vide ou qui n'est pas du JSON
+  // donne un objet vide au lieu de tout faire planter.
+  const donnees = await reponse.json().catch(() => ({}));
+  if (!reponse.ok) {
+    const probleme = new Error(donnees.erreur || `Le serveur a répondu ${reponse.status}.`);
+    probleme.statut = reponse.status;
+    throw probleme;
+  }
+  return donnees;
+}
+
+
+/* CE QUE LE NAVIGATEUR RETIENT
+
+   Tout tient dans une seule clé du localStorage, « dispos » :
+
+     { "ABCD2345": { nom: "Les potes", jeton: "…" }, … }
+
+   Le nom sert à la liste « Tes groupes » de l'accueil ; le jeton
+   prouve au serveur qui tu es dans ce groupe. Ni cookie, ni compte.
+
+   Les try/catch : en navigation privée, ou si le visiteur a bloqué le
+   stockage, localStorage peut refuser de lire ou d'écrire. Le site
+   marche alors quand même, il oubliera juste tout à la fermeture. */
+const CLE = 'dispos';
+
+export function lireGroupes() {
+  try {
+    return JSON.parse(localStorage.getItem(CLE)) || {};
+  } catch {
+    return {};
+  }
+}
+
+// Fusionne : retenirGroupe(code, { jeton }) garde le nom déjà connu.
+export function retenirGroupe(code, infos) {
+  const groupes = lireGroupes();
+  groupes[code] = { ...groupes[code], ...infos };
+  try {
+    localStorage.setItem(CLE, JSON.stringify(groupes));
+  } catch {
+    // Rien à faire : voir plus haut.
+  }
+}
+
+
+/* LES DATES
+
+   Piège classique : date.toISOString() donne la date à Londres (UTC).
+   À 0 h 30 à Paris, il est encore 23 h 30 la veille à Londres, et
+   toISOString() renverrait la mauvaise date. D'où ces petites
+   fonctions qui travaillent toujours à l'heure locale. */
+
+// Date → "2026-11-02"
+export function versTexte(date) {
+  const mois = String(date.getMonth() + 1).padStart(2, '0');
+  const jour = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${mois}-${jour}`;
+}
+
+// "2026-11-02" → Date, à minuit heure locale.
+export function depuisTexte(texte) {
+  const [annee, mois, jour] = texte.split('-').map(Number);
+  return new Date(annee, mois - 1, jour);
+}
+
+// Le navigateur gère tout seul les fins de mois : le 31 + 1 donne le 1er.
+export function ajouterJours(date, nombre) {
+  const resultat = new Date(date);
+  resultat.setDate(resultat.getDate() + nombre);
+  return resultat;
+}
+
+// Le lundi de la semaine d'une date. getDay() compte à partir du
+// dimanche (0) ; (getDay() + 6) % 7 compte à partir du lundi.
+export function lundiDe(date) {
+  const minuit = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  return ajouterJours(minuit, -((minuit.getDay() + 6) % 7));
+}
+
+// 21 → "21h", 25 → "1h"
+export function libelleHeure(heure) {
+  return (heure % 24) + 'h';
+}
+
+// Intl.DateTimeFormat écrit les dates à la française tout seul :
+// formater(date, { weekday: 'long' }) → "samedi".
+export function formater(date, options) {
+  return new Intl.DateTimeFormat('fr-FR', options).format(date);
+}
+
+// "ven. 6 nov." → "Ven. 6 nov." (la première lettre seulement ; la
+// règle CSS text-transform: capitalize mettrait aussi « Nov. »).
+export function majuscule(texte) {
+  return texte.charAt(0).toUpperCase() + texte.slice(1);
+}
+
+// "Ce soir" / "Demain" / "Sam. 8 nov." pour une date donnée.
+export function jourRelatif(date) {
+  const aujourdhui = versTexte(new Date());
+  if (versTexte(date) === aujourdhui) return date.getHours() >= 18 ? 'Ce soir' : "Aujourd'hui";
+  if (versTexte(date) === versTexte(ajouterJours(new Date(), 1))) return 'Demain';
+  return majuscule(formater(date, { weekday: 'short', day: 'numeric', month: 'short' }));
+}
+
+
+/* LES PETITS MORCEAUX D'INTERFACE */
+
+/* Fabrique un élément HTML : creer('p', 'aide', 'Bonjour') donne
+   <p class="aide">Bonjour</p>. Le texte passe par textContent : tout
+   ce qu'un membre a écrit s'affiche tel quel, sans jamais être
+   interprété comme du code. Un pseudo comme <img onerror=…> reste donc
+   du texte inoffensif. C'est la raison pour laquelle ce site n'utilise
+   jamais innerHTML. */
+export function creer(balise, classe, texte) {
+  const element = document.createElement(balise);
+  if (classe) element.className = classe;
+  if (texte !== undefined) element.textContent = texte;
+  return element;
+}
+
+/* Un avatar : un rond de la couleur du membre, avec l'initiale de son
+   pseudo. Array.from découpe par caractère réel : un pseudo qui
+   commence par un émoji garde son émoji entier, alors que pseudo[0]
+   n'en prendrait que la moitié. */
+export function avatar(membre) {
+  const rond = creer('span', 'avatar', Array.from(membre.pseudo)[0].toUpperCase());
+  rond.title = membre.pseudo;
+  // La couleur passe par une variable CSS : la feuille de style
+  // décide de l'usage (fond du rond, bordure…).
+  rond.style.setProperty('--couleur', membre.couleur);
+  return rond;
+}
+
+/* Le message qui apparaît quelques secondes en bas de l'écran. La zone
+   a role="status" dans le HTML : un lecteur d'écran lit chaque
+   nouveau message à voix haute. */
+let minuterieAnnonce;
+export function annoncer(message, type = 'info') {
+  const zone = document.getElementById('annonce');
+  zone.textContent = message;
+  zone.dataset.type = type;
+  zone.classList.add('visible');
+  clearTimeout(minuterieAnnonce);
+  minuterieAnnonce = setTimeout(() => zone.classList.remove('visible'), 4000);
+}
+
+// Copie un texte dans le presse-papiers. Si le navigateur refuse, on
+// affiche le texte dans une petite fenêtre pour le copier à la main.
+export async function copier(texte, message) {
+  try {
+    await navigator.clipboard.writeText(texte);
+    annoncer(message);
+  } catch {
+    window.prompt('Copie ce lien :', texte);
+  }
+}

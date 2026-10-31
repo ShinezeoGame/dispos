@@ -1,0 +1,1236 @@
+/* LA MISE EN FORME DE DISPOS
+
+   Un seul fichier pour les trois pages. L'ambiance « gaming » tient à
+   peu de choses : un fond presque noir, une seule couleur vive (le
+   vert citron, celui du point « en ligne »), une police de titres
+   anguleuse, et une lueur sur ce qui compte. Tout le reste reste
+   sobre, pour que l'agenda se lise d'un coup d'œil.
+
+   Ordre du fichier : polices, couleurs, bases, puis chaque partie de
+   l'écran dans l'ordre où on la rencontre. */
+
+
+/* 1. LA POLICE DES TITRES
+
+   Chakra Petch, hébergée dans fonts/ (licence libre OFL) : rien n'est
+   demandé à Google, aucun visiteur n'est signalé à un tiers. Deux
+   graisses, 10 Ko chacune. Le texte courant utilise la police du
+   système (celle de l'iPhone, de Windows…) : zéro téléchargement.
+
+   font-display: swap : le texte s'affiche tout de suite dans une
+   police de secours, puis bascule quand Chakra Petch est arrivée. */
+@font-face {
+  font-family: 'Chakra Petch';
+  src: url('../fonts/chakra-petch-600.woff2') format('woff2');
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Chakra Petch';
+  src: url('../fonts/chakra-petch-700.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+
+
+/* 2. LES COULEURS ET LES RÉGLAGES
+
+   Toutes les couleurs passent par ces variables : pour changer
+   l'ambiance, c'est ici et nulle part ailleurs.
+
+   Contrastes mesurés sur --surface (#151924) : --texte 15:1,
+   --texte-doux 6,7:1, --accent 13:1. Le minimum recommandé pour du
+   texte est 4,5:1. */
+:root {
+  --fond: #0b0d12;
+  --surface: #151924;        /* les cartes */
+  --surface-haute: #1d2231;  /* ce qui passe au-dessus : fenêtres, survols */
+  --case: #1a1f2c;           /* une case vide de l'agenda */
+  --bordure: #262c3d;
+  --texte: #edf0f7;
+  --texte-doux: #9ba3b8;
+
+  --accent: #b5f23d;         /* vert citron : dispo, en ligne, action */
+  --accent-vif: #c8ff5a;     /* au survol */
+  --sur-accent: #0b0d12;     /* le texte posé sur l'accent */
+  --soiree: #ff5fd2;         /* rose : ce qui concerne une soirée */
+  --peutetre: #ffb547;       /* ambre : peut-être */
+  --non: #ff5d73;            /* rouge : pas dispo, erreur */
+
+  --police-titre: 'Chakra Petch', system-ui, sans-serif;
+  --police: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --rayon: 14px;
+  --rayon-petit: 9px;
+  --largeur: 72rem;          /* largeur maximale du contenu */
+  --marge: clamp(1rem, 4vw, 2rem);
+}
+
+
+/* 3. LES BASES */
+
+/* box-sizing: border-box : la largeur annoncée d'un élément comprend
+   sa bordure et sa marge intérieure. Sans ça, width: 100% + padding
+   déborde. */
+*, *::before, *::after { box-sizing: border-box; }
+
+/* [hidden] doit toujours gagner. Sans !important, un élément caché
+   qui a aussi display: flex dans sa classe resterait visible. */
+[hidden] { display: none !important; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font: 1rem/1.55 var(--police);
+  color: var(--texte);
+  /* Deux couches de fond : une lueur verte tout en haut, et une trame
+     de points très discrète, comme un écran de jeu. */
+  background:
+    radial-gradient(60rem 28rem at 50% -12rem, rgb(181 242 61 / 0.09), transparent 70%),
+    radial-gradient(rgb(255 255 255 / 0.035) 1px, transparent 1px) 0 0 / 22px 22px,
+    var(--fond);
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--police-titre);
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 0;
+}
+
+p { margin: 0; }
+a { color: var(--accent); }
+
+/* Le contour de focus, visible seulement au clavier (:focus-visible) :
+   un clic de souris ne laisse pas de cadre, la touche Tab si. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Caché à l'œil, lu par les lecteurs d'écran. */
+.visuellement-cache {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+
+/* 4. LE LOGO
+
+   Le mot « dispos » précédé d'un point vert qui pulse doucement : le
+   voyant « en ligne » des applis de jeu. */
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  font: 700 1.35rem var(--police-titre);
+  letter-spacing: 0.02em;
+  color: var(--texte);
+  text-decoration: none;
+}
+
+.logo-point {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 0 rgb(181 242 61 / 0.6);
+  animation: pouls 2.4s ease-out infinite;
+}
+
+/* L'anneau qui s'élargit et s'efface autour du point. box-shadow
+   plutôt qu'un second élément : rien à ajouter dans le HTML. */
+@keyframes pouls {
+  0% { box-shadow: 0 0 0 0 rgb(181 242 61 / 0.55); }
+  70%, 100% { box-shadow: 0 0 0 0.6rem rgb(181 242 61 / 0); }
+}
+
+
+/* 5. LES BOUTONS
+
+   .bouton : l'action principale, vert citron. Une seule par écran,
+   pour qu'on sache toujours où cliquer.
+   .bouton-second : les autres actions, en contour.
+   Hauteur minimale de 44 px : la taille d'un doigt. */
+.bouton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0 1.25rem;
+  border: 1px solid var(--accent);
+  border-radius: var(--rayon-petit);
+  background: var(--accent);
+  color: var(--sur-accent);
+  font: 700 1rem var(--police-titre);
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s, box-shadow 0.15s, border-color 0.15s;
+}
+
+.bouton:hover {
+  background: var(--accent-vif);
+  box-shadow: 0 0 0 4px rgb(181 242 61 / 0.15), 0 8px 24px -8px rgb(181 242 61 / 0.6);
+}
+
+.bouton:disabled { opacity: 0.55; cursor: wait; }
+
+.bouton-second {
+  background: transparent;
+  border-color: var(--bordure);
+  color: var(--texte);
+}
+
+.bouton-second:hover {
+  background: var(--surface-haute);
+  border-color: var(--accent);
+  box-shadow: none;
+}
+
+.bouton-petit { padding: 0 0.9rem; font-size: 0.92rem; }
+
+/* Un carré de 44 px pour une flèche ou une croix. */
+.bouton-icone {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-petit);
+  background: var(--surface);
+  color: var(--texte);
+  font: 600 1.5rem/1 var(--police-titre);
+  cursor: pointer;
+}
+
+.bouton-icone:hover { border-color: var(--accent); }
+
+/* Un bouton qui se présente comme un lien : actions secondaires. */
+.lien-discret {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--texte-doux);
+  font: inherit;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.lien-discret:hover { color: var(--texte); }
+
+
+/* 6. LES FORMULAIRES */
+label, legend {
+  display: block;
+  margin: 1rem 0 0.4rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.facultatif {
+  font-weight: 400;
+  font-size: 0.85rem;
+  color: var(--texte-doux);
+}
+
+input, textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-petit);
+  background: var(--fond);
+  color: var(--texte);
+  font: inherit;
+}
+
+textarea { resize: vertical; }
+
+input:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgb(181 242 61 / 0.18);
+}
+
+input::placeholder, textarea::placeholder { color: #6b7389; }
+
+/* Le calendrier et l'horloge natifs, en version sombre. */
+input[type="date"], input[type="time"] { color-scheme: dark; }
+
+.erreur {
+  margin-top: 0.75rem;
+  color: var(--non);
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+/* Vide, il ne prend aucune place. */
+.erreur:empty { display: none; }
+
+.indice {
+  margin-top: 0.5rem;
+  color: var(--texte-doux);
+  font-size: 0.9rem;
+}
+.indice:empty { display: none; }
+
+
+/* 7. LES BRIQUES COMMUNES */
+.carte {
+  padding: 1.5rem;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--surface);
+}
+
+.titre-section {
+  font-size: 1.15rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.vide { color: var(--texte-doux); }
+
+/* Un avatar : le rond coloré avec l'initiale (fabriqué par commun.js). */
+.avatar {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  flex: none;
+  border-radius: 50%;
+  background: var(--couleur, var(--texte-doux));
+  color: var(--sur-accent);
+  font: 700 0.95rem var(--police-titre);
+}
+
+/* Des avatars qui se chevauchent un peu, comme une équipe. */
+.avatars { display: flex; flex-wrap: wrap; }
+.avatars .avatar {
+  margin-right: -0.4rem;
+  box-shadow: 0 0 0 2px var(--surface);
+}
+.avatars .avatar.hesitant { opacity: 0.45; }
+
+/* Une étiquette : un jeu, par exemple. */
+.tag {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border: 1px solid var(--bordure);
+  border-radius: 99px;
+  background: var(--surface-haute);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+/* Le message temporaire en bas de l'écran (annoncer() dans commun.js). */
+.annonce {
+  position: fixed;
+  left: 50%;
+  bottom: 1.25rem;
+  z-index: 20;
+  max-width: calc(100% - 2rem);
+  padding: 0.8rem 1.2rem;
+  border: 1px solid var(--accent);
+  border-radius: var(--rayon-petit);
+  background: var(--surface-haute);
+  box-shadow: 0 12px 32px -8px rgb(0 0 0 / 0.6);
+  font-weight: 600;
+  /* Cachée : transparente et un peu plus bas. Visible : elle remonte
+     en apparaissant. opacity plutôt que display: none, pour que les
+     lecteurs d'écran lisent bien chaque nouveau message.
+     pointer-events: none : invisible, elle ne bloque aucun clic. */
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 1rem);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.annonce.visible { opacity: 1; transform: translate(-50%, 0); }
+.annonce[data-type="erreur"] { border-color: var(--non); }
+
+
+/* 8. L'ACCUEIL */
+.entete-accueil,
+.accueil,
+.pied {
+  width: 100%;
+  max-width: var(--largeur);
+  margin: 0 auto;
+  padding-inline: var(--marge);
+}
+
+.entete-accueil { padding-block: 1rem; }
+
+.accueil {
+  flex: 1;
+  display: grid;
+  gap: 2.5rem;
+  padding-block: 1.5rem 3rem;
+}
+
+/* Le titre à gauche, l'aperçu de l'agenda à droite (sur grand écran). */
+.hero {
+  display: grid;
+  gap: 2.5rem;
+  align-items: center;
+}
+
+@media (min-width: 52rem) {
+  .hero { grid-template-columns: 1.1fr 1fr; padding-block: 2rem; }
+}
+
+.surtitre {
+  margin-bottom: 0.75rem;
+  color: var(--accent);
+  font: 600 0.9rem var(--police-titre);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.hero h1 {
+  font-size: clamp(2.4rem, 7vw, 4.2rem);
+  letter-spacing: -0.01em;
+}
+
+.accent { color: var(--accent); }
+/* « ce soir » reste sur une seule ligne. */
+.insecable { white-space: nowrap; }
+
+.chapo {
+  max-width: 32rem;
+  margin-top: 1.25rem;
+  color: var(--texte-doux);
+  font-size: 1.15rem;
+}
+
+/* L'aperçu décoratif : un bout d'agenda, légèrement incliné en
+   perspective comme un écran posé de biais. */
+.apercu {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2.5rem repeat(7, 1fr);
+  gap: 5px;
+  padding: 1.25rem;
+  border: 1px solid var(--bordure);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: 0 30px 60px -30px rgb(0 0 0 / 0.8), 0 0 80px -40px rgb(181 242 61 / 0.5);
+}
+
+@media (min-width: 52rem) {
+  .apercu { transform: perspective(1000px) rotateY(-10deg) rotateX(4deg); }
+}
+
+.apercu span { aspect-ratio: 1.4; border-radius: 6px; }
+.apercu .apercu-jour,
+.apercu .apercu-heure {
+  aspect-ratio: auto;
+  align-self: center;
+  color: var(--texte-doux);
+  font: 600 0.75rem var(--police-titre);
+  text-align: center;
+}
+.apercu .n0 { background: var(--case); }
+.apercu .n1 { background: color-mix(in srgb, var(--accent) 22%, var(--case)); }
+.apercu .n2 { background: color-mix(in srgb, var(--accent) 42%, var(--case)); }
+.apercu .n3 { background: color-mix(in srgb, var(--accent) 68%, var(--case)); }
+.apercu .n4 { background: var(--accent); }
+.apercu .apercu-top { box-shadow: 0 0 0 2px var(--fond), 0 0 0 4px var(--soiree), 0 0 18px var(--soiree); }
+
+.apercu-bulle {
+  position: absolute;
+  right: 1rem;
+  bottom: -1.1rem;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid var(--soiree);
+  border-radius: var(--rayon-petit);
+  background: var(--surface-haute);
+  font-size: 0.85rem;
+}
+.apercu-bulle strong { color: var(--soiree); margin-right: 0.3rem; }
+
+.cartes-accueil {
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 46rem) {
+  .cartes-accueil { grid-template-columns: 1fr 1fr; }
+}
+
+.cartes-accueil h2 { font-size: 1.4rem; }
+.cartes-accueil p { color: var(--texte-doux); margin-top: 0.35rem; }
+.cartes-accueil .bouton { margin-top: 1.25rem; width: 100%; }
+
+.mes-groupes h2,
+.etapes h2 {
+  margin-bottom: 1rem;
+  font-size: 1.15rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.mes-groupes ul {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mes-groupes a {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  min-height: 52px;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-petit);
+  background: var(--surface);
+  color: var(--texte);
+  font-weight: 600;
+  text-decoration: none;
+}
+.mes-groupes a:hover { border-color: var(--accent); }
+.mes-groupes .code { color: var(--texte-doux); font: 600 0.8rem var(--police-titre); letter-spacing: 0.08em; }
+
+/* Les trois étapes, numérotées en gros chiffres verts. */
+.etapes ol {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: etape;
+}
+
+@media (min-width: 46rem) {
+  .etapes ol { grid-template-columns: repeat(3, 1fr); }
+}
+
+.etapes li {
+  counter-increment: etape;
+  padding: 1.25rem;
+  border-left: 2px solid var(--accent);
+  background: linear-gradient(90deg, rgb(181 242 61 / 0.06), transparent);
+  color: var(--texte-doux);
+}
+
+.etapes li::before {
+  content: '0' counter(etape);
+  display: block;
+  margin-bottom: 0.3rem;
+  color: var(--accent);
+  font: 700 1.5rem var(--police-titre);
+}
+
+.etapes strong { color: var(--texte); }
+
+.pied {
+  padding-block: 2rem;
+  color: var(--texte-doux);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+
+/* 9. LA PAGE GROUPE : L'EN-TÊTE ET LES ONGLETS
+
+   position: sticky : l'en-tête défile avec la page jusqu'en haut de
+   l'écran, puis y reste collé. Les onglets restent toujours à portée. */
+.barre {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 1px solid var(--bordure);
+  background: var(--fond);
+}
+
+.barre-interieur,
+.onglets,
+.groupe {
+  width: 100%;
+  max-width: var(--largeur);
+  margin: 0 auto;
+  padding-inline: var(--marge);
+}
+
+.barre-interieur {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-block: 0.5rem;
+}
+
+/* Le nom du groupe prend toute la place libre ; trop long, il se
+   termine par « … » au lieu de pousser les boutons hors de l'écran. */
+.titre-groupe {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1.15rem;
+  padding-left: 0.75rem;
+  border-left: 1px solid var(--bordure);
+}
+
+.bouton-profil {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0 0.4rem;
+  border: 1px solid transparent;
+  border-radius: 99px;
+  background: none;
+  color: var(--texte);
+  font: 600 0.95rem var(--police);
+  cursor: pointer;
+}
+.bouton-profil:not(.bouton):hover { border-color: var(--bordure); background: var(--surface); }
+.bouton-profil.bouton { border-radius: var(--rayon-petit); font-family: var(--police-titre); }
+
+/* Sur téléphone : le logo réduit à son point, le pseudo à l'avatar. */
+@media (max-width: 40rem) {
+  .logo-texte, .bouton-profil-nom { display: none; }
+  .titre-groupe { padding-left: 0.5rem; }
+}
+
+.onglets [role="tablist"] { display: flex; gap: 0.25rem; }
+
+.onglets [role="tab"] {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 46px;
+  padding: 0 1rem;
+  border: 0;
+  background: none;
+  color: var(--texte-doux);
+  font: 600 1rem var(--police-titre);
+  cursor: pointer;
+}
+.onglets [role="tab"]:hover { color: var(--texte); }
+.onglets [role="tab"][aria-selected="true"] { color: var(--texte); }
+
+/* Le trait vert sous l'onglet actif, avec sa lueur. */
+.onglets [role="tab"][aria-selected="true"]::after {
+  content: '';
+  position: absolute;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: -1px;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent);
+}
+
+/* La pastille rose : les soirées auxquelles tu n'as pas répondu. */
+.pastille {
+  min-width: 1.3rem;
+  height: 1.3rem;
+  padding: 0 0.35rem;
+  border-radius: 99px;
+  background: var(--soiree);
+  color: var(--sur-accent);
+  font: 700 0.75rem/1.3rem var(--police-titre);
+  text-align: center;
+}
+
+.groupe {
+  flex: 1;
+  padding-block: 1.5rem 4rem;
+}
+
+.message-centre {
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+  padding: 4rem 0;
+  color: var(--texte-doux);
+  text-align: center;
+}
+.message-centre h2 { color: var(--texte); font-size: 1.6rem; }
+
+.vue-entete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+
+/* 10. L'AGENDA */
+.agenda-outils {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.semaine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.semaine-libelle {
+  min-width: 11rem;
+  text-align: center;
+  line-height: 1.25;
+}
+.semaine-libelle strong { display: block; font: 700 1.1rem var(--police-titre); }
+.semaine-libelle span { color: var(--texte-doux); font-size: 0.9rem; }
+
+/* La bascule « Le groupe / Mes dispos » : deux boutons collés, celui
+   qui est enfoncé (aria-pressed="true") est rempli de vert. */
+.bascule {
+  display: inline-flex;
+  padding: 4px;
+  border: 1px solid var(--bordure);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.bascule button {
+  min-height: 40px;
+  padding: 0 1rem;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--texte-doux);
+  font: 600 0.95rem var(--police-titre);
+  cursor: pointer;
+}
+.bascule button:hover { color: var(--texte); }
+.bascule button[aria-pressed="true"] { background: var(--accent); color: var(--sur-accent); }
+
+/* Les meilleurs créneaux : des cartes côte à côte. auto-fill crée
+   autant de colonnes de 14rem qu'il en tient. */
+.meilleurs { margin-bottom: 1.75rem; }
+.meilleurs .titre-section { margin-bottom: 0.9rem; }
+
+.meilleurs-contenu {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  align-items: start;
+}
+.meilleurs-contenu > .vide { grid-column: 1 / -1; }
+.meilleurs-contenu > .bouton { justify-self: start; }
+
+.creneau {
+  display: grid;
+  gap: 0.7rem;
+  padding: 1rem;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--surface);
+}
+/* Tout le monde est là : la carte s'allume. */
+.creneau.complet {
+  border-color: var(--accent);
+  box-shadow: 0 0 30px -12px var(--accent);
+}
+
+.creneau-quand { font: 600 1.05rem var(--police-titre); }
+.creneau-quand strong { color: var(--accent); }
+/* Les avatars restent groupés sur une ligne ; si la place manque, c'est
+   le texte qui passe dessous (flex-wrap sur le conteneur seulement). */
+.creneau-equipe { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.9rem; }
+.creneau-equipe .avatars { flex-wrap: nowrap; padding-right: 0.4rem; }
+.creneau-combien { color: var(--texte-doux); font-size: 0.9rem; }
+
+/* Sur téléphone, les cartes se rangent en une bande qui défile à
+   l'horizontale, au lieu de s'empiler et de repousser l'agenda tout en
+   bas. 85 % de large : on voit dépasser la suivante, qui invite à
+   glisser. scroll-snap aligne la carte sur le bord au lâcher.
+   :has(.creneau) : seulement quand il y a des cartes, pas pour le
+   message « Tu es seul pour l'instant ». */
+@media (max-width: 40rem) {
+  .meilleurs-contenu:has(.creneau) {
+    grid-auto-flow: column;
+    grid-auto-columns: 85%;
+    grid-template-columns: none;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    margin-inline: calc(-1 * var(--marge));
+    padding: 0.25rem var(--marge) 0.75rem;
+    scroll-padding-inline: var(--marge);
+  }
+  .creneau { scroll-snap-align: start; }
+}
+
+.aide {
+  margin-bottom: 0.9rem;
+  color: var(--texte-doux);
+  font-size: 0.92rem;
+}
+
+/* LA GRILLE
+
+   Une colonne étroite pour les heures, puis sept colonnes égales.
+   minmax(0, 1fr) : une colonne peut rétrécir autant qu'il faut ; avec
+   un simple 1fr, elle refuserait de devenir plus étroite que son
+   contenu et la grille déborderait sur téléphone.
+
+   user-select: none : glisser pour cocher ne sélectionne pas de texte. */
+.grille {
+  display: grid;
+  grid-template-columns: 2.6rem repeat(7, minmax(0, 1fr));
+  gap: 3px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.grille-jour {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding-bottom: 0.4rem;
+  color: var(--texte-doux);
+  font: 600 0.72rem/1.1 var(--police-titre);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.grille-jour-num { color: var(--texte); font-size: 1.05rem; padding: 0 0.35rem; border-radius: 7px; }
+.grille-jour.aujourdhui .grille-jour-num { background: var(--accent); color: var(--sur-accent); }
+
+.grille-heure {
+  align-self: center;
+  padding-right: 0.45rem;
+  color: var(--texte-doux);
+  font: 600 0.72rem var(--police-titre);
+  text-align: right;
+}
+
+/* UNE CASE
+
+   Sa couleur dépend de --niveau, posé par agenda.js entre 0,2 et 1 :
+   color-mix mélange le vert et le gris des cases vides dans cette
+   proportion. 0 = case vide, 1 = vert plein. */
+.case {
+  position: relative;
+  height: 1.9rem;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent) calc(var(--niveau, 0) * 100%), var(--case));
+  color: var(--texte);
+  font: 700 0.78rem var(--police-titre);
+  cursor: pointer;
+  transition: background-color 0.12s;
+}
+
+/* Le survol, seulement avec une souris (hover: hover). Sur un écran
+   tactile, le navigateur « survole » la dernière case touchée et l'y
+   laisse : un cadre fantôme resterait collé sur une case au hasard. */
+@media (hover: hover) {
+  .case:hover { box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.3); }
+  .grille.edition .case:not(:disabled):hover { box-shadow: inset 0 0 0 2px var(--accent); }
+}
+.case.forte { color: var(--sur-accent); }
+.case.passee { opacity: 0.35; }
+
+/* Tout le monde est dispo : la case brille. */
+.case.complete { box-shadow: 0 0 14px -2px var(--accent); }
+
+/* Le petit point en haut à gauche : tu fais partie des dispos.
+   currentColor reprend la couleur du chiffre, lisible sur toutes les
+   intensités. */
+.case.moi::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Une soirée commence à cette heure-là : un cadre rose. */
+.case.avec-soiree::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--soiree);
+  border-radius: 6px;
+  box-shadow: 0 0 10px -2px var(--soiree);
+}
+
+.case.choisie { box-shadow: inset 0 0 0 2px var(--texte); }
+
+/* Minuit ouvre la nuit : un petit espace la sépare de la soirée. */
+.case.minuit, .grille-heure.minuit { margin-top: 0.5rem; }
+
+/* MODE « MES DISPOS »
+
+   Les cases oublient le nombre de dispos : vides en gris, cochées en
+   vert. touch-action: none : sur écran tactile, glisser le doigt sur
+   une case coche au lieu de faire défiler la page. On fait défiler en
+   glissant sur la colonne des heures. */
+.grille.edition .case {
+  background: var(--case);
+  touch-action: none;
+}
+.grille.edition .case.cochee { background: var(--accent); }
+.grille.edition .case:disabled { cursor: not-allowed; }
+
+@media (max-width: 30rem) {
+  .grille { grid-template-columns: 2.1rem repeat(7, minmax(0, 1fr)); gap: 2px; }
+  .case { height: 1.75rem; border-radius: 5px; font-size: 0.72rem; }
+  .grille-heure { padding-right: 0.3rem; font-size: 0.66rem; }
+}
+
+.sous-grille {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+  margin-top: 1rem;
+  min-height: 1.5rem;
+}
+
+/* La légende : le dégradé, le cadre rose, le point. */
+.legende {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+  color: var(--texte-doux);
+  font-size: 0.82rem;
+}
+.legende > span { display: inline-flex; align-items: center; gap: 0.45rem; }
+.legende i { display: inline-block; flex: none; }
+.legende-degrade i {
+  width: 4.5rem;
+  height: 0.7rem;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--case), color-mix(in srgb, var(--accent) 20%, var(--case)), var(--accent));
+}
+.legende-soiree {
+  width: 1rem;
+  height: 0.8rem;
+  border: 2px solid var(--soiree);
+  border-radius: 3px;
+}
+.legende-moi {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--texte);
+}
+
+.statut { color: var(--accent); font-size: 0.88rem; font-weight: 600; }
+
+/* Le détail d'une case touchée en mode groupe. */
+.detail-case {
+  display: grid;
+  gap: 0.8rem;
+  justify-items: start;
+  margin-top: 1.25rem;
+  padding: 1.1rem 1.25rem;
+  border: 1px solid var(--bordure);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--rayon);
+  background: var(--surface);
+}
+.detail-titre { font-size: 1.05rem; }
+
+.detail-membres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.detail-membres li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.2rem 0.75rem 0.2rem 0.2rem;
+  border-radius: 99px;
+  background: var(--surface-haute);
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+.detail-membres .avatar { width: 1.7rem; height: 1.7rem; font-size: 0.8rem; }
+
+.detail-soiree { color: var(--soiree); font-weight: 600; }
+.detail-soiree::before { content: '◆ '; }
+
+
+/* 11. LES SOIRÉES
+
+   Chaque soirée : à gauche la date en gros, à droite le reste. */
+.liste-soirees { display: grid; gap: 1rem; }
+
+.soiree {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  gap: 1.25rem;
+  padding: 1.25rem;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--surface);
+}
+
+/* La soirée du jour ressort, en rose. */
+.soiree.aujourdhui {
+  border-color: var(--soiree);
+  box-shadow: 0 0 34px -16px var(--soiree);
+}
+
+.soiree-date {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 0.15rem;
+  padding: 0.75rem 0.25rem;
+  border-radius: var(--rayon-petit);
+  background: var(--surface-haute);
+  text-align: center;
+}
+.soiree-jour { color: var(--texte-doux); font: 600 0.82rem/1.2 var(--police-titre); text-transform: uppercase; }
+.soiree-heure { font: 700 1.5rem var(--police-titre); }
+.soiree.aujourdhui .soiree-jour { color: var(--soiree); }
+
+.soiree-corps { display: grid; gap: 0.6rem; min-width: 0; }
+.soiree-titre { font-size: 1.3rem; }
+.soiree-infos { color: var(--texte-doux); font-size: 0.9rem; }
+/* white-space: pre-line : les retours à la ligne du petit mot sont gardés. */
+.soiree-note { white-space: pre-line; overflow-wrap: anywhere; }
+
+.soiree-equipe {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1rem;
+}
+.soiree-avatars:empty { display: none; }
+.soiree-compte { color: var(--texte-doux); font-size: 0.9rem; }
+
+.soiree-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-top: 0.25rem;
+}
+
+/* Les trois réponses, en bascule. La réponse choisie prend sa couleur :
+   vert, ambre ou rouge. */
+.choix { display: inline-flex; flex-wrap: wrap; gap: 0.4rem; }
+
+.choix button {
+  min-height: 44px;
+  padding: 0 1rem;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-petit);
+  background: transparent;
+  color: var(--texte);
+  font: 600 0.95rem var(--police-titre);
+  cursor: pointer;
+}
+.choix button:hover { background: var(--surface-haute); }
+.choix button:disabled { opacity: 0.6; cursor: wait; }
+.choix [data-reponse="oui"][aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--sur-accent); }
+.choix [data-reponse="peutetre"][aria-pressed="true"] { background: var(--peutetre); border-color: var(--peutetre); color: var(--sur-accent); }
+.choix [data-reponse="non"][aria-pressed="true"] { background: var(--non); border-color: var(--non); color: var(--sur-accent); }
+
+@media (max-width: 34rem) {
+  .soiree { grid-template-columns: 1fr; gap: 0.9rem; }
+  /* Sur téléphone, la date passe en bandeau horizontal au-dessus. */
+  .soiree-date { grid-auto-flow: column; justify-content: start; gap: 0.6rem; padding: 0.5rem 0.75rem; }
+  .soiree-heure { font-size: 1.15rem; }
+  .choix { width: 100%; }
+  .choix button { flex: 1; padding: 0 0.5rem; }
+}
+
+
+/* 12. LA TEAM */
+.liste-membres {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  align-items: start;
+}
+
+/* Le liseré du haut prend la couleur du membre (variable --couleur,
+   posée par team.js). */
+.membre {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+  padding: 1.25rem;
+  border: 1px solid var(--bordure);
+  border-top: 3px solid var(--couleur);
+  border-radius: var(--rayon);
+  background: var(--surface);
+}
+
+.membre-tete {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  width: 100%;
+}
+.membre-tete .avatar { width: 2.75rem; height: 2.75rem; font-size: 1.2rem; }
+.membre-tete > div { flex: 1; min-width: 0; }
+.membre-pseudo { font-size: 1.2rem; overflow-wrap: anywhere; }
+.membre-semaine { color: var(--texte-doux); font-size: 0.85rem; }
+
+.membre-toi {
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--accent);
+  border-radius: 99px;
+  color: var(--accent);
+  font: 600 0.75rem var(--police-titre);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.membre-jeux {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.membre-sous-titre {
+  color: var(--texte-doux);
+  font: 600 0.78rem var(--police-titre);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.membre-bio { white-space: pre-line; overflow-wrap: anywhere; margin-top: -0.4rem; }
+.membre-bio.vide { color: var(--texte-doux); font-style: italic; }
+
+
+/* 13. LES FENÊTRES (<dialog>)
+
+   Le formulaire remplit toute la fenêtre (padding sur lui, pas sur le
+   dialog) : un clic dont la cible est le dialog lui-même vient donc
+   forcément du fond assombri, et groupe.js ferme alors la fenêtre. */
+.dialogue {
+  width: min(32rem, calc(100% - 1.5rem));
+  max-height: calc(100% - 1.5rem);
+  padding: 0;
+  border: 1px solid var(--bordure);
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--texte);
+  box-shadow: 0 30px 80px -20px rgb(0 0 0 / 0.8);
+}
+
+/* ::backdrop : le voile posé derrière la fenêtre, sur toute la page. */
+.dialogue::backdrop { background: rgb(5 6 10 / 0.72); }
+
+.dialogue form { padding: 1.5rem; }
+
+.dialogue-tete {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+.dialogue-tete h2 { font-size: 1.4rem; overflow-wrap: anywhere; }
+
+.dialogue-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 1.5rem;
+}
+/* Les boutons s'élargissent pour remplir la ligne ; s'ils n'y tiennent
+   pas côte à côte (téléphone), chacun prend une ligne entière. */
+.dialogue-actions .bouton { flex: 1 1 auto; }
+
+.champs-cote {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 0.9rem;
+}
+
+/* Les pastilles de couleur du profil. Le bouton radio est caché sous
+   la pastille (opacity: 0), mais reste là : le clavier et les lecteurs
+   d'écran s'en servent normalement. */
+.couleurs { margin: 0; padding: 0; border: 0; min-width: 0; }
+
+.couleurs-liste { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+.pastille-couleur {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  border-radius: 50%;
+  background: var(--couleur);
+  cursor: pointer;
+}
+.pastille-couleur input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+/* :has() : la pastille se reconnaît cochée ou visée au clavier à
+   travers son bouton radio. */
+.pastille-couleur:has(input:checked) { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--texte); }
+.pastille-couleur:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 5px; }
+
+.lien-perso {
+  margin-top: 1.25rem;
+  padding: 1rem;
+  border: 1px dashed var(--bordure);
+  border-radius: var(--rayon-petit);
+}
+.lien-perso h3 { font-size: 1rem; }
+.lien-perso p { margin: 0.35rem 0 0.75rem; color: var(--texte-doux); font-size: 0.9rem; }
+
+
+/* 14. MOINS DE MOUVEMENT
+
+   Si le visiteur a demandé à son système de limiter les animations
+   (réglage d'accessibilité), le point du logo cesse de pulser et le
+   message du bas apparaît sans glisser. Rien ne disparaît pour autant. */
+@media (prefers-reduced-motion: reduce) {
+  .logo-point { animation: none; }
+  .annonce, .case, .bouton { transition: none; }
+  .apercu { transform: none; }
+}

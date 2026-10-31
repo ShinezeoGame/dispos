@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Groupe · dispos</title>
+  <!-- Un groupe est privé : on demande aux moteurs de recherche de ne
+       jamais le référencer, même si un lien traînait quelque part. -->
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0b0d12">
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="/fonts/chakra-petch-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/css/style.css">
+  <!-- Un seul script : groupe.js importe lui-même les autres. -->
+  <script type="module" src="/js/groupe.js"></script>
+</head>
+<body>
+  <!-- L'EN-TÊTE, collé en haut de l'écran : le groupe, l'invitation,
+       ton profil, puis les trois onglets. -->
+  <header class="barre">
+    <div class="barre-interieur">
+      <a class="logo" href="/" aria-label="dispos, retour à l'accueil"><span class="logo-point" aria-hidden="true"></span><span class="logo-texte">dispos</span></a>
+      <h1 id="titre-groupe" class="titre-groupe"></h1>
+      <button id="bouton-inviter" class="bouton bouton-second bouton-petit" type="button" hidden>Inviter</button>
+      <button id="bouton-profil" class="bouton-profil" type="button" hidden></button>
+    </div>
+
+    <!-- Les onglets suivent le modèle « tablist » : un lecteur d'écran
+         annonce « onglet 1 sur 3, sélectionné », et les flèches du
+         clavier passent de l'un à l'autre (géré par groupe.js). -->
+    <nav class="onglets" aria-label="Sections du groupe" hidden>
+      <div role="tablist">
+        <button role="tab" type="button" id="onglet-agenda" aria-controls="vue-agenda" aria-selected="true">Agenda</button>
+        <button role="tab" type="button" id="onglet-soirees" aria-controls="vue-soirees" aria-selected="false" tabindex="-1">Soirées <span id="pastille-soirees" class="pastille" hidden></span></button>
+        <button role="tab" type="button" id="onglet-team" aria-controls="vue-team" aria-selected="false" tabindex="-1">La team</button>
+      </div>
+    </nav>
+  </header>
+
+  <main class="groupe">
+    <p id="chargement" class="message-centre">Chargement du groupe…</p>
+
+    <section id="erreur-groupe" class="message-centre" hidden>
+      <h2>Oups</h2>
+      <p id="erreur-groupe-texte"></p>
+      <a class="bouton" href="/">Retour à l'accueil</a>
+    </section>
+
+
+    <!-- L'AGENDA (js/agenda.js) -->
+    <section id="vue-agenda" class="vue" role="tabpanel" aria-labelledby="onglet-agenda" hidden>
+      <div class="agenda-outils">
+        <div class="semaine">
+          <button id="semaine-avant" class="bouton-icone" type="button" aria-label="Semaine précédente">‹</button>
+          <p class="semaine-libelle"><strong id="semaine-titre"></strong> <span id="semaine-dates"></span></p>
+          <button id="semaine-apres" class="bouton-icone" type="button" aria-label="Semaine suivante">›</button>
+          <button id="semaine-retour" class="lien-discret" type="button" hidden>Revenir à cette semaine</button>
+        </div>
+        <div class="bascule" role="group" aria-label="Ce que montre l'agenda">
+          <button type="button" data-mode="groupe" aria-pressed="true">Le groupe</button>
+          <button type="button" data-mode="moi" aria-pressed="false">Mes dispos</button>
+        </div>
+      </div>
+
+      <section id="meilleurs" class="meilleurs" aria-labelledby="titre-meilleurs">
+        <h2 id="titre-meilleurs" class="titre-section">Meilleurs créneaux</h2>
+        <div id="meilleurs-contenu" class="meilleurs-contenu"></div>
+      </section>
+
+      <p id="aide-agenda" class="aide"></p>
+
+      <!-- La grille est entièrement fabriquée par js/agenda.js :
+           7 jours × 18 heures, chaque case est un bouton. -->
+      <div id="grille" class="grille"></div>
+
+      <div class="sous-grille">
+        <div id="legende" class="legende">
+          <span class="legende-degrade"><span>Personne</span><i aria-hidden="true"></i><span>Tout le monde</span></span>
+          <span><i class="legende-soiree" aria-hidden="true"></i>Soirée prévue</span>
+          <span><i class="legende-moi" aria-hidden="true"></i>Tu es dispo</span>
+        </div>
+        <p id="statut-sauvegarde" class="statut" aria-live="polite"></p>
+      </div>
+
+      <div id="detail-case" class="detail-case" hidden></div>
+    </section>
+
+
+    <!-- LES SOIRÉES (js/soirees.js) -->
+    <section id="vue-soirees" class="vue" role="tabpanel" aria-labelledby="onglet-soirees" hidden>
+      <div class="vue-entete">
+        <h2 class="titre-section">Prochaines soirées</h2>
+        <button id="bouton-proposer" class="bouton" type="button">Proposer une soirée</button>
+      </div>
+      <div id="liste-soirees" class="liste-soirees"></div>
+      <p id="aucune-soiree" class="vide" hidden>Aucune soirée prévue pour l'instant. Lance la première !</p>
+    </section>
+
+
+    <!-- LA TEAM (js/team.js) -->
+    <section id="vue-team" class="vue" role="tabpanel" aria-labelledby="onglet-team" hidden>
+      <div class="vue-entete">
+        <h2 class="titre-section">La team</h2>
+        <button id="bouton-inviter-team" class="bouton bouton-second" type="button">Inviter des potes</button>
+      </div>
+      <div id="liste-membres" class="liste-membres"></div>
+    </section>
+  </main>
+
+
+  <!-- LES MODÈLES
+
+       Un <template> n'est jamais affiché : c'est un moule. Le script en
+       fait une copie (cloneNode) pour chaque soirée ou chaque membre,
+       puis remplit les trous avec textContent. La structure reste ici,
+       dans le HTML, lisible d'un coup d'œil. -->
+  <template id="modele-soiree">
+    <article class="soiree">
+      <div class="soiree-date">
+        <span class="soiree-jour"></span>
+        <span class="soiree-heure"></span>
+      </div>
+      <div class="soiree-corps">
+        <h3 class="soiree-titre"></h3>
+        <p class="soiree-infos"><span class="tag soiree-jeu"></span> <span class="soiree-auteur"></span></p>
+        <p class="soiree-note"></p>
+        <div class="soiree-equipe">
+          <div class="avatars soiree-avatars"></div>
+          <p class="soiree-compte"></p>
+        </div>
+        <div class="soiree-actions">
+          <div class="choix" role="group" aria-label="Ta réponse">
+            <button type="button" data-reponse="oui">Chaud</button>
+            <button type="button" data-reponse="peutetre">Peut-être</button>
+            <button type="button" data-reponse="non">Pas dispo</button>
+          </div>
+          <button type="button" class="lien-discret soiree-annuler" hidden>Annuler la soirée</button>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <template id="modele-membre">
+    <article class="membre">
+      <div class="membre-tete">
+        <div>
+          <h3 class="membre-pseudo"></h3>
+          <p class="membre-semaine"></p>
+        </div>
+        <span class="membre-toi" hidden>toi</span>
+      </div>
+      <ul class="membre-jeux"></ul>
+      <h4 class="membre-sous-titre">Dispos habituelles</h4>
+      <p class="membre-bio"></p>
+      <button type="button" class="bouton bouton-second bouton-petit membre-modifier" hidden>Modifier mon profil</button>
+    </article>
+  </template>
+
+
+  <!-- LES FENÊTRES
+
+       <dialog> est une fenêtre native du navigateur. Ouverte avec
+       showModal(), elle passe au-dessus de tout, garde le focus du
+       clavier à l'intérieur et se ferme avec Échap, sans une ligne de
+       code pour ça. -->
+  <dialog id="dialogue-soiree" class="dialogue" aria-labelledby="titre-dialogue-soiree">
+    <form id="form-soiree">
+      <div class="dialogue-tete">
+        <h2 id="titre-dialogue-soiree">Proposer une soirée</h2>
+        <button type="button" class="bouton-icone" data-fermer aria-label="Fermer">×</button>
+      </div>
+
+      <label for="soiree-jeu">Jeu</label>
+      <!-- autofocus : à l'ouverture de la fenêtre, le curseur se place
+           ici plutôt que sur la croix de fermeture. -->
+      <input id="soiree-jeu" name="jeu" list="liste-jeux" required maxlength="40" placeholder="Among Us" autocomplete="off" autofocus>
+      <datalist id="liste-jeux"></datalist>
+
+      <div class="champs-cote">
+        <div>
+          <label for="soiree-jour">Date</label>
+          <input id="soiree-jour" name="jour" type="date" required>
+        </div>
+        <div>
+          <label for="soiree-horaire">Heure</label>
+          <input id="soiree-horaire" name="horaire" type="time" required step="900">
+        </div>
+      </div>
+      <p id="soiree-dispos" class="indice"></p>
+
+      <label for="soiree-titre">Titre <span class="facultatif">facultatif</span></label>
+      <input id="soiree-titre" name="titre" maxlength="60" autocomplete="off">
+
+      <label for="soiree-note">Un petit mot <span class="facultatif">facultatif</span></label>
+      <textarea id="soiree-note" name="note" maxlength="300" rows="3" placeholder="On se retrouve sur le Discord, salon Jeux."></textarea>
+
+      <p class="erreur" role="alert"></p>
+      <div class="dialogue-actions">
+        <button type="button" class="bouton bouton-second" data-fermer>Annuler</button>
+        <button type="submit" class="bouton">Proposer</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="dialogue-profil" class="dialogue" aria-labelledby="titre-dialogue-profil">
+    <form id="form-profil">
+      <div class="dialogue-tete">
+        <h2 id="titre-dialogue-profil">Ton profil</h2>
+        <button type="button" class="bouton-icone" data-fermer aria-label="Fermer">×</button>
+      </div>
+      <p id="profil-intro" class="indice"></p>
+
+      <label for="profil-pseudo">Pseudo</label>
+      <input id="profil-pseudo" name="pseudo" required maxlength="24" autocomplete="nickname" autofocus>
+
+      <fieldset class="couleurs">
+        <legend>Ta couleur</legend>
+        <div id="profil-couleurs" class="couleurs-liste"></div>
+      </fieldset>
+
+      <label for="profil-jeux">Tes jeux <span class="facultatif">séparés par des virgules</span></label>
+      <input id="profil-jeux" name="jeux" maxlength="200" placeholder="Among Us, Minecraft, Valorant" autocomplete="off">
+
+      <label for="profil-bio">Tes dispos habituelles <span class="facultatif">facultatif</span></label>
+      <textarea id="profil-bio" name="bio" maxlength="500" rows="3" placeholder="En semaine après 20h, le week-end l'aprèm. Jamais le dimanche matin."></textarea>
+
+      <div id="profil-lien-perso" class="lien-perso" hidden>
+        <h3>Ton lien perso</h3>
+        <p>Ouvre-le sur ton téléphone ou un autre ordi pour y retrouver ton profil. Garde-le pour toi : il permet de modifier tes dispos.</p>
+        <button type="button" id="copier-lien-perso" class="bouton bouton-second bouton-petit">Copier mon lien perso</button>
+      </div>
+
+      <p class="erreur" role="alert"></p>
+      <div class="dialogue-actions">
+        <button type="button" id="profil-annuler" class="bouton bouton-second" data-fermer>Annuler</button>
+        <button type="submit" id="profil-valider" class="bouton">Enregistrer</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="annonce" class="annonce" role="status" aria-live="polite"></div>
+</body>
+</html>

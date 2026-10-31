@@ -1,0 +1,5 @@
+# Les moteurs de recherche peuvent lire l'accueil, mais jamais les
+# groupes (privés) ni l'API.
+User-agent: *
+Disallow: /groupe
+Disallow: /api/

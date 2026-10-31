@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dispos · qui est chaud ce soir ?</title>
+  <meta name="description" content="Partage tes dispos avec tes potes, trouve le créneau où tout le monde est là et lance la soirée de jeu.">
+  <meta name="theme-color" content="#0b0d12">
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <!-- preload : la police des titres part tout de suite, sans attendre
+       que le navigateur la découvre dans la feuille de style. -->
+  <link rel="preload" href="/fonts/chakra-petch-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/css/style.css">
+  <script type="module" src="/js/accueil.js"></script>
+</head>
+<body>
+  <header class="entete-accueil">
+    <a class="logo" href="/"><span class="logo-point" aria-hidden="true"></span>dispos</a>
+  </header>
+
+  <main class="accueil">
+    <section class="hero">
+      <div class="hero-texte">
+        <p class="surtitre">Organise tes sessions</p>
+        <h1>Qui est chaud <span class="accent insecable">ce soir</span>&nbsp;?</h1>
+        <p class="chapo">Chacun coche ses dispos, le site trouve le créneau où tout le monde est là. Plus qu'à lancer la partie.</p>
+      </div>
+
+      <!-- Un faux morceau d'agenda, purement décoratif (aria-hidden) :
+           il montre en un coup d'œil ce que fait le site. Les classes
+           n0 à n4 règlent l'intensité de chaque case. -->
+      <div class="apercu" aria-hidden="true">
+        <span></span><span class="apercu-jour">L</span><span class="apercu-jour">M</span><span class="apercu-jour">M</span><span class="apercu-jour">J</span><span class="apercu-jour">V</span><span class="apercu-jour">S</span><span class="apercu-jour">D</span>
+        <span class="apercu-heure">19h</span><span class="n1"></span><span class="n1"></span><span class="n0"></span><span class="n2"></span><span class="n2"></span><span class="n3"></span><span class="n2"></span>
+        <span class="apercu-heure">20h</span><span class="n1"></span><span class="n2"></span><span class="n1"></span><span class="n2"></span><span class="n3"></span><span class="n4"></span><span class="n2"></span>
+        <span class="apercu-heure">21h</span><span class="n2"></span><span class="n3"></span><span class="n1"></span><span class="n3"></span><span class="n4 apercu-top"></span><span class="n3"></span><span class="n1"></span>
+        <span class="apercu-heure">22h</span><span class="n1"></span><span class="n2"></span><span class="n0"></span><span class="n2"></span><span class="n4"></span><span class="n3"></span><span class="n1"></span>
+        <span class="apercu-heure">23h</span><span class="n0"></span><span class="n1"></span><span class="n0"></span><span class="n1"></span><span class="n3"></span><span class="n2"></span><span class="n0"></span>
+        <p class="apercu-bulle"><strong>Ven. 21h</strong> 5 sur 5 dispos</p>
+      </div>
+    </section>
+
+    <noscript>
+      <p class="carte">Ce site a besoin de JavaScript pour fonctionner. Active-le dans ton navigateur.</p>
+    </noscript>
+
+    <section class="cartes-accueil">
+      <form id="form-creer" class="carte">
+        <h2>Créer un groupe</h2>
+        <p>Pour ta bande, ta guilde ou ton serveur Discord.</p>
+        <label for="nom-groupe">Nom du groupe</label>
+        <input id="nom-groupe" name="nom" maxlength="40" required placeholder="Les potes du jeudi" autocomplete="off">
+        <p class="erreur" role="alert"></p>
+        <button class="bouton">Créer le groupe</button>
+      </form>
+
+      <form id="form-rejoindre" class="carte">
+        <h2>Rejoindre un groupe</h2>
+        <p>Colle le lien qu'on t'a envoyé, ou juste son code.</p>
+        <label for="lien">Lien ou code</label>
+        <input id="lien" name="lien" required placeholder="ABCD2345" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <p class="erreur" role="alert"></p>
+        <button class="bouton bouton-second">Rejoindre</button>
+      </form>
+    </section>
+
+    <!-- Rempli par js/accueil.js avec les groupes déjà ouverts sur cet
+         appareil. Reste caché s'il n'y en a aucun. -->
+    <section id="mes-groupes" class="mes-groupes" hidden>
+      <h2>Tes groupes</h2>
+      <ul id="liste-groupes"></ul>
+    </section>
+
+    <section class="etapes" aria-labelledby="titre-etapes">
+      <h2 id="titre-etapes">Comment ça marche</h2>
+      <ol>
+        <li><strong>Crée un groupe</strong> et envoie le lien à tes potes.</li>
+        <li><strong>Chacun coche ses dispos</strong> dans l'agenda commun, ou les écrit dans son profil.</li>
+        <li><strong>Propose une soirée</strong> sur le meilleur créneau. Among Us vendredi 21h, qui est chaud ?</li>
+      </ol>
+    </section>
+  </main>
+
+  <footer class="pied">Pas de compte, pas de pub, pas de cookie.</footer>
+
+  <div id="annonce" class="annonce" role="status" aria-live="polite"></div>
+</body>
+</html>
