@@ -104,6 +104,15 @@ nom de domaine à part reste à choisir.
   Ne pas « simplifier » en chargeant les images depuis images.igdb.com.
 - Un jeu absent d'IGDB s'ajoute « tel quel » (sans image), et le site
   reste utilisable si la recherche est en panne ou pas configurée.
+- **Pas de texte inutile** (demandé le 31 oct. 2026) : pas de phrases
+  d'aide, d'intro ni de remplissage (« facultatif », « pas encore
+  renseigné », titres qui répètent l'onglet…). Une zone sans contenu se
+  cache plutôt que d'afficher un message. Seules restent les aides qui
+  apprennent un geste (glisser pour cocher) et l'avertissement de garder
+  son lien perso secret.
+- **Un seul bouton d'invitation** : « Inviter », dans l'en-tête, en
+  orange tant qu'on est seul dans le groupe (groupe.js). Pas d'autre
+  bouton « copier le lien » ailleurs dans la page.
 - Pas de README avant que le site soit terminé (demandé le 31 oct. 2026).
 
 ## Les fichiers

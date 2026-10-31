@@ -49,9 +49,6 @@ export function ouvrirProfil() {
   document.getElementById('titre-dialogue-profil').textContent = inscription
     ? `Rejoins ${etat.groupe.nom}`
     : 'Ton profil';
-  document.getElementById('profil-intro').textContent = inscription
-    ? 'Choisis un pseudo et une couleur : c\'est comme ça que la team te verra. Le reste peut attendre.'
-    : '';
   document.getElementById('profil-lien-perso').hidden = inscription;
   document.getElementById('profil-valider').textContent = inscription ? 'Rejoindre le groupe' : 'Enregistrer';
   document.getElementById('profil-annuler').textContent = inscription ? 'Juste regarder' : 'Annuler';
@@ -98,7 +95,7 @@ formulaire.addEventListener('submit', async (evenement) => {
       const { jeton } = await appeler('/membres', { methode: 'POST', corps: profil });
       etat.jeton = jeton;
       retenirGroupe(etat.code, { jeton });
-      annoncer(`Bienvenue dans ${etat.groupe.nom} ! Coche tes dispos dans l'agenda.`);
+      annoncer(`Bienvenue dans ${etat.groupe.nom} !`);
     }
     dialogue.close();
     await charger();
@@ -114,6 +111,6 @@ formulaire.addEventListener('submit', async (evenement) => {
 document.getElementById('copier-lien-perso').addEventListener('click', () => {
   copier(
     `${location.origin}/groupe?g=${etat.code}#moi=${etat.jeton}`,
-    'Lien perso copié. Ouvre-le sur ton autre appareil, et ne le partage pas.',
+    'Lien perso copié.',
   );
 });

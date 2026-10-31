@@ -37,9 +37,10 @@ function fabriquerCarte(membre, estMoi) {
   const quelleSemaine = etat.semaine.getTime() === lundiDe(new Date()).getTime()
     ? 'cette semaine'
     : `semaine du ${formater(etat.semaine, { day: 'numeric', month: 'short' })}`;
+  // Rien n'est écrit quand rien n'est coché : pas de texte pour rien.
   carte.querySelector('.membre-semaine').textContent = heures
     ? `${heures} h cochée${heures > 1 ? 's' : ''} ${quelleSemaine}`
-    : `Rien de coché ${quelleSemaine}`;
+    : '';
 
   // Les jeux : une étiquette par jeu, avec sa petite couverture.
   const listeJeux = carte.querySelector('.membre-jeux');
@@ -50,11 +51,10 @@ function fabriquerCarte(membre, estMoi) {
   }));
   listeJeux.hidden = membre.jeux.length === 0;
 
-  const bio = carte.querySelector('.membre-bio');
-  bio.textContent = membre.bio || (estMoi
-    ? 'Écris ici quand tu es dispo d\'habitude : tes potes le verront.'
-    : 'Pas encore renseignées.');
-  bio.classList.toggle('vide', !membre.bio);
+  // Les dispos habituelles, titre compris, seulement si elles sont remplies.
+  carte.querySelector('.membre-bio').textContent = membre.bio;
+  carte.querySelector('.membre-sous-titre').hidden = !membre.bio;
+  carte.querySelector('.membre-bio').hidden = !membre.bio;
 
   if (estMoi) {
     const modifier = carte.querySelector('.membre-modifier');

@@ -43,9 +43,8 @@
   <main class="accueil">
     <section class="hero">
       <div class="hero-texte">
-        <p class="surtitre">Organise tes sessions</p>
         <h1>Qui est chaud <span class="accent insecable">ce soir</span>&nbsp;?</h1>
-        <p class="chapo">Chacun coche ses dispos, le site trouve le créneau où tout le monde est là. Plus qu'à lancer la partie.</p>
+        <p class="chapo">Chacun coche ses dispos, le site trouve le créneau où tout le monde est là.</p>
       </div>
 
       <!-- Un faux morceau d'agenda, purement décoratif (aria-hidden) :
@@ -69,8 +68,9 @@
     <section class="cartes-accueil">
       <form id="form-creer" class="carte">
         <h2>Créer un groupe</h2>
-        <p>Pour ta bande, ta guilde ou ton serveur Discord.</p>
-        <label for="nom-groupe">Nom du groupe</label>
+        <!-- L'étiquette reste pour les lecteurs d'écran, cachée à l'œil :
+             le titre de la carte et l'exemple dans le champ suffisent. -->
+        <label for="nom-groupe" class="visuellement-cache">Nom du groupe</label>
         <input id="nom-groupe" name="nom" maxlength="40" required placeholder="Les potes du jeudi" autocomplete="off">
         <p class="erreur" role="alert"></p>
         <button class="bouton">Créer le groupe</button>
@@ -78,9 +78,8 @@
 
       <form id="form-rejoindre" class="carte">
         <h2>Rejoindre un groupe</h2>
-        <p>Colle le lien qu'on t'a envoyé, ou juste son code.</p>
-        <label for="lien">Lien ou code</label>
-        <input id="lien" name="lien" required placeholder="ABCD2345" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <label for="lien" class="visuellement-cache">Lien ou code du groupe</label>
+        <input id="lien" name="lien" required placeholder="Lien ou code" autocomplete="off" autocapitalize="characters" spellcheck="false">
         <p class="erreur" role="alert"></p>
         <button class="bouton bouton-second">Rejoindre</button>
       </form>
@@ -91,15 +90,6 @@
     <section id="mes-groupes" class="mes-groupes" hidden>
       <h2>Tes groupes</h2>
       <ul id="liste-groupes"></ul>
-    </section>
-
-    <section class="etapes" aria-labelledby="titre-etapes">
-      <h2 id="titre-etapes">Comment ça marche</h2>
-      <ol>
-        <li><strong>Crée un groupe</strong> et envoie le lien à tes potes.</li>
-        <li><strong>Chacun coche ses dispos</strong> dans l'agenda commun, ou les écrit dans son profil.</li>
-        <li><strong>Propose une soirée</strong> sur le meilleur créneau. Among Us vendredi 21h, qui est chaud ?</li>
-      </ol>
     </section>
   </main>
 

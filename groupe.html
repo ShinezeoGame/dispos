@@ -109,20 +109,15 @@
     <!-- LES SOIRÉES (js/soirees.js) -->
     <section id="vue-soirees" class="vue" role="tabpanel" aria-labelledby="onglet-soirees" hidden>
       <div class="vue-entete">
-        <h2 class="titre-section">Prochaines soirées</h2>
         <button id="bouton-proposer" class="bouton" type="button">Proposer une soirée</button>
       </div>
       <div id="liste-soirees" class="liste-soirees"></div>
-      <p id="aucune-soiree" class="vide" hidden>Aucune soirée prévue pour l'instant. Lance la première !</p>
+      <p id="aucune-soiree" class="vide" hidden>Aucune soirée prévue.</p>
     </section>
 
 
     <!-- LA TEAM (js/team.js) -->
     <section id="vue-team" class="vue" role="tabpanel" aria-labelledby="onglet-team" hidden>
-      <div class="vue-entete">
-        <h2 class="titre-section">La team</h2>
-        <button id="bouton-inviter-team" class="bouton bouton-second" type="button">Inviter des potes</button>
-      </div>
       <div id="liste-membres" class="liste-membres"></div>
     </section>
   </main>
@@ -213,7 +208,7 @@
         <input id="soiree-jeu-recherche" type="search" placeholder="Cherche un jeu : Among Us, Fortnite…" autocomplete="off" autofocus
                role="combobox" aria-controls="soiree-jeu-resultats" aria-expanded="false" aria-autocomplete="list">
         <ul id="soiree-jeu-resultats" class="resultats-jeux" role="listbox" aria-label="Jeux trouvés" hidden></ul>
-        <p class="indice jeux-note">Jeux et couvertures : IGDB.com</p>
+        <p class="indice jeux-note"></p>
       </div>
 
       <div class="champs-cote">
@@ -228,10 +223,10 @@
       </div>
       <p id="soiree-dispos" class="indice"></p>
 
-      <label for="soiree-titre">Titre <span class="facultatif">facultatif</span></label>
+      <label for="soiree-titre">Titre</label>
       <input id="soiree-titre" name="titre" maxlength="60" autocomplete="off">
 
-      <label for="soiree-note">Un petit mot <span class="facultatif">facultatif</span></label>
+      <label for="soiree-note">Petit mot</label>
       <textarea id="soiree-note" name="note" maxlength="300" rows="3" placeholder="On se retrouve sur le Discord, salon Jeux."></textarea>
 
       <p class="erreur" role="alert"></p>
@@ -248,7 +243,6 @@
         <h2 id="titre-dialogue-profil">Ton profil</h2>
         <button type="button" class="bouton-icone" data-fermer aria-label="Fermer">×</button>
       </div>
-      <p id="profil-intro" class="indice"></p>
 
       <label for="profil-pseudo">Pseudo</label>
       <input id="profil-pseudo" name="pseudo" required maxlength="24" autocomplete="nickname" autofocus>
@@ -258,21 +252,20 @@
         <div id="profil-couleurs" class="couleurs-liste"></div>
       </fieldset>
 
-      <label for="profil-jeux-recherche">Tes jeux <span class="facultatif">facultatif</span></label>
+      <label for="profil-jeux-recherche">Tes jeux</label>
       <div id="profil-jeux" class="selecteur-jeux">
         <div class="jeux-choisis" hidden></div>
         <input id="profil-jeux-recherche" type="search" placeholder="Cherche un jeu et ajoute-le" autocomplete="off"
                role="combobox" aria-controls="profil-jeux-resultats" aria-expanded="false" aria-autocomplete="list">
         <ul id="profil-jeux-resultats" class="resultats-jeux" role="listbox" aria-label="Jeux trouvés" hidden></ul>
-        <p class="indice jeux-note">Jeux et couvertures : IGDB.com</p>
+        <p class="indice jeux-note"></p>
       </div>
 
-      <label for="profil-bio">Tes dispos habituelles <span class="facultatif">facultatif</span></label>
+      <label for="profil-bio">Tes dispos habituelles</label>
       <textarea id="profil-bio" name="bio" maxlength="500" rows="3" placeholder="En semaine après 20h, le week-end l'aprèm. Jamais le dimanche matin."></textarea>
 
       <div id="profil-lien-perso" class="lien-perso" hidden>
-        <h3>Ton lien perso</h3>
-        <p>Ouvre-le sur ton téléphone ou un autre ordi pour y retrouver ton profil. Garde-le pour toi : il permet de modifier tes dispos.</p>
+        <p>Pour te retrouver sur un autre appareil. Garde-le pour toi : il permet de modifier ton profil.</p>
         <button type="button" id="copier-lien-perso" class="bouton bouton-second bouton-petit">Copier mon lien perso</button>
       </div>
 

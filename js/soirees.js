@@ -250,8 +250,8 @@ function mettreAJourDispos() {
   if (!cle) return;
   const dispos = etat.membres.filter((membre) => etat.dispos.get(membre.id)?.has(cle));
   zone.textContent = dispos.length
-    ? `D'après l'agenda, dispo${dispos.length > 1 ? 's' : ''} à cette heure : ${dispos.map((m) => (m.id === etat.moi?.id ? 'toi' : m.pseudo)).join(', ')}.`
-    : "Personne n'a coché cette heure dans l'agenda.";
+    ? `Dispo${dispos.length > 1 ? 's' : ''} : ${dispos.map((m) => (m.id === etat.moi?.id ? 'toi' : m.pseudo)).join(', ')}`
+    : 'Personne de dispo à cette heure.';
 }
 
 // Le titre suit aussi ce qu'on tape, avant même de choisir un jeu.
@@ -283,7 +283,7 @@ formulaire.addEventListener('submit', async (evenement) => {
       },
     });
     dialogue.close();
-    annoncer('Soirée proposée ! Préviens la team.');
+    annoncer('Soirée proposée !');
     // On bascule sur l'onglet Soirées pour voir la nouvelle venue.
     document.getElementById('onglet-soirees').click();
     await charger();

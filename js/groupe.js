@@ -72,10 +72,9 @@ for (const onglet of onglets) {
 const boutonProfil = document.getElementById('bouton-profil');
 
 function inviter() {
-  copier(lienGroupe(), 'Lien copié ! Colle-le sur Discord ou WhatsApp.');
+  copier(lienGroupe(), 'Lien copié !');
 }
 document.getElementById('bouton-inviter').addEventListener('click', inviter);
-document.getElementById('bouton-inviter-team').addEventListener('click', inviter);
 boutonProfil.addEventListener('click', ouvrirProfil);
 
 // Redessiné à chaque changement, comme le reste de la page.
@@ -88,7 +87,12 @@ quandCaChange(() => {
   const zoneBlague = document.getElementById('jeu-de-mots');
   zoneBlague.textContent = blague || '';
   zoneBlague.hidden = !blague;
-  document.getElementById('bouton-inviter').hidden = false;
+  /* « Inviter » est le seul bouton d'invitation du groupe. Tant qu'on est
+     seul, il passe en orange (bouton principal) pour attirer l'œil ;
+     dès qu'un pote a rejoint, il redevient discret. */
+  const boutonInviter = document.getElementById('bouton-inviter');
+  boutonInviter.hidden = false;
+  boutonInviter.classList.toggle('bouton-second', etat.membres.length >= 2);
 
   // Inscrit : ton avatar et ton pseudo. Simple visiteur : « Rejoindre ».
   boutonProfil.hidden = false;

@@ -71,7 +71,6 @@ export function selecteurJeux(racine, { multiple = false, max = 12, auChangement
   const champ = racine.querySelector('input');
   const liste = racine.querySelector('.resultats-jeux');
   const note = racine.querySelector('.jeux-note');
-  const noteParDefaut = note.textContent; // le crédit IGDB écrit dans le HTML
 
   let choisis = [];      // les jeux retenus
   let propositions = []; // ce que la liste affiche
@@ -122,6 +121,7 @@ export function selecteurJeux(racine, { multiple = false, max = 12, auChangement
     surligne = -1;
     champ.setAttribute('aria-expanded', 'false');
     champ.removeAttribute('aria-activedescendant');
+    if (note.textContent === 'Source : IGDB.com') note.textContent = '';
   }
 
   /* La liste des propositions : les jeux trouvés, puis, en dernier,
@@ -153,6 +153,8 @@ export function selecteurJeux(racine, { multiple = false, max = 12, auChangement
     surligne = -1;
     liste.hidden = propositions.length === 0;
     champ.setAttribute('aria-expanded', String(!liste.hidden));
+    // Le crédit de la source, seulement quand ses résultats sont à l'écran.
+    if (trouves.length) note.textContent = 'Source : IGDB.com';
   }
 
   function surligner(numero) {
@@ -178,7 +180,7 @@ export function selecteurJeux(racine, { multiple = false, max = 12, auChangement
     note.textContent = 'Recherche…';
     try {
       trouves = (await appeler(`/jeux?q=${encodeURIComponent(texte)}`)).jeux;
-      note.textContent = noteParDefaut;
+      note.textContent = '';
     } catch (probleme) {
       // Recherche en panne ou pas configurée : on le dit, et la liste
       // propose quand même d'ajouter le jeu tel quel.
@@ -227,7 +229,7 @@ export function selecteurJeux(racine, { multiple = false, max = 12, auChangement
     remplir(jeux) {
       choisis = [...jeux];
       champ.value = '';
-      note.textContent = noteParDefaut;
+      note.textContent = '';
       fermer();
       dessinerChoisis();
     },

@@ -336,12 +336,6 @@ label, legend {
   font-size: 0.95rem;
 }
 
-.facultatif {
-  font-weight: 400;
-  font-size: 0.85rem;
-  color: var(--texte-doux);
-}
-
 input, textarea {
   width: 100%;
   min-height: 44px;
@@ -482,6 +476,10 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 .accueil {
   flex: 1;
   display: grid;
+  /* La page remplit toute la hauteur de l'écran (flex: 1) : sans
+     align-content: start, la grille répartirait l'espace en trop entre
+     ses blocs et étirerait les cartes, avec un grand vide dedans. */
+  align-content: start;
   gap: 2.5rem;
   padding-block: 1.5rem 3rem;
 }
@@ -495,14 +493,6 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 
 @media (min-width: 52rem) {
   .hero { grid-template-columns: 1.1fr 1fr; padding-block: 2rem; }
-}
-
-.surtitre {
-  margin-bottom: 0.75rem;
-  color: var(--accent);
-  font: 600 0.9rem var(--police-titre);
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
 }
 
 .hero h1 {
@@ -577,11 +567,15 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 }
 
 .cartes-accueil h2 { font-size: 1.4rem; }
-.cartes-accueil p { color: var(--texte-doux); margin-top: 0.35rem; }
-.cartes-accueil .bouton { margin-top: 1.25rem; width: 100%; }
+/* Chaque carte : le titre, le champ, le bouton, en colonne avec le même
+   écart entre chacun. En flex, le champ et le bouton ne sont plus des
+   éléments « en ligne » : le navigateur n'ajoute plus sous eux l'espace
+   d'une ligne de texte, qui laissait un vide en bas de carte. */
+.cartes-accueil .carte { display: flex; flex-direction: column; gap: 0.9rem; }
+.cartes-accueil .bouton { width: 100%; }
+.cartes-accueil .erreur { margin-top: 0; }
 
-.mes-groupes h2,
-.etapes h2 {
+.mes-groupes h2 {
   margin-bottom: 1rem;
   font-size: 1.15rem;
   text-transform: uppercase;
@@ -613,38 +607,6 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 }
 .mes-groupes a:hover { border-color: var(--accent); }
 .mes-groupes .code { color: var(--texte-doux); font: 600 0.8rem var(--police-titre); letter-spacing: 0.08em; }
-
-/* Les trois étapes, numérotées en gros chiffres orange. */
-.etapes ol {
-  display: grid;
-  gap: 1rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  counter-reset: etape;
-}
-
-@media (min-width: 46rem) {
-  .etapes ol { grid-template-columns: repeat(3, 1fr); }
-}
-
-.etapes li {
-  counter-increment: etape;
-  padding: 1.25rem;
-  border-left: 2px solid var(--accent);
-  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 6%, transparent), transparent);
-  color: var(--texte-doux);
-}
-
-.etapes li::before {
-  content: '0' counter(etape);
-  display: block;
-  margin-bottom: 0.3rem;
-  color: var(--accent);
-  font: 700 1.5rem var(--police-titre);
-}
-
-.etapes strong { color: var(--texte); }
 
 .pied {
   padding-block: 2rem;
@@ -878,8 +840,6 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
   grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
   align-items: start;
 }
-.meilleurs-contenu > .vide { grid-column: 1 / -1; }
-.meilleurs-contenu > .bouton { justify-self: start; }
 
 .creneau {
   display: grid;
@@ -1328,7 +1288,6 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 }
 
 .membre-bio { white-space: pre-line; overflow-wrap: anywhere; margin-top: -0.4rem; }
-.membre-bio.vide { color: var(--texte-doux); font-style: italic; }
 
 
 /* 12 BIS. LES JEUX ET LEURS COUVERTURES (js/jeux.js)
@@ -1562,8 +1521,7 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
   border: 1px dashed var(--bordure);
   border-radius: var(--rayon-petit);
 }
-.lien-perso h3 { font-size: 1rem; }
-.lien-perso p { margin: 0.35rem 0 0.75rem; color: var(--texte-doux); font-size: 0.9rem; }
+.lien-perso p { margin: 0 0 0.75rem; color: var(--texte-doux); font-size: 0.9rem; }
 
 
 /* 13 BIS. LE CHOIX DE LA COULEUR (js/apparence.js)
@@ -1724,20 +1682,6 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 .message-centre > :nth-child(3) { animation-delay: 0.16s; }
 .message-centre > :nth-child(4) { animation-delay: 0.24s; }
 
-/* Les étapes « Comment ça marche » apparaissent au fil du défilement.
-   animation-timeline: view() relie l'animation à la position de
-   l'élément dans l'écran au lieu du temps : elle avance quand on fait
-   défiler. Récent (Chrome, Edge, Safari 26) : @supports ne l'active que
-   là où le navigateur sait faire, les autres affichent les étapes
-   directement. animation-timeline est écrit APRÈS animation, que le
-   raccourci remettrait sinon à zéro. */
-@supports (animation-timeline: view()) {
-  .etapes li {
-    animation: monter linear both;
-    animation-timeline: view();
-    animation-range: entry 10% cover 35%;
-  }
-}
 
 
 /* LA PAGE GROUPE
@@ -1838,8 +1782,7 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 
   /* Et toutes les animations de la section 14 bis d'un coup : durée
      quasi nulle, aucun délai, une seule fois. Chaque élément arrive
-     directement à son état final, rien ne reste caché. Les étapes de
-     l'accueil, animées au défilement, sont simplement affichées. */
+     directement à son état final, rien ne reste caché. */
   *, *::before, *::after, ::backdrop {
     animation-duration: 0.01ms !important;
     animation-delay: 0s !important;
@@ -1847,5 +1790,4 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
     transition-duration: 0.01ms !important;
     transition-delay: 0s !important;
   }
-  .etapes li { animation: none !important; }
 }

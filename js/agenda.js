@@ -15,11 +15,11 @@
 
 import {
   etat, quandCaChange, charger, appeler, trouverMembre, mesCases,
-  lienGroupe, debutCase, caseDe,
+  debutCase, caseDe,
 } from './etat.js';
 import {
   HEURE_DEBUT, HEURE_FIN, ajouterJours, lundiDe, versTexte, formater,
-  libelleHeure, avatar, annoncer, copier, creer, majuscule, animerEntree,
+  libelleHeure, avatar, annoncer, creer, majuscule, animerEntree,
 } from './commun.js';
 import { proposerSoiree } from './soirees.js';
 import { ouvrirProfil } from './profil.js';
@@ -31,6 +31,7 @@ const legende = document.getElementById('legende');
 const statut = document.getElementById('statut-sauvegarde');
 const detail = document.getElementById('detail-case');
 const meilleurs = document.getElementById('meilleurs-contenu');
+const sectionMeilleurs = document.getElementById('meilleurs');
 
 let mode = 'groupe';     // 'groupe' ou 'moi'
 let caseChoisie = null;  // la case touchée en mode groupe, ex. "4-21"
@@ -160,13 +161,13 @@ function dessiner() {
   for (const bouton of boutonsMode) {
     bouton.setAttribute('aria-pressed', bouton.dataset.mode === mode);
   }
-  if (mode === 'moi') {
-    aide.textContent = tactile
-      ? 'Touche ou glisse sur les cases où tu es dispo. Pour faire défiler, glisse sur la colonne des heures. Tout est enregistré tout seul.'
-      : 'Clique ou glisse sur les cases où tu es dispo. Tout est enregistré tout seul.';
-  } else {
-    aide.textContent = `Plus la case est vive, plus il y a de monde. ${tactile ? 'Touche' : 'Clique sur'} une case pour voir qui est dispo.`;
-  }
+  /* Une seule aide, en mode « Mes dispos » : le geste (glisser pour
+     cocher plusieurs cases) ne se devine pas. Sur écran tactile, elle dit
+     aussi comment faire défiler. En mode groupe, la légende suffit. */
+  aide.textContent = mode !== 'moi' ? ''
+    : tactile ? 'Touche ou glisse sur tes heures dispos. Pour faire défiler, glisse sur les heures.'
+    : 'Clique ou glisse sur tes heures dispos.';
+  aide.hidden = mode !== 'moi';
   legende.hidden = mode === 'moi';
 
   dessinerGrille();
@@ -278,23 +279,15 @@ function dessinerGrille() {
   grille.replaceChildren(brouillon);
 }
 
+/* La section entière (titre compris) n'apparaît que s'il y a au moins
+   un créneau à proposer. Seul dans le groupe, ou sans créneau commun, il
+   n'y a rien à montrer : pas de message pour le dire. Pour inviter, le
+   bouton « Inviter » de l'en-tête suffit (il passe en orange tant qu'on
+   est seul, voir groupe.js). */
 function dessinerMeilleurs() {
   meilleurs.replaceChildren();
-
-  if (etat.membres.length < 2) {
-    const texte = creer('p', 'vide', "Tu es seul pour l'instant. Invite tes potes : les créneaux où vous êtes dispos ensemble apparaîtront ici.");
-    const bouton = creer('button', 'bouton bouton-petit', 'Copier le lien d\'invitation');
-    bouton.type = 'button';
-    bouton.addEventListener('click', () => copier(lienGroupe(), 'Lien copié ! Colle-le sur Discord ou WhatsApp.'));
-    meilleurs.append(texte, bouton);
-    return;
-  }
-
-  const creneaux = trouverMeilleurs(compterDispos());
-  if (creneaux.length === 0) {
-    meilleurs.append(creer('p', 'vide', 'Aucun créneau commun cette semaine pour l\'instant. Coche tes dispos dans « Mes dispos » et motive la team !'));
-    return;
-  }
+  const creneaux = etat.membres.length < 2 ? [] : trouverMeilleurs(compterDispos());
+  sectionMeilleurs.hidden = creneaux.length === 0;
 
   for (const creneau of creneaux) {
     const carte = creer('article', 'creneau');
@@ -343,8 +336,6 @@ function dessinerDetail() {
     const ligne = creer('p', 'detail-chance', `${Math.round(chance.part * 100)} % de la team · ${chance.libelle}`);
     ligne.classList.toggle('tres-probable', chance.part >= TRES_PROBABLE);
     detail.append(ligne);
-  } else if (ids.length === 1) {
-    detail.append(creer('p', 'detail-chance', 'Une seule personne : il faut être au moins deux pour une soirée.'));
   }
 
   if (ids.length > 0) {
