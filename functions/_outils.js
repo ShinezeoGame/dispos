@@ -154,6 +154,20 @@ export const SCHEMA = [
     PRIMARY KEY (soiree_id, membre_id)
   )`,
 
+  // La photo de profil d'un membre (1er nov. 2026), une au plus. Petite
+  // (160 × 160 px, réduite par le navigateur avant l'envoi), rangée en
+  // base64 : du texte, que la base stocke sans surprise. « version »
+  // change à chaque nouvelle photo : elle finit dans l'adresse de
+  // l'image (voir adressePhoto), ce qui force les navigateurs à
+  // recharger la nouvelle au lieu de garder l'ancienne en mémoire.
+  // Une table neuve : le CREATE TABLE suffit, pas de MIGRATIONS.
+  `CREATE TABLE IF NOT EXISTS photos (
+    membre_id INTEGER PRIMARY KEY REFERENCES membres(id) ON DELETE CASCADE,
+    type TEXT NOT NULL,
+    image TEXT NOT NULL,
+    version TEXT NOT NULL
+  )`,
+
   // Les index sont des tables des matières : ils évitent de relire
   // toute la table pour trouver les membres ou les soirées d'un groupe.
   `CREATE INDEX IF NOT EXISTS membres_par_groupe ON membres (groupe_id)`,
@@ -332,6 +346,14 @@ export function persoStockee(texte) {
   } catch {
     return lirePerso({});
   }
+}
+
+/* L'adresse de la photo d'un membre, que la page met dans ses <img>
+   (voir api/groupes/[code]/photos/[id].js). ?v= : la version de la
+   photo. Une nouvelle photo = une nouvelle adresse, donc jamais
+   l'ancienne image ressortie de la mémoire du navigateur. */
+export function adressePhoto(code, membreId, version) {
+  return `/api/groupes/${code}/photos/${membreId}?v=${version}`;
 }
 
 /* Le profil d'un membre, vérifié au même endroit pour l'inscription

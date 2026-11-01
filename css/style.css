@@ -1539,6 +1539,31 @@ button.tag-jeu:hover { border-color: var(--accent); }
    dessiné plus petit que les lettres à taille égale. */
 .avatar-emoji { font-size: 1.15em; line-height: 1; }
 
+/* La photo de profil (js/commun.js, avatar()) : elle remplit le rond.
+   object-fit: cover la recadre au besoin au lieu de la déformer. */
+.avatar-photo img,
+.choix-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+/* Dans la fenêtre du profil, l'aperçu remplit toute la case. */
+.choix-photo span { width: 100%; height: 100%; }
+
+/* « + » : choisir une photo. Un bouton dessiné comme les autres cases,
+   mais en pointillés : il ajoute, il ne se coche pas. Deux classes
+   (.choix-emoji.choix-ajout) : la règle commune des cases, plus bas
+   dans ce fichier, écraserait sinon les pointillés et la taille. */
+.choix-emoji.choix-ajout {
+  padding: 0;
+  border-style: dashed;
+  color: var(--texte-doux);
+  font: 500 1.6rem/1 var(--police-titre);
+}
+.choix-emoji.choix-ajout:hover { border-color: var(--accent); color: var(--texte); }
+
 /* Sur la carte : le statut sous le pseudo, les étiquettes de style et
    de plateformes, les pseudos pour se retrouver en jeu. */
 .membre-statut { color: var(--texte); font-size: 0.9rem; font-style: italic; overflow-wrap: anywhere; }

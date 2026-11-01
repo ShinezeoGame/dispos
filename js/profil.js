@@ -9,7 +9,7 @@
      personnalisation, et ton compte (se déconnecter). */
 
 import { etat, appeler, charger } from './etat.js';
-import { COULEURS, EMOJIS, PLATEFORMES, STYLES, annoncer } from './commun.js';
+import { COULEURS, EMOJIS, PLATEFORMES, STYLES, annoncer, creer } from './commun.js';
 import { selecteurJeux, memeJeu } from './jeux.js';
 import { messageConnexion, deconnecter } from './compte.js';
 
@@ -62,12 +62,109 @@ function creerChoix(zone, type, nom, valeur, texte, classe, aria) {
   if (aria) entree.setAttribute('aria-label', aria);
   etiquette.append(entree, visible);
   zone.append(etiquette);
+  return etiquette;
 }
 
-// L'avatar : « Aa » (valeur vide) = l'initiale du pseudo, puis les emojis.
+/* L'avatar, dans cet ordre :
+   — ta photo (valeur « photo »), cachée tant que tu n'en as pas ;
+   — « + », un vrai bouton (pas un choix) qui ouvre le choix d'une photo ;
+   — « Aa » (valeur vide) = l'initiale du pseudo, puis les emojis. */
 const zoneEmojis = document.getElementById('profil-emojis');
+const casePhoto = creerChoix(zoneEmojis, 'radio', 'emoji', 'photo', '', 'choix-emoji choix-photo', 'Ta photo');
+const apercuPhoto = creer('img');
+apercuPhoto.alt = '';
+casePhoto.querySelector('span').replaceChildren(apercuPhoto);
+const boutonPhoto = creer('button', 'choix-emoji choix-ajout', '+');
+boutonPhoto.type = 'button';
+boutonPhoto.setAttribute('aria-label', 'Choisir une photo');
+zoneEmojis.append(boutonPhoto);
 creerChoix(zoneEmojis, 'radio', 'emoji', '', 'Aa', 'choix-emoji choix-initiale', 'Initiale du pseudo');
 for (const emoji of EMOJIS) creerChoix(zoneEmojis, 'radio', 'emoji', emoji, emoji, 'choix-emoji');
+
+
+/* TA PHOTO DE PROFIL
+
+   Rien ne part au serveur tant que tu n'as pas cliqué sur Enregistrer
+   (ou Rejoindre) : Annuler ne change rien. En attendant, deux mémoires :
+   — photoActuelle : l'adresse de ta photo déjà enregistrée, ou null ;
+   — photoNouvelle : celle que tu viens de choisir, déjà préparée, sous
+     forme de « data URL » (data:image/webp;base64,…), un texte qui
+     contient toute l'image. La règle de sécurité du site autorise ces
+     adresses data: dans les <img> : c'est ce qui permet l'aperçu. */
+const TAILLE_PHOTO = 160; // en pixels : deux fois le plus grand avatar affiché, pour les écrans fins
+const fichierPhoto = document.getElementById('profil-photo-fichier');
+let photoActuelle = null;
+let photoNouvelle = null;
+
+// La case photo : visible avec son aperçu, ou cachée s'il n'y a rien à montrer.
+function montrerPhoto(adresse) {
+  casePhoto.hidden = !adresse;
+  if (adresse) apercuPhoto.src = adresse;
+}
+
+/* Prépare la photo choisie, entièrement dans le navigateur :
+   1. createImageBitmap lit le fichier (JPEG, PNG, WebP, HEIC sur
+      iPhone…) et le tourne dans le bon sens ;
+   2. on garde le plus grand carré possible au centre (cote × cote) ;
+   3. on le dessine réduit à 160 × 160 sur un canvas (une zone de dessin
+      invisible), sur un fond de ta couleur, pour les images
+      transparentes ;
+   4. toDataURL en tire une image WebP. Safari ne sait pas en faire : il
+      renvoie alors du PNG, bien plus lourd, et on demande du JPEG. */
+async function preparerPhoto(fichier) {
+  const image = await createImageBitmap(fichier);
+  const cote = Math.min(image.width, image.height);
+  const toile = document.createElement('canvas');
+  toile.width = TAILLE_PHOTO;
+  toile.height = TAILLE_PHOTO;
+  const pinceau = toile.getContext('2d');
+  pinceau.imageSmoothingQuality = 'high'; // une réduction plus douce
+  pinceau.fillStyle = champs.couleur.value;
+  pinceau.fillRect(0, 0, TAILLE_PHOTO, TAILLE_PHOTO);
+  pinceau.drawImage(image, (image.width - cote) / 2, (image.height - cote) / 2, cote, cote, 0, 0, TAILLE_PHOTO, TAILLE_PHOTO);
+  image.close(); // libère la mémoire de la grande image
+  const webp = toile.toDataURL('image/webp', 0.85);
+  return webp.startsWith('data:image/webp') ? webp : toile.toDataURL('image/jpeg', 0.85);
+}
+
+boutonPhoto.addEventListener('click', () => fichierPhoto.click());
+
+fichierPhoto.addEventListener('change', async () => {
+  const fichier = fichierPhoto.files[0];
+  if (!fichier) return; // fenêtre de choix fermée sans rien prendre
+  const zoneErreur = formulaire.querySelector('.erreur');
+  try {
+    photoNouvelle = await preparerPhoto(fichier);
+    montrerPhoto(photoNouvelle);
+    champs.emoji.value = 'photo'; // la nouvelle photo devient l'avatar choisi
+    zoneErreur.textContent = '';
+  } catch {
+    zoneErreur.textContent = "Cette image n'a pas pu être lue. Essaie une photo JPEG ou PNG.";
+  } finally {
+    // Vidé : choisir à nouveau le même fichier redéclenchera « change ».
+    fichierPhoto.value = '';
+  }
+});
+
+/* Envoie la photo, une fois le profil enregistré (à l'inscription, il
+   faut d'abord exister pour avoir une photo) :
+   — case photo choisie et nouvelle photo : on l'envoie (PUT) ;
+   — autre avatar choisi alors qu'une photo existait : on la retire.
+   Un échec ici ne doit pas faire perdre le profil, déjà enregistré :
+   on le signale, et la fenêtre se ferme quand même. */
+async function enregistrerPhoto(id, avecPhoto) {
+  try {
+    if (avecPhoto && photoNouvelle) {
+      // "data:image/webp;base64,UklGR…" → le type et l'image en base64.
+      const [entete, image] = photoNouvelle.split(',');
+      await appeler(`/photos/${id}`, { methode: 'PUT', corps: { image, type: entete.slice(5, entete.indexOf(';')) } });
+    } else if (!avecPhoto && photoActuelle) {
+      await appeler(`/photos/${id}`, { methode: 'DELETE' });
+    }
+  } catch (probleme) {
+    annoncer(probleme.message, 'erreur');
+  }
+}
 
 // Le style de jeu (un seul) et les plateformes (plusieurs).
 const zoneStyles = document.getElementById('profil-styles');
@@ -120,6 +217,11 @@ export function ouvrirProfil() {
   document.getElementById('bouton-deconnexion').hidden = !etat.compte;
   document.getElementById('profil-relier').hidden = Boolean(etat.compte);
 
+  // Ta photo enregistrée (aucune à l'inscription) ; rien de nouveau choisi.
+  photoActuelle = inscription ? null : etat.moi.photo;
+  photoNouvelle = null;
+  montrerPhoto(photoActuelle);
+
   if (inscription) {
     // Une couleur que personne n'a encore prise, si possible.
     const prises = etat.membres.map((membre) => membre.couleur);
@@ -137,7 +239,8 @@ export function ouvrirProfil() {
     selecteur.remplir(etat.moi.jeux);
     champs.bio.value = etat.moi.bio;
     const perso = etat.moi.perso;
-    champs.emoji.value = perso.emoji;
+    // Avec une photo, c'est elle qui est cochée ; sinon l'emoji (ou « Aa »).
+    champs.emoji.value = photoActuelle ? 'photo' : perso.emoji;
     champs.statut.value = perso.statut;
     champs.style.value = perso.style;
     champs.discord.value = perso.discord;
@@ -160,13 +263,15 @@ formulaire.addEventListener('submit', async (evenement) => {
   const enPlus = { id: null, nom: texte, cover: '' };
   if (texte && jeux.length < 12 && !jeux.some((jeu) => memeJeu(jeu, enPlus))) jeux.push(enPlus);
 
+  // La case photo cochée : l'avatar est la photo, pas d'emoji à retenir.
+  const avecPhoto = champs.emoji.value === 'photo';
   const profil = {
     pseudo: champs.pseudo.value,
     couleur: champs.couleur.value,
     jeux,
     bio: champs.bio.value,
     perso: {
-      emoji: champs.emoji.value,
+      emoji: avecPhoto ? '' : champs.emoji.value,
       statut: champs.statut.value,
       style: champs.style.value,
       // Les cases cochées, dans l'ordre de la liste.
@@ -176,14 +281,19 @@ formulaire.addEventListener('submit', async (evenement) => {
     },
   };
   try {
+    let id; // ton numéro de membre, pour l'adresse de ta photo
     if (etat.moi) {
       await appeler('/moi', { methode: 'PUT', corps: profil });
+      id = etat.moi.id;
       annoncer('Profil enregistré.');
     } else {
-      // Le serveur relie le profil à ton compte : rien à retenir ici.
-      await appeler('/membres', { methode: 'POST', corps: profil });
+      // Le serveur relie le profil à ton compte : rien à retenir ici,
+      // sauf ton numéro de membre, tout neuf.
+      const reponse = await appeler('/membres', { methode: 'POST', corps: profil });
+      id = reponse.membre.id;
       annoncer(`Bienvenue dans ${etat.groupe.nom} !`);
     }
+    await enregistrerPhoto(id, avecPhoto);
     dialogue.close();
     await charger();
   } catch (probleme) {

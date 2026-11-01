@@ -38,6 +38,12 @@ nom de domaine à part reste à choisir.
 - **La personnalisation des profils** : avatar emoji, statut, style de
   jeu, plateformes, Discord (copiable d'un clic), autres pseudos. Cachée
   à l'inscription pour rejoindre vite, modifiable ensuite.
+- **La photo de profil** (1er nov. 2026) : la case « + » de « Ton
+  avatar » ouvre le choix d'une image, recadrée en carré et réduite à
+  160 × 160 par le navigateur (WebP, JPEG sur Safari, ~3 Ko). Elle
+  remplace l'emoji partout (`avatar()` dans commun.js). Une photo par
+  profil, donc par groupe. Choisir un emoji ou « Aa » la retire à
+  l'enregistrement ; Annuler ne change rien.
 - **Des animations** (31 oct. 2026) : l'accueil qui s'allume (titre,
   aperçu d'agenda colonne par colonne, bulle), l'agenda en vague à
   l'ouverture et au changement de semaine, les cartes l'une après
@@ -167,6 +173,7 @@ nom de domaine à part reste à choisir.
     functions/api/groupes/[code]/jeux.js   la recherche IGDB
     functions/api/groupes/[code]/jeu/[id].js   la fiche d'un jeu (IGDB)
     functions/api/couverture/[id].js       les couvertures, relayées
+    functions/api/groupes/[code]/photos/[id].js   la photo de profil (voir, changer, retirer)
     functions/_igdb.js         code SERVEUR : jeton Twitch, requêtes IGDB
     assets/discord.svg         le logo Discord des boutons (en pochoir, voir style.css)
     _headers, robots.txt, assets/favicon.svg, fonts/
@@ -287,6 +294,15 @@ nom de domaine à part reste à choisir.
   tables de traduction en tête de `jeu/[id].js` ; un nom absent des
   tables est ignoré plutôt qu'affiché en anglais. Les soirées retiennent
   `jeu_id` depuis le 31 oct. 2026 (les plus anciennes n'ont pas de fiche).
+- **Les photos de profil vivent dans la table `photos`** (base64,
+  50 Ko au plus, signature JPEG/PNG/WebP vérifiée, jamais de SVG), pas
+  dans `membres`. Le chargement du groupe ne renvoie que leur adresse,
+  avec `?v=version` (`adressePhoto()`) : une nouvelle photo = une
+  nouvelle adresse, sinon le navigateur (cache d'un an) garderait
+  l'ancienne. L'aperçu avant envoi est une adresse `data:` : ne pas
+  retirer `data:` de `img-src` dans la CSP. Seul son propriétaire peut
+  changer ou retirer une photo, et le code d'un groupe n'ouvre que les
+  photos de ses membres.
 - **12 jeux par profil au plus** : écrit dans `functions/_outils.js`
   (`MAX_JEUX`) ET dans `js/profil.js`. Changer les deux ensemble.
 - **Limites de D1 (offre gratuite)** : 50 requêtes SQL par appel, 100

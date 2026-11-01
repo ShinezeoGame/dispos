@@ -13,7 +13,7 @@
    « compte » dit en plus si le visiteur est connecté avec Discord :
    sinon, l'inscription commence par la connexion. */
 
-import { json, erreur, estLundi, identifier, jeuxStockes, persoStockee } from '../../../_outils.js';
+import { json, erreur, estLundi, identifier, jeuxStockes, persoStockee, adressePhoto } from '../../../_outils.js';
 
 export async function onRequestGet(context) {
   const { groupe, moi, compte, refus } = await identifier(context, false);
@@ -28,7 +28,12 @@ export async function onRequestGet(context) {
      navigateur fait ensuite le tri exact, à son heure. */
   const db = context.env.DB;
   const [membres, dispos, soirees, reponses] = await db.batch([
-    db.prepare('SELECT id, pseudo, couleur, jeux, bio, perso FROM membres WHERE groupe_id = ? ORDER BY id')
+    // LEFT JOIN : chaque membre, avec la version de sa photo s'il en a
+    // une (NULL sinon). Jamais l'image elle-même : la page la demande à
+    // part, par son adresse (voir photos/[id].js).
+    db.prepare(`SELECT m.id, m.pseudo, m.couleur, m.jeux, m.bio, m.perso, p.version AS photo
+                FROM membres m LEFT JOIN photos p ON p.membre_id = m.id
+                WHERE m.groupe_id = ? ORDER BY m.id`)
       .bind(groupe.id),
 
     db.prepare(`SELECT d.membre_id, d.creneaux FROM dispos d
@@ -70,10 +75,12 @@ export async function onRequestGet(context) {
     semaine,
     // Les jeux et la personnalisation sont stockés en texte JSON : on
     // les rend sous forme de vraies listes et de vrais objets.
+    // La photo : son adresse, prête à mettre dans un <img>, ou null.
     membres: membres.results.map((membre) => ({
       ...membre,
       jeux: jeuxStockes(membre.jeux),
       perso: persoStockee(membre.perso),
+      photo: membre.photo ? adressePhoto(groupe.code, membre.id, membre.photo) : null,
     })),
     dispos: disposParMembre,
     soirees: soirees.results.map((soiree) => ({

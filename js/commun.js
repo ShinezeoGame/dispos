@@ -216,6 +216,26 @@ export function avatar(membre) {
   // La couleur passe par une variable CSS : la feuille de style
   // décide de l'usage (fond du rond, bordure…).
   rond.style.setProperty('--couleur', membre.couleur);
+
+  /* La photo de profil, si le membre en a une : elle prend la place de
+     l'emoji ou de l'initiale. membre.photo est son adresse, fournie
+     par le serveur. alt vide : le pseudo est déjà écrit à côté, un
+     lecteur d'écran n'a pas à annoncer « image ». Si elle ne se charge
+     pas (supprimée entre-temps…), on remet ce qu'il y avait avant,
+     plutôt qu'une icône d'image cassée. */
+  if (membre.photo) {
+    const avant = [...rond.childNodes];
+    const classeAvant = rond.className;
+    const image = creer('img');
+    image.alt = '';
+    image.src = membre.photo;
+    image.addEventListener('error', () => {
+      rond.className = classeAvant;
+      rond.replaceChildren(...avant);
+    });
+    rond.className = 'avatar avatar-photo';
+    rond.replaceChildren(image);
+  }
   return rond;
 }
 

@@ -266,11 +266,15 @@
         <div id="profil-couleurs" class="couleurs-liste"></div>
       </fieldset>
 
-      <!-- L'avatar : un emoji, ou l'initiale du pseudo (« Aa »). Les
-           boutons sont fabriqués par js/profil.js à partir de EMOJIS. -->
+      <!-- L'avatar : ta photo, un emoji, ou l'initiale du pseudo (« Aa »).
+           Les cases sont fabriquées par js/profil.js à partir de EMOJIS.
+           Le champ de fichier reste caché : c'est la case « + » qui
+           l'ouvre (la fenêtre de choix du système, ou l'appareil photo
+           sur téléphone). -->
       <fieldset class="couleurs">
         <legend>Ton avatar</legend>
         <div id="profil-emojis" class="emojis-liste"></div>
+        <input type="file" id="profil-photo-fichier" accept="image/*" hidden>
       </fieldset>
 
       <label for="profil-jeux-recherche">Tes jeux</label>
