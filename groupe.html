@@ -249,6 +249,15 @@
         <button type="button" class="bouton-icone" data-fermer aria-label="Fermer">×</button>
       </div>
 
+      <!-- SE CONNECTER D'ABORD : rejoindre un groupe demande un compte
+           Discord. Pas encore connecté, on ne voit que ce bouton (profil.js
+           cache alors les champs). Un lien, pas un bouton de formulaire :
+           voir functions/api/compte/connexion.js. -->
+      <div id="profil-connexion" class="profil-connexion" hidden>
+        <a class="bouton bouton-discord" data-connexion href="/api/compte/connexion">Se connecter avec Discord</a>
+      </div>
+
+      <div id="profil-champs">
       <label for="profil-pseudo">Pseudo</label>
       <input id="profil-pseudo" name="pseudo" required maxlength="24" autocomplete="nickname" autofocus>
 
@@ -304,9 +313,16 @@
         </div>
       </div>
 
-      <div id="profil-lien-perso" class="lien-perso" hidden>
-        <p>Pour te retrouver sur un autre appareil. Garde-le pour toi : il permet de modifier ton profil.</p>
-        <button type="button" id="copier-lien-perso" class="bouton bouton-second bouton-petit">Copier mon lien perso</button>
+      </div><!-- fin de #profil-champs -->
+
+      <!-- TON COMPTE, une fois inscrit (profil.js remplit le texte) :
+           connecté, ton pseudo Discord et « Se déconnecter » ; profil
+           d'avant les comptes, pas encore relié, le bouton pour le
+           relier à Discord. -->
+      <div id="profil-compte" class="profil-compte" hidden>
+        <p id="profil-compte-texte"></p>
+        <button type="button" id="bouton-deconnexion" class="lien-discret">Se déconnecter</button>
+        <a id="profil-relier" class="bouton bouton-second bouton-petit bouton-discord" data-connexion href="/api/compte/connexion">Relier à Discord</a>
       </div>
 
       <p class="erreur" role="alert"></p>

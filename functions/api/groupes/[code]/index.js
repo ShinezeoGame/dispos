@@ -9,12 +9,14 @@
 
    Ouvert aux simples visiteurs du lien (identifier(…, false)) : il
    faut bien voir le groupe avant de choisir son pseudo. « moi » vaut
-   alors null, et le navigateur sait qu'il doit proposer l'inscription. */
+   alors null, et le navigateur sait qu'il doit proposer l'inscription.
+   « compte » dit en plus si le visiteur est connecté avec Discord :
+   sinon, l'inscription commence par la connexion. */
 
 import { json, erreur, estLundi, identifier, jeuxStockes, persoStockee } from '../../../_outils.js';
 
 export async function onRequestGet(context) {
-  const { groupe, moi, refus } = await identifier(context, false);
+  const { groupe, moi, compte, refus } = await identifier(context, false);
   if (refus) return refus;
 
   const semaine = new URL(context.request.url).searchParams.get('semaine');
@@ -62,6 +64,9 @@ export async function onRequestGet(context) {
   return json(200, {
     groupe: { code: groupe.code, nom: groupe.nom },
     moi: moi ? moi.id : null,
+    // Le nom et le pseudo Discord, sans le numéro du compte : la page
+    // n'en a pas besoin.
+    compte: compte ? { nom: compte.nom, discord: compte.discord } : null,
     semaine,
     // Les jeux et la personnalisation sont stockés en texte JSON : on
     // les rend sous forme de vraies listes et de vrais objets.

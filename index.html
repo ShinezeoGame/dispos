@@ -32,11 +32,23 @@
       </svg>
       <span class="logo-texte">All<span class="logo-ready">Ready</span></span>
     </a>
-    <!-- LE CHOIX DE LA COULEUR (js/apparence.js) : le rond montre le
-         thème en cours ; popovertarget ouvre la palette. -->
-    <button class="bouton-theme" type="button" popovertarget="choix-theme" aria-label="Changer la couleur du site"><span class="echantillon" aria-hidden="true"></span></button>
-    <div id="choix-theme" class="choix-theme" popover>
-      <p id="titre-choix-theme" class="choix-theme-titre">Couleur du site</p>
+    <div class="entete-droite">
+      <!-- TON COMPTE (js/accueil.js) : « Se connecter » si personne ne
+           l'est, sinon ton nom Discord et « Se déconnecter ». Tous deux
+           cachés tant que le serveur n'a pas répondu, pour ne pas
+           afficher l'un puis l'autre. data-connexion : js/compte.js
+           complète l'adresse pour revenir ici après Discord. -->
+      <a id="bouton-connexion" class="bouton bouton-second bouton-petit bouton-discord" data-connexion href="/api/compte/connexion" hidden><span class="bouton-discord-texte">Se connecter</span></a>
+      <div id="compte" class="compte" hidden>
+        <span id="compte-nom" class="compte-nom"></span>
+        <button id="bouton-deconnexion" class="lien-discret" type="button">Se déconnecter</button>
+      </div>
+      <!-- LE CHOIX DE LA COULEUR (js/apparence.js) : le rond montre le
+           thème en cours ; popovertarget ouvre la palette. -->
+      <button class="bouton-theme" type="button" popovertarget="choix-theme" aria-label="Changer la couleur du site"><span class="echantillon" aria-hidden="true"></span></button>
+      <div id="choix-theme" class="choix-theme" popover>
+        <p id="titre-choix-theme" class="choix-theme-titre">Couleur du site</p>
+      </div>
     </div>
   </header>
 
@@ -85,15 +97,16 @@
       </form>
     </section>
 
-    <!-- Rempli par js/accueil.js avec les groupes déjà ouverts sur cet
-         appareil. Reste caché s'il n'y en a aucun. -->
+    <!-- Rempli par js/accueil.js : les groupes de ton compte, puis ceux
+         déjà ouverts sur cet appareil. Reste caché s'il n'y en a aucun. -->
     <section id="mes-groupes" class="mes-groupes" hidden>
       <h2>Tes groupes</h2>
       <ul id="liste-groupes"></ul>
     </section>
   </main>
 
-  <footer class="pied">Pas de compte, pas de pub, pas de cookie.</footer>
+  <!-- Un seul cookie, celui qui te garde connecté : ni pub ni pistage. -->
+  <footer class="pied">Pas de pub, pas de pistage.</footer>
 
   <div id="annonce" class="annonce" role="status" aria-live="polite"></div>
 </body>

@@ -294,6 +294,19 @@ a { color: var(--accent); }
 
 .bouton-petit { padding: 0 0.9rem; font-size: 0.92rem; }
 
+/* Le logo de Discord devant « Se connecter avec Discord ». Le dessin
+   (assets/discord.svg) sert de pochoir (mask) : on peint à travers
+   avec la couleur du texte du bouton (currentColor). Il suit donc le
+   thème choisi, au lieu d'imposer le bleu-violet de Discord. */
+.bouton-discord::before {
+  content: '';
+  flex: none;
+  width: 1.25em;
+  height: 1.25em;
+  background: currentColor;
+  mask: url('/assets/discord.svg') center / contain no-repeat;
+}
+
 /* Un carré de 44 px pour une flèche ou une croix. */
 .bouton-icone {
   display: inline-grid;
@@ -465,12 +478,46 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
   padding-inline: var(--marge);
 }
 
-/* Le logo à gauche, le choix de la couleur à droite. */
+/* Le logo à gauche ; à droite, ton compte et le choix de la couleur. */
 .entete-accueil {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 1rem;
   padding-block: 1rem;
+}
+
+.entete-droite,
+.compte {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+/* Ton nom Discord : trop long, il finit par « … ». Sur téléphone, il
+   laisse la place à « Se déconnecter », plus utile. */
+.compte-nom {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+/* Sur téléphone, « Se connecter » ne tient pas sur une ligne à côté du
+   logo : le bouton se réduit au logo Discord, un carré de 44 px. Le
+   texte reste lu par les lecteurs d'écran (mêmes règles que
+   .visuellement-cache, plus haut). */
+@media (max-width: 30rem) {
+  .compte-nom { display: none; }
+  #bouton-connexion { width: 44px; padding: 0; }
+  .bouton-discord-texte {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }
 
 .accueil {
@@ -1642,13 +1689,25 @@ button.tag-jeu:hover { border-color: var(--accent); }
 .pastille-couleur:has(input:checked) { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--texte); }
 .pastille-couleur:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 5px; }
 
-.lien-perso {
+/* Se connecter avant de rejoindre : le bouton Discord, seul, sur toute
+   la largeur de la fenêtre, un peu détaché du titre. */
+.profil-connexion { margin-top: 1rem; }
+.profil-connexion .bouton { width: 100%; }
+
+/* Ton compte, en bas de la fenêtre du profil : le texte à gauche, le
+   bouton à droite (ou dessous, si la place manque). */
+.profil-compte {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
   margin-top: 1.25rem;
-  padding: 1rem;
+  padding: 0.5rem 1rem;
   border: 1px dashed var(--bordure);
   border-radius: var(--rayon-petit);
 }
-.lien-perso p { margin: 0 0 0.75rem; color: var(--texte-doux); font-size: 0.9rem; }
+.profil-compte p { margin: 0; color: var(--texte-doux); font-size: 0.9rem; }
 
 
 /* 13 BIS. LE CHOIX DE LA COULEUR (js/apparence.js)

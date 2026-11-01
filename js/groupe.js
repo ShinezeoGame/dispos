@@ -6,8 +6,9 @@
    le premier chargement et le rafraîchissement. */
 
 import { etat, charger, quandCaChange, lienGroupe } from './etat.js';
-import { lireGroupes, retenirGroupe, oublierGroupe, avatar, copier, creer, animerEntree } from './commun.js';
+import { lireGroupes, retenirGroupe, oublierGroupe, avatar, copier, creer, animerEntree, annoncer } from './commun.js';
 import { ouvrirProfil } from './profil.js';
+import { messageConnexion } from './compte.js';
 import './agenda.js';
 import './soirees.js';
 import './team.js';
@@ -24,10 +25,15 @@ const codeValable = /^[A-Z0-9]{8}$/.test(etat.code);
 if (!codeValable) location.replace('/');
 
 
-/* 2. LE JETON
+/* 2. L'ANCIEN JETON
 
-   Arrivée par un lien perso (…#moi=jeton) : on range le jeton, puis
-   on l'efface de la barre d'adresse pour qu'il ne finisse pas dans
+   Depuis les comptes (1er nov. 2026), c'est la connexion Discord qui
+   te fait reconnaître : le navigateur n'a rien à faire, son cookie part
+   tout seul avec chaque requête. Le jeton ne sert plus qu'aux profils
+   créés avant, tant qu'ils ne sont pas reliés à un compte.
+
+   Arrivée par un ancien lien perso (…#moi=jeton) : on range le jeton,
+   puis on l'efface de la barre d'adresse pour qu'il ne finisse pas dans
    une capture d'écran ou un lien recopié. La partie après # n'est
    jamais envoyée au serveur, même lors de l'ouverture de la page. */
 const lienPerso = location.hash.match(/^#moi=([0-9a-f]{64})$/);
@@ -145,8 +151,12 @@ async function demarrer() {
   document.getElementById('chargement').hidden = true;
   document.querySelector('.onglets').hidden = false;
   afficherOnglet(onglets[0]);
-  // Première visite : on propose tout de suite de choisir son pseudo.
+  /* Pas encore membre : la fenêtre pour rejoindre s'ouvre tout de suite
+     (et affiche elle-même l'éventuel échec de connexion Discord). Déjà
+     membre et revenu d'un échec (« Relier à Discord ») : on le dit en
+     bas de l'écran. */
   if (!etat.moi) ouvrirProfil();
+  else if (messageConnexion) annoncer(messageConnexion, 'erreur');
 }
 if (codeValable) demarrer();
 

@@ -1,8 +1,12 @@
 /* LA PAGE D'ACCUEIL : créer un groupe, en rejoindre un, retrouver
-   ceux qu'on a déjà ouverts sur cet appareil. */
+   les siens, se connecter. */
 
-import { api, lireGroupes, retenirGroupe, creer } from './commun.js';
+import { api, lireGroupes, retenirGroupe, creer, annoncer } from './commun.js';
+import { messageConnexion, deconnecter } from './compte.js';
 import './apparence.js'; // le choix de la couleur du site
+
+// Revenu de Discord sur un échec : on le dit.
+if (messageConnexion) annoncer(messageConnexion, 'erreur');
 
 const formCreer = document.getElementById('form-creer');
 const formRejoindre = document.getElementById('form-rejoindre');
@@ -61,18 +65,55 @@ formRejoindre.addEventListener('submit', (evenement) => {
 
 /* TES GROUPES
 
-   Les groupes retenus dans le localStorage (voir commun.js). Un lien
-   par groupe, le plus récent en haut. */
-const groupes = Object.entries(lireGroupes()).reverse();
-if (groupes.length > 0) {
+   Deux sources, dans cet ordre :
+   — ceux de ton compte (duCompte), que le serveur envoie quand tu es
+     connecté : tu les retrouves sur n'importe quel appareil ;
+   — ceux retenus par ce navigateur (le localStorage, voir commun.js) :
+     les groupes simplement visités, et ceux d'avant les comptes.
+   Une Map, rangée par code : un groupe présent des deux côtés n'est
+   listé qu'une fois. Un lien par groupe, le plus récent en haut.
+
+   La liste du navigateur s'affiche tout de suite ; celle du compte
+   arrive un instant plus tard, et la liste est alors redessinée. */
+function afficherGroupes(duCompte) {
+  const groupes = new Map(duCompte.map((groupe) => [groupe.code, groupe.nom]));
+  for (const [code, infos] of Object.entries(lireGroupes()).reverse()) {
+    if (!groupes.has(code)) groupes.set(code, infos.nom || code);
+  }
+
   const liste = document.getElementById('liste-groupes');
-  for (const [code, infos] of groupes) {
-    const lien = creer('a', '', infos.nom || code);
+  liste.replaceChildren();
+  for (const [code, nom] of groupes) {
+    const lien = creer('a', '', nom);
     lien.href = '/groupe?g=' + code;
     lien.append(creer('span', 'code', code));
     const element = creer('li');
     element.append(lien);
     liste.append(element);
   }
-  document.getElementById('mes-groupes').hidden = false;
+  document.getElementById('mes-groupes').hidden = groupes.size === 0;
 }
+afficherGroupes([]);
+
+
+/* TON COMPTE
+
+   On demande au serveur qui est connecté (/api/compte), puis on montre
+   soit ton nom et « Se déconnecter », soit « Se connecter ». Si le
+   serveur ne répond pas, on propose de se connecter : c'est le cas le
+   plus courant, et le bouton mène de toute façon au serveur. */
+api('/compte')
+  .then(({ compte, groupes }) => {
+    if (!compte) {
+      document.getElementById('bouton-connexion').hidden = false;
+      return;
+    }
+    document.getElementById('compte-nom').textContent = compte.nom;
+    document.getElementById('compte').hidden = false;
+    afficherGroupes(groupes);
+  })
+  .catch(() => {
+    document.getElementById('bouton-connexion').hidden = false;
+  });
+
+document.getElementById('bouton-deconnexion').addEventListener('click', deconnecter);

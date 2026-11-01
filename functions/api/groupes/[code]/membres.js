@@ -1,12 +1,13 @@
 /* REJOINDRE UN GROUPE — POST /api/groupes/ABCD2345/membres
 
-   Reçoit : { pseudo, couleur, jeux, bio } (jeux et bio facultatifs ;
-   jeux = liste de jeux, voir lireJeu dans _outils.js)
-   Renvoie : { membre: {…}, jeton: "64 caractères" }
+   Reçoit : { pseudo, couleur, jeux, bio, perso } (seul le pseudo est
+   obligatoire ; jeux = liste de jeux, voir lireJeu dans _outils.js)
+   Renvoie : { membre: {…} }
 
-   Le jeton n'est envoyé qu'UNE fois, ici. Le navigateur le range dans
-   son localStorage et le joint à chaque modification ; la base n'en
-   garde que l'empreinte (voir hacher() dans _outils.js). */
+   Il faut être connecté avec Discord (voir « Les comptes » dans
+   _outils.js) : le profil est relié au compte, et un compte n'a qu'un
+   profil par groupe. C'est ce qui permet de retrouver ses groupes sur
+   n'importe quel appareil. */
 
 import {
   json, erreur, lireCorps, lireProfil, pseudoPris,
@@ -14,8 +15,13 @@ import {
 } from '../../../_outils.js';
 
 export async function onRequestPost(context) {
-  const { groupe, refus } = await identifier(context, false);
+  const { groupe, moi, compte, refus } = await identifier(context, false);
   if (refus) return refus;
+
+  // 401 = « il faut d'abord dire qui tu es ».
+  if (!compte) return erreur(401, 'Connecte-toi avec Discord pour rejoindre le groupe.');
+  // 409 = « conflit » : la demande est correcte, mais heurte l'existant.
+  if (moi) return erreur(409, 'Tu fais déjà partie de ce groupe.');
 
   const { profil, probleme } = lireProfil(await lireCorps(context.request));
   if (probleme) return erreur(400, probleme);
@@ -27,22 +33,23 @@ export async function onRequestPost(context) {
     .first();
   if (nombre >= MAX_MEMBRES) return erreur(403, `Ce groupe est complet (${MAX_MEMBRES} membres).`);
 
-  // 409 = « conflit » : la demande est correcte, mais heurte l'existant.
   if (await pseudoPris(db, groupe.id, profil.pseudo)) {
     return erreur(409, 'Ce pseudo est déjà pris dans le groupe.');
   }
 
-  const jeton = genererJeton();
-  // RETURNING renvoie le numéro (id) que la base vient d'attribuer.
-  // Les jeux sont rangés en texte JSON : la base ne sait pas stocker
-  // une liste telle quelle.
+  /* RETURNING renvoie le numéro (id) que la base vient d'attribuer.
+     Les jeux et la personnalisation sont rangés en texte JSON : la base
+     ne sait pas stocker une liste telle quelle.
+     jeton_hash : la colonne l'exige (elle date d'avant les comptes). On
+     y range l'empreinte d'un jeton tiré au hasard et aussitôt oublié :
+     personne ne pourra jamais s'en servir. C'est le compte qui fait foi. */
   const { id } = await db
-    .prepare(`INSERT INTO membres (groupe_id, pseudo, couleur, jeux, bio, perso, jeton_hash)
-              VALUES (?, ?, ?, ?, ?, ?, ?)
+    .prepare(`INSERT INTO membres (groupe_id, compte_id, pseudo, couleur, jeux, bio, perso, jeton_hash)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?)
               RETURNING id`)
-    .bind(groupe.id, profil.pseudo, profil.couleur, JSON.stringify(profil.jeux), profil.bio,
-      JSON.stringify(profil.perso), await hacher(jeton))
+    .bind(groupe.id, compte.id, profil.pseudo, profil.couleur, JSON.stringify(profil.jeux), profil.bio,
+      JSON.stringify(profil.perso), await hacher(genererJeton()))
     .first();
 
-  return json(201, { membre: { id, ...profil }, jeton });
+  return json(201, { membre: { id, ...profil } });
 }

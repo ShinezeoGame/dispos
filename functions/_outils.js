@@ -47,15 +47,15 @@ export const STYLES = ['chill', 'tryhard', 'les-deux'];
 
 /* LA STRUCTURE DE LA BASE
 
-   Cinq tables. « IF NOT EXISTS » permet de lancer ces lignes à chaque
+   Sept tables. « IF NOT EXISTS » permet de lancer ces lignes à chaque
    démarrage sans rien abîmer : une table déjà là est laissée telle
    quelle. C'est _middleware.js qui s'en charge, une fois par serveur
    allumé. Tu n'as donc jamais à taper de SQL dans le tableau de bord.
 
    Attention : ajouter une colonne à une table qui existe déjà ne se
-   fait PAS en modifiant ces lignes (la table existe, elles sont
-   ignorées). Il faut un ALTER TABLE, à taper une fois dans la console
-   de la base sur Cloudflare.
+   fait PAS seulement en modifiant ces lignes (la table existe, elles
+   sont ignorées). Il faut aussi un ALTER TABLE dans MIGRATIONS, plus
+   bas.
 
    REFERENCES … ON DELETE CASCADE : quand un groupe disparaît, ses
    membres disparaissent avec lui, et ainsi de suite. Rien ne reste
@@ -69,13 +69,42 @@ export const SCHEMA = [
     cree_le TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
 
+  // Un compte = une personne connectée avec Discord. discord_id est le
+  // numéro que Discord donne à chaque utilisateur et qui ne change
+  // jamais (contrairement au pseudo) : c'est lui qui la reconnaît.
+  // « nom » est son nom affiché sur Discord, « discord » son pseudo
+  // Discord (celui qu'on tape pour l'ajouter en ami). Rien d'autre :
+  // ni e-mail, ni photo, ni liste d'amis.
+  `CREATE TABLE IF NOT EXISTS comptes (
+    id INTEGER PRIMARY KEY,
+    discord_id TEXT NOT NULL UNIQUE,
+    nom TEXT NOT NULL,
+    discord TEXT NOT NULL DEFAULT '',
+    cree_le TEXT NOT NULL DEFAULT (datetime('now'))
+  )`,
+
+  // Une session = un navigateur connecté à un compte (voir « Les
+  // comptes » plus bas). Comme pour les jetons des membres, la base ne
+  // garde que l'empreinte du secret, jamais le secret lui-même.
+  // « expire » : la date après laquelle il faut se reconnecter.
+  `CREATE TABLE IF NOT EXISTS sessions (
+    jeton_hash TEXT PRIMARY KEY,
+    compte_id INTEGER NOT NULL REFERENCES comptes(id) ON DELETE CASCADE,
+    expire TEXT NOT NULL
+  )`,
+
   // Une personne dans un groupe. « jeux » et « bio » forment son
   // profil : ses jeux préférés (une liste en JSON, voir lireJeu plus
-  // bas) et ses dispos habituelles en texte libre. jeton_hash : voir
+  // bas) et ses dispos habituelles en texte libre.
+  // compte_id : le compte Discord à qui appartient ce profil. Vide pour
+  // les profils créés avant les comptes, tant que leur propriétaire ne
+  // s'est pas connecté (voir identifier() tout en bas).
+  // jeton_hash : l'ancienne façon de se faire reconnaître, voir
   // genererJeton() plus bas.
   `CREATE TABLE IF NOT EXISTS membres (
     id INTEGER PRIMARY KEY,
     groupe_id INTEGER NOT NULL REFERENCES groupes(id) ON DELETE CASCADE,
+    compte_id INTEGER REFERENCES comptes(id) ON DELETE SET NULL,
     pseudo TEXT NOT NULL,
     couleur TEXT NOT NULL,
     jeux TEXT NOT NULL DEFAULT '',
@@ -153,6 +182,18 @@ export const MIGRATIONS = [
   "ALTER TABLE membres ADD COLUMN perso TEXT NOT NULL DEFAULT '{}'",
   // 31 octobre 2026 : le numéro IGDB du jeu d'une soirée, pour sa fiche.
   "ALTER TABLE soirees ADD COLUMN jeu_id INTEGER",
+  // 1er novembre 2026 : les comptes. Chaque profil sait à quel compte
+  // il appartient (les tables comptes et sessions, elles, sont toutes
+  // neuves : le CREATE TABLE de SCHEMA suffit).
+  'ALTER TABLE membres ADD COLUMN compte_id INTEGER REFERENCES comptes(id) ON DELETE SET NULL',
+  /* Un compte n'a qu'un profil par groupe : la base refuse le second.
+     « WHERE compte_id IS NOT NULL » : la règle ne vise que les profils
+     reliés à un compte ; les anciens, sans compte, ne se gênent pas
+     entre eux. Rangé ici et non dans SCHEMA : sur une base déjà en
+     ligne, SCHEMA passe AVANT l'ajout de la colonne, et l'index
+     échouerait faute de colonne. IF NOT EXISTS : ne fait rien la
+     seconde fois, sans erreur. */
+  'CREATE UNIQUE INDEX IF NOT EXISTS membre_par_compte ON membres (groupe_id, compte_id) WHERE compte_id IS NOT NULL',
 ];
 
 
@@ -329,15 +370,22 @@ export async function pseudoPris(db, groupeId, pseudo, saufId = 0) {
 
 /* LES CODES ET LES JETONS
 
-   Il n'y a pas de compte ni de mot de passe. Deux secrets suffisent :
+   Pas de mot de passe sur ce site. Des secrets tirés au hasard :
 
    — le CODE du groupe, dans le lien d'invitation : qui l'a peut voir
-     le groupe et s'y inscrire. 8 caractères parmi 31, soit plus de
-     850 milliards de combinaisons : impossible à deviner au hasard.
+     le groupe, et s'y inscrire s'il a un compte. 8 caractères parmi
+     31, soit plus de 850 milliards de combinaisons : impossible à
+     deviner au hasard.
 
-   — le JETON de chaque membre, gardé dans son navigateur : c'est lui
-     qui prouve « je suis Léa » et permet de modifier SES dispos et
-     rien d'autre. */
+   — le JETON de SESSION, posé dans le navigateur à la connexion avec
+     Discord (voir « Les comptes » plus bas) : c'est lui qui prouve
+     « je suis Léa » et permet de modifier SES dispos et rien d'autre.
+
+   — l'ancien JETON de MEMBRE, gardé dans le localStorage : avant les
+     comptes (1er nov. 2026), c'était la seule preuve. Il sert encore
+     aux profils de cette époque, jusqu'à ce que leur propriétaire se
+     connecte (voir identifier()). Les nouveaux profils en reçoivent un
+     aussi, parce que la colonne l'exige, mais personne ne le voit. */
 
 // Sans I, L, O, 0 ni 1, qu'on confond facilement en recopiant un code.
 const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
@@ -376,20 +424,142 @@ function enHexa(octets) {
 }
 
 
+/* LES COMPTES
+
+   On se connecte avec Discord (voir functions/api/compte/). Une fois
+   Discord d'accord, le serveur ouvre une SESSION : il tire un jeton au
+   hasard, en range l'empreinte dans la table sessions, et confie le
+   jeton au navigateur dans un COOKIE. Le navigateur renvoie ensuite ce
+   cookie tout seul, à chaque requête vers le site.
+
+   Pourquoi un cookie, et pas le localStorage comme les anciens jetons ?
+   — HttpOnly : le JavaScript de la page ne peut pas le lire. Même si
+     quelqu'un réussissait à glisser du code dans la page, il ne
+     pourrait pas voler la session.
+   — Le retour de Discord est une page que le SERVEUR renvoie : il ne
+     peut rien écrire dans le localStorage, seulement poser un cookie.
+
+   Ce cookie sert uniquement à rester connecté : c'est un cookie
+   « strictement nécessaire » au sens du RGPD, qui ne demande pas de
+   bandeau de consentement. Aucun cookie de pistage ni de pub. */
+
+const NOM_COOKIE = 'session';
+const DUREE_SESSION = 90 * 24 * 3600; // 90 jours, en secondes
+
+/* Le texte d'un en-tête Set-Cookie, qui demande au navigateur de
+   retenir (ou d'oublier, avec duree = 0) un cookie :
+   — Path=/ : renvoyé pour tout le site (chemin plus court au besoin) ;
+   — Max-Age : sa durée de vie en secondes ;
+   — HttpOnly : invisible pour le JavaScript de la page ;
+   — Secure : envoyé seulement en https, jamais en clair ;
+   — SameSite=Lax : jamais joint aux envois (POST, PUT…) lancés depuis
+     un AUTRE site. Un site piégé ne peut donc pas modifier tes dispos
+     à ta place en profitant de ta connexion. */
+export function cookie(nom, valeur, duree, chemin = '/') {
+  return `${nom}=${valeur}; Path=${chemin}; Max-Age=${duree}; HttpOnly; Secure; SameSite=Lax`;
+}
+
+// La valeur d'un cookie reçu, ou '' s'il n'y est pas. Le navigateur
+// les envoie tous sur une ligne : « session=ab12…; oauth=cd34… ».
+export function lireCookie(request, nom) {
+  for (const morceau of (request.headers.get('Cookie') || '').split(';')) {
+    const [cle, ...valeur] = morceau.trim().split('=');
+    if (cle === nom) return valeur.join('=');
+  }
+  return '';
+}
+
+/* Ouvre une session pour un compte. Renvoie le Set-Cookie à joindre à
+   la réponse. Au passage, les sessions expirées sont effacées : la
+   table ne grossit pas indéfiniment. */
+export async function ouvrirSession(db, compteId) {
+  const jeton = genererJeton();
+  await db.batch([
+    db.prepare("DELETE FROM sessions WHERE expire < datetime('now')"),
+    db.prepare(`INSERT INTO sessions (jeton_hash, compte_id, expire)
+                VALUES (?, ?, datetime('now', '+${DUREE_SESSION} seconds'))`)
+      .bind(await hacher(jeton), compteId),
+  ]);
+  return cookie(NOM_COOKIE, jeton, DUREE_SESSION);
+}
+
+/* Ferme la session du navigateur qui appelle (déconnexion). Renvoie le
+   Set-Cookie qui lui fait oublier son cookie. */
+export async function fermerSession(request, db) {
+  const jeton = lireCookie(request, NOM_COOKIE);
+  if (/^[0-9a-f]{64}$/.test(jeton)) {
+    await db.prepare('DELETE FROM sessions WHERE jeton_hash = ?').bind(await hacher(jeton)).run();
+  }
+  return cookie(NOM_COOKIE, '', 0);
+}
+
+/* Une redirection : « va plutôt à cette adresse » (statut 302). Le
+   navigateur y file aussitôt, en retenant au passage les cookies joints. */
+export function rediriger(adresse, cookies = []) {
+  const entetes = new Headers({ Location: adresse, 'Cache-Control': 'no-store' });
+  for (const texte of cookies) entetes.append('Set-Cookie', texte);
+  return new Response(null, { status: 302, headers: entetes });
+}
+
+/* Où revenir après la connexion : une page de CE site, et rien
+   d'autre. Sans cette vérification, un lien piégé pourrait faire
+   revenir sur un faux AllReady (« …?retour=https://site-pirate »)
+   qui imiterait le vrai. new URL résout l'adresse comme le ferait le
+   navigateur : « //pirate.com » ou « /\pirate.com » y sont reconnus
+   pour ce qu'ils sont, un autre site. Les adresses /api/ sont refusées
+   aussi : revenir sur la connexion elle-même tournerait en rond. */
+export function cheminDuSite(texte, request) {
+  try {
+    const origine = new URL(request.url).origin;
+    const cible = new URL(texte || '/', origine);
+    if (cible.origin === origine && !cible.pathname.startsWith('/api/')) return cible.pathname + cible.search;
+  } catch {
+    // Adresse illisible : on rentre à l'accueil.
+  }
+  return '/';
+}
+
+/* Le compte connecté dans ce navigateur : { id, nom, discord }, ou
+   null si personne n'est connecté (pas de cookie, cookie inconnu ou
+   session expirée). */
+export async function compteConnecte(request, db) {
+  const jeton = lireCookie(request, NOM_COOKIE);
+  if (!/^[0-9a-f]{64}$/.test(jeton)) return null;
+  return db
+    .prepare(`SELECT c.id, c.nom, c.discord FROM sessions s
+              JOIN comptes c ON c.id = s.compte_id
+              WHERE s.jeton_hash = ? AND s.expire > datetime('now')`)
+    .bind(await hacher(jeton))
+    .first();
+}
+
+
 /* QUI APPELLE ?
 
    Utilisé au début de chaque route d'un groupe. Retrouve le groupe à
-   partir du code dans l'adresse, puis le membre à partir du jeton
-   envoyé dans l'en-tête Authorization (« Bearer » suivi du jeton).
+   partir du code dans l'adresse, puis ton profil dans ce groupe :
 
-   Renvoie { groupe, moi } si tout va bien, ou { refus } : une réponse
-   d'erreur toute prête, que la route n'a plus qu'à renvoyer.
+   1. par ton COMPTE, si tu es connecté : le profil relié à ton compte ;
+   2. sinon par l'ancien JETON de membre, envoyé dans l'en-tête
+      Authorization (« Bearer » suivi du jeton), pour les profils créés
+      avant les comptes. Seulement s'il n'est relié à AUCUN compte :
+      une fois relié, c'est le compte qui fait foi, et se déconnecter
+      déconnecte vraiment.
+
+   Le RATTACHEMENT : connecté, sans profil dans ce groupe, mais avec
+   l'ancien jeton d'un profil sans compte ? Ce profil est le tien (le
+   jeton le prouve) : on le relie à ton compte, une fois pour toutes.
+   Tu le retrouveras ensuite sur tous tes appareils.
+
+   Renvoie { groupe, moi, compte } si tout va bien, ou { refus } : une
+   réponse d'erreur toute prête, que la route n'a plus qu'à renvoyer.
 
    membreObligatoire = false pour les routes ouvertes aux simples
    visiteurs du lien : voir le groupe, s'y inscrire. */
 export async function identifier({ request, env, params }, membreObligatoire = true) {
+  const db = env.DB;
   const code = String(params.code || '').toUpperCase();
-  const groupe = await env.DB
+  const groupe = await db
     .prepare('SELECT id, code, nom FROM groupes WHERE code = ?')
     .bind(code)
     .first();
@@ -397,16 +567,28 @@ export async function identifier({ request, env, params }, membreObligatoire = t
     return { refus: erreur(404, "Ce groupe n'existe pas. Vérifie le lien qu'on t'a envoyé.") };
   }
 
-  const jeton = (request.headers.get('Authorization') || '').replace(/^Bearer /, '');
+  const compte = await compteConnecte(request, db);
   let moi = null;
-  if (/^[0-9a-f]{64}$/.test(jeton)) {
-    moi = await env.DB
-      .prepare('SELECT id, pseudo FROM membres WHERE groupe_id = ? AND jeton_hash = ?')
-      .bind(groupe.id, await hacher(jeton))
+  if (compte) {
+    moi = await db
+      .prepare('SELECT id, pseudo FROM membres WHERE groupe_id = ? AND compte_id = ?')
+      .bind(groupe.id, compte.id)
       .first();
   }
+
+  const jeton = (request.headers.get('Authorization') || '').replace(/^Bearer /, '');
+  if (!moi && /^[0-9a-f]{64}$/.test(jeton)) {
+    moi = await db
+      .prepare('SELECT id, pseudo FROM membres WHERE groupe_id = ? AND jeton_hash = ? AND compte_id IS NULL')
+      .bind(groupe.id, await hacher(jeton))
+      .first();
+    if (moi && compte) {
+      await db.prepare('UPDATE membres SET compte_id = ? WHERE id = ?').bind(compte.id, moi.id).run();
+    }
+  }
+
   if (!moi && membreObligatoire) {
     return { refus: erreur(401, "Tu n'es pas reconnu dans ce groupe. Recharge la page pour t'inscrire.") };
   }
-  return { groupe, moi };
+  return { groupe, moi, compte };
 }

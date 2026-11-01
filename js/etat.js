@@ -15,7 +15,8 @@ import { api, lundiDe, versTexte, depuisTexte, ajouterJours, retenirGroupe, HEUR
 export const etat = {
   // Le code du groupe, lu dans l'adresse : /groupe?g=ABCD2345
   code: (new URLSearchParams(location.search).get('g') || '').toUpperCase(),
-  jeton: null,          // le secret qui prouve qui tu es (posé par groupe.js)
+  jeton: null,          // l'ancien secret des profils d'avant les comptes (posé par groupe.js)
+  compte: null,         // ton compte Discord { nom, discord }, ou null si tu n'es pas connecté
   groupe: null,         // { code, nom }
   moi: null,            // ton profil complet, ou null si tu n'es pas inscrit
   membres: [],          // [{ id, pseudo, couleur, jeux, bio }, …]
@@ -64,6 +65,7 @@ export async function charger() {
   const miennes = garderLesMiennes ? etat.dispos.get(etat.moi.id) : null;
 
   etat.groupe = donnees.groupe;
+  etat.compte = donnees.compte;
   etat.membres = donnees.membres;
   etat.moi = donnees.membres.find((membre) => membre.id === donnees.moi) || null;
   etat.semaineChargee = donnees.semaine;

@@ -13,7 +13,8 @@ libre (aucune appli de ce nom trouvée). Le dépôt GitHub, le projet
 Cloudflare et l'adresse `dispos.pages.dev` gardent l'ancien nom ; un
 nom de domaine à part reste à choisir.
 
-- Un **groupe** = une bande d'amis, rejoint par un lien d'invitation.
+- Un **groupe** = une bande d'amis, rejoint par un lien d'invitation,
+  connecté avec son **compte Discord** (voir « Décisions déjà prises »).
 - **L'agenda commun** : chacun coche ses heures dispos de la semaine ; la
   vue « Le groupe » colore chaque case selon le nombre de dispos et
   propose les trois **meilleurs créneaux**.
@@ -51,11 +52,24 @@ nom de domaine à part reste à choisir.
 
 - HTML + CSS + JavaScript sans framework, sans étape de construction.
   Modules ES (`<script type="module">`), un fichier par partie d'écran.
-- **Pas de compte, pas de mot de passe.** Le code du groupe (8 caractères)
-  est dans le lien ; chaque membre reçoit un jeton secret gardé dans son
-  `localStorage` (clé `dispos`). La base ne stocke que l'empreinte SHA-256
-  du jeton. Le « lien perso » (`…#moi=jeton`) sert à se retrouver sur un
-  autre appareil ; groupe.js l'efface de la barre d'adresse.
+- **Les comptes passent par Discord** (1er nov. 2026), aucun mot de
+  passe. Un compte est **obligatoire pour rejoindre** un groupe (pas pour
+  le regarder, ni pour en créer un), et donne **un profil par groupe**
+  (pseudo, couleur, jeux propres à chaque groupe). Le compte sert à être
+  reconnu et à retrouver ses groupes sur tous ses appareils. Permission
+  Discord `identify` seulement (numéro, pseudo, nom affiché) : ni e-mail
+  ni photo ni amis. La session est un **cookie** `session` HttpOnly,
+  Secure, SameSite=Lax, 90 jours (le seul cookie du site : strictement
+  nécessaire, pas de bandeau) ; la base ne garde que son empreinte
+  SHA-256. Le code du groupe (8 caractères) reste le secret du lien
+  d'invitation. Pied de page : « Pas de pub, pas de pistage. »
+- **Les profils d'avant les comptes** gardent leur ancien jeton (gardé
+  dans le `localStorage`, clé `dispos`, envoyé en `Authorization:
+  Bearer`), tant qu'ils ne sont pas reliés. Connecté avec ce jeton dans
+  le navigateur, le profil est relié au compte automatiquement
+  (`identifier()`), puis le jeton ne vaut plus rien. Le « lien perso »
+  a disparu de l'interface ; groupe.js lit encore les anciens liens
+  `…#moi=jeton` déjà partagés.
 - **Hébergement : Cloudflare Pages + Functions + D1** (base SQLite de
   Cloudflare), en ligne sur `dispos.pages.dev` depuis le 31 octobre 2026.
   Chaque push sur `main` déclenche un déploiement. KV écarté : ses
@@ -116,8 +130,8 @@ nom de domaine à part reste à choisir.
   d'aide, d'intro ni de remplissage (« facultatif », « pas encore
   renseigné », titres qui répètent l'onglet…). Une zone sans contenu se
   cache plutôt que d'afficher un message. Seules restent les aides qui
-  apprennent un geste (glisser pour cocher) et l'avertissement de garder
-  son lien perso secret.
+  apprennent un geste (glisser pour cocher) et, pour un profil d'avant
+  les comptes, l'invitation à le relier à Discord.
 - **Un seul bouton d'invitation** : « Inviter », dans l'en-tête, en
   orange tant qu'on est seul dans le groupe (groupe.js). Pas d'autre
   bouton « copier le lien » ailleurs dans la page.
@@ -142,13 +156,19 @@ nom de domaine à part reste à choisir.
     js/apparence.js            la palette des couleurs du site
     js/jeu-de-mots.js          le jeu de mots sur le nom du groupe
     js/fiche-jeu.js            la fiche d'un jeu au survol
-    functions/_outils.js       code SERVEUR partagé : schéma, vérifs, jetons
+    js/compte.js               liens « Se connecter avec Discord », déconnexion
+    functions/_outils.js       code SERVEUR partagé : schéma, vérifs, sessions, identifier()
+    functions/_discord.js      code SERVEUR : la connexion Discord (OAuth2)
+    functions/api/compte/      connexion.js (départ vers Discord), retour.js
+                               (retour de Discord), index.js (qui est connecté,
+                               ses groupes), deconnexion.js
     functions/api/_middleware.js   crée les tables, les met à jour, rattrape les erreurs
     functions/api/groupes/…    une route par fichier (voir leurs en-têtes)
     functions/api/groupes/[code]/jeux.js   la recherche IGDB
     functions/api/groupes/[code]/jeu/[id].js   la fiche d'un jeu (IGDB)
     functions/api/couverture/[id].js       les couvertures, relayées
     functions/_igdb.js         code SERVEUR : jeton Twitch, requêtes IGDB
+    assets/discord.svg         le logo Discord des boutons (en pochoir, voir style.css)
     _headers, robots.txt, assets/favicon.svg, fonts/
 
 ## Mise en ligne (à faire une fois)
@@ -168,6 +188,15 @@ nom de domaine à part reste à choisir.
    copier le secret. Dans le projet Pages : Settings → Variables and
    Secrets → `TWITCH_CLIENT_ID` et `TWITCH_CLIENT_SECRET` (type
    *Secret*), puis redéployer. Sans elles, on ajoute les jeux tels quels.
+6. **La connexion Discord** : sur discord.com/developers/applications,
+   *New Application* (nom : AllReady). Onglet *OAuth2* : copier le
+   Client ID, *Reset Secret* → copier le secret, et dans *Redirects*
+   ajouter exactement `https://dispos.pages.dev/api/compte/retour`
+   (une adresse par domaine : à refaire le jour du vrai nom de domaine).
+   Dans le projet Pages : Settings → Variables and Secrets →
+   `DISCORD_CLIENT_ID` et `DISCORD_CLIENT_SECRET` (type *Secret*), puis
+   redéployer. Sans elles, « Se connecter » revient avec « pas encore
+   configurée », et personne ne peut rejoindre de groupe.
 
 ## Ce qui casse si on n'y fait pas attention
 
@@ -194,11 +223,37 @@ nom de domaine à part reste à choisir.
   ferait perdre à tout le monde son jeton, donc l'accès à son profil.
 - **Le logo est écrit trois fois** (index.html, groupe.html, 404.html) :
   le modifier aux trois endroits, et dans `assets/favicon.svg`.
-- **« Tes groupes » (accueil) vient du navigateur, pas de la base.**
-  Supprimer un groupe dans D1 ne l'enlève de cette liste qu'au moment où
-  on l'ouvre : le serveur répond 404 et groupe.js appelle
-  `oublierGroupe()`. Seul un 404 efface : une coupure réseau ne doit
-  jamais faire perdre un jeton.
+- **« Tes groupes » (accueil) a deux sources** : ceux du compte
+  (`GET /api/compte`, depuis la base) puis ceux retenus par le navigateur
+  (localStorage), sans doublon. Un groupe supprimé dans D1 disparaît
+  aussitôt de la première, mais ne quitte la seconde qu'au moment où on
+  l'ouvre : le serveur répond 404 et groupe.js appelle `oublierGroupe()`.
+  Seul un 404 efface : une coupure réseau ne doit jamais faire perdre un
+  jeton.
+- **Qui est qui : `identifier()`** (`_outils.js`), au début de chaque
+  route d'un groupe. D'abord le compte (cookie), sinon l'ancien jeton,
+  et seulement pour un profil **sans** compte (sinon se déconnecter ne
+  déconnecterait pas). Connecté + ancien jeton d'un profil sans compte
+  = rattachement automatique. Ne pas changer cet ordre.
+- **Un compte, un profil par groupe** : vérifié dans `membres.js` ET
+  garanti par l'index unique `membre_par_compte` (dans `MIGRATIONS`, pas
+  dans `SCHEMA` : sur une base déjà en ligne, SCHEMA passe avant l'ajout
+  de la colonne `compte_id`). Les nouveaux profils reçoivent une
+  empreinte de jeton tirée au hasard (la colonne `jeton_hash` l'exige),
+  jamais renvoyée.
+- **Les boutons de connexion sont des liens** (`<a data-connexion>`),
+  jamais des formulaires : la CSP `form-action 'self'` bloquerait la
+  redirection vers discord.com. `js/compte.js` complète leur adresse
+  avec `?retour=` (la page actuelle) ; le serveur n'accepte qu'un chemin
+  de ce site (`cheminDuSite()`), jamais un autre domaine.
+- **L'adresse de retour Discord doit être enregistrée à l'identique**
+  dans l'application Discord (`…/api/compte/retour`). Changer de domaine
+  ou renommer `functions/api/compte/retour.js` = connexion cassée tant
+  que *Redirects* n'est pas mis à jour.
+- **Les échecs de connexion reviennent par l'adresse** :
+  `#connexion-ratee` ou `#connexion-indisponible`, traduits par
+  `js/compte.js` (message dans la fenêtre « Rejoins », sinon annonce en
+  bas) puis effacés de la barre d'adresse.
 - **`js/theme.js` doit rester un script classique dans `<head>`**, avant
   la feuille de style : en module ou en `defer`, la page s'afficherait
   d'abord en orange puis changerait de couleur.
@@ -250,6 +305,11 @@ session utilisaient un petit serveur Node hors dépôt qui imitait Pages,
 Functions et D1 (`node:sqlite`), et Playwright pour les captures. IGDB y
 était imité (fausse liste de jeux, fausses jaquettes) : la vraie
 recherche ne se teste qu'en ligne, une fois les identifiants Twitch posés.
+Discord aussi (1er nov. 2026) : faux échange de code, faux
+utilisateurs. Dans Playwright, la page discord.com atteinte par
+redirection ne s'intercepte pas : intercepter `/api/compte/connexion`,
+garder sa vraie réponse (cookie `oauth`, `state`) et sauter directement
+au retour. La vraie connexion ne se teste qu'en ligne.
 
 ## Comment travailler avec moi
 
@@ -264,6 +324,7 @@ recherche ne se teste qu'en ligne, une fois les identifiants Twitch posés.
 ## Idées pour la suite (rien de décidé)
 
 - Quitter un groupe, retirer un membre, renommer le groupe.
+- Supprimer son compte (et ses profils) soi-même.
 - Une « semaine type » qui se recopie toute seule d'une semaine à l'autre.
 - Rappel ou notification avant une soirée (Discord, e-mail).
 - Nombre de places par soirée (ex. 4 pour un jeu en équipe).
