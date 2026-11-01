@@ -597,9 +597,11 @@ input[type="range"] {
   text-align: center;
 }
 .apercu .n0 { background: var(--case); }
-.apercu .n1 { background: color-mix(in srgb, var(--accent) 22%, var(--case)); }
-.apercu .n2 { background: color-mix(in srgb, var(--accent) 42%, var(--case)); }
-.apercu .n3 { background: color-mix(in srgb, var(--accent) 68%, var(--case)); }
+/* Mélangés comme les vraies cases de l'agenda (in srgb-linear, voir
+   « Une case » plus bas) : l'aperçu montre les mêmes couleurs. */
+.apercu .n1 { background: color-mix(in srgb-linear, var(--accent) 22%, var(--case)); }
+.apercu .n2 { background: color-mix(in srgb-linear, var(--accent) 42%, var(--case)); }
+.apercu .n3 { background: color-mix(in srgb-linear, var(--accent) 68%, var(--case)); }
 .apercu .n4 { background: var(--accent); }
 .apercu .apercu-top { box-shadow: 0 0 0 2px var(--fond), 0 0 0 4px var(--soiree), 0 0 18px var(--soiree); }
 
@@ -989,14 +991,21 @@ input[type="range"] {
    Sa couleur dépend de --niveau, posé par agenda.js entre 0,2 et 1 :
    color-mix mélange l'orange et le gris des cases vides dans cette
    proportion. 0 = case vide, 1 = orange plein : la braise s'allume
-   avec le nombre de dispos. */
+   avec le nombre de dispos.
+
+   « in srgb-linear » (1er nov. 2026, demandé : « trop foncé ») : le
+   mélange se fait comme s'additionne la lumière. Le mélange ordinaire
+   (« in srgb ») donnait un brun terne aux cases à une ou deux
+   personnes ; celui-ci donne déjà un orange chaud, sans changer les
+   cases vides ni les cases pleines. Garder le même espace dans la
+   légende (.legende-degrade) et l'aperçu de l'accueil (.apercu .n1…). */
 .case {
   position: relative;
   height: 1.9rem;
   padding: 0;
   border: 0;
   border-radius: 6px;
-  background: color-mix(in srgb, var(--accent) calc(var(--niveau, 0) * 100%), var(--case));
+  background: color-mix(in srgb-linear, var(--accent) calc(var(--niveau, 0) * 100%), var(--case));
   color: var(--texte);
   font: 700 0.78rem var(--police-titre);
   cursor: pointer;
@@ -1022,7 +1031,10 @@ input[type="range"] {
   .grille.edition .case:not(:disabled):hover { box-shadow: inset 0 0 0 2px var(--accent); }
 }
 .case.forte { color: var(--sur-accent); }
-.case.passee { opacity: 0.35; }
+/* Un créneau déjà passé : estompé, mais lisible. 0,35 (avant le
+   1er nov. 2026) le fondait dans le fond, chiffre compris : le
+   dimanche, presque toute la semaine affichée était illisible. */
+.case.passee { opacity: 0.55; }
 
 /* LE REFLET : à partir de « soirée très probable » (75 % de la team,
    voir TRES_PROBABLE dans agenda.js), un éclat de lumière balaie la
@@ -1127,7 +1139,9 @@ input[type="range"] {
   width: 4.5rem;
   height: 0.7rem;
   border-radius: 4px;
-  background: linear-gradient(90deg, var(--case), color-mix(in srgb, var(--accent) 20%, var(--case)), var(--accent));
+  /* « in srgb-linear » : le dégradé passe par les mêmes couleurs que
+     les cases de l'agenda (voir « Une case »). */
+  background: linear-gradient(90deg in srgb-linear, var(--case), color-mix(in srgb-linear, var(--accent) 20%, var(--case)), var(--accent));
 }
 .legende-soiree {
   width: 1rem;

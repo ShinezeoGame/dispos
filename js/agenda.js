@@ -252,8 +252,11 @@ function dessinerGrille() {
           const niveau = 0.2 + 0.8 * (ids.length / total);
           bouton.style.setProperty('--niveau', niveau);
           bouton.textContent = ids.length;
-          // Sur une case très vive, le chiffre passe en sombre.
-          bouton.classList.toggle('forte', niveau > 0.6);
+          /* Sur une case vive, le chiffre passe en sombre. Le seuil de
+             0,5 suit les couleurs claires de style.css (« in
+             srgb-linear ») : au-delà, le chiffre sombre se lit mieux
+             que le blanc (contraste mesuré à 4,4 contre 4,1). */
+          bouton.classList.toggle('forte', niveau > 0.5);
         }
         /* LA BRILLANCE : --eclat (de 0 à 1) règle la lueur autour de la
            case dans le CSS, d'autant plus forte que la soirée a de
