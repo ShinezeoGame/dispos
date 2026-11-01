@@ -154,7 +154,12 @@
             <button type="button" data-reponse="peutetre">Peut-être</button>
             <button type="button" data-reponse="non">Pas dispo</button>
           </div>
-          <button type="button" class="lien-discret soiree-annuler" hidden>Annuler la soirée</button>
+          <!-- Pour la personne qui a proposé la soirée seulement
+               (js/soirees.js retire hidden). -->
+          <div class="soiree-gestion" hidden>
+            <button type="button" class="lien-discret soiree-modifier">Modifier</button>
+            <button type="button" class="lien-discret soiree-annuler">Annuler la soirée</button>
+          </div>
         </div>
       </div>
     </article>
@@ -227,6 +232,9 @@
         </div>
       </div>
       <p id="soiree-dispos" class="indice"></p>
+      <!-- En modification seulement, quand la date ou l'heure a changé
+           (js/soirees.js) : prévient que les réponses repartent de zéro. -->
+      <p id="soiree-avertissement" class="indice soiree-avertissement" hidden>Nouvelle date ou heure : chacun devra répondre à nouveau.</p>
 
       <label for="soiree-titre">Titre</label>
       <input id="soiree-titre" name="titre" maxlength="60" autocomplete="off">
@@ -237,7 +245,7 @@
       <p class="erreur" role="alert"></p>
       <div class="dialogue-actions">
         <button type="button" class="bouton bouton-second" data-fermer>Annuler</button>
-        <button type="submit" class="bouton">Proposer</button>
+        <button type="submit" id="soiree-valider" class="bouton">Proposer</button>
       </div>
     </form>
   </dialog>

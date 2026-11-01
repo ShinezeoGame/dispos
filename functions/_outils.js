@@ -377,6 +377,26 @@ export function lireProfil(corps) {
   return { profil };
 }
 
+/* Une soirée, vérifiée au même endroit pour la création
+   (soirees/index.js) et la modification (soirees/[id].js) : les deux
+   ne peuvent pas diverger. Renvoie soit { soiree }, soit { probleme }
+   avec la phrase à afficher. */
+export function lireSoiree(corps) {
+  const jeu = lireJeu(corps.jeu);
+  if (!jeu) return { probleme: 'Choisis un jeu.' };
+  // Sans titre, le nom du jeu fait l'affaire.
+  const titre = ligne(corps.titre) || jeu.nom;
+  const note = bloc(corps.note);
+  if (titre.length > 80) return { probleme: 'Le titre est trop long (80 caractères au plus).' };
+  if (!estDate(corps.jour)) return { probleme: 'Choisis une date.' };
+  // De 00:00 à 23:59, toujours sur deux chiffres.
+  if (typeof corps.horaire !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(corps.horaire)) {
+    return { probleme: 'Choisis une heure.' };
+  }
+  if (note.length > 300) return { probleme: 'Le petit mot est trop long (300 caractères au plus).' };
+  return { soiree: { jeu, titre, jour: corps.jour, horaire: corps.horaire, note } };
+}
+
 // Deux membres d'un même groupe ne peuvent pas porter le même pseudo :
 // on ne saurait plus qui est qui. COLLATE NOCASE : « Max » et « max »
 // comptent comme le même. saufId : soi-même, quand on modifie son

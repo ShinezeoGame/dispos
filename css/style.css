@@ -1262,6 +1262,14 @@ input[type="range"] {
 .soiree-avatars:empty { display: none; }
 .soiree-compte { color: var(--texte-doux); font-size: 0.9rem; }
 
+/* « Modifier » et « Annuler la soirée », côte à côte, à droite des
+   boutons de réponse (pour la personne qui a proposé seulement). */
+.soiree-gestion { display: flex; gap: 1rem; }
+
+/* L'avertissement « chacun devra répondre à nouveau » : dans la couleur
+   des soirées, pour qu'on le remarque sans qu'il crie. */
+.soiree-avertissement { color: var(--soiree); }
+
 .soiree-actions {
   display: flex;
   flex-wrap: wrap;

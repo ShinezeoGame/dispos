@@ -125,11 +125,11 @@ function fabriquerCarte(soiree) {
     bouton.addEventListener('click', () => repondre(soiree, bouton.dataset.reponse, carte));
   }
 
-  // Seule la personne qui a proposé peut annuler.
+  // Seule la personne qui a proposé peut modifier ou annuler.
   if (moi && soiree.createur_id === moi.id) {
-    const annuler = carte.querySelector('.soiree-annuler');
-    annuler.hidden = false;
-    annuler.addEventListener('click', () => annulerSoiree(soiree));
+    carte.querySelector('.soiree-gestion').hidden = false;
+    carte.querySelector('.soiree-modifier').addEventListener('click', () => modifierSoiree(soiree));
+    carte.querySelector('.soiree-annuler').addEventListener('click', () => annulerSoiree(soiree));
   }
   return carte;
 }
@@ -165,24 +165,72 @@ async function annulerSoiree(soiree) {
 
 /* LE FORMULAIRE
 
-   Ouvert par le bouton « Proposer une soirée », ou depuis l'agenda
-   (meilleur créneau, case touchée) avec la date et l'heure déjà
-   remplies. export : agenda.js s'en sert. */
+   Une seule fenêtre pour proposer une soirée et pour la modifier.
+   enModification : la soirée qu'on modifie, ou null pour une nouvelle.
+   Le titre de la fenêtre et le bouton changent en conséquence. */
+let enModification = null;
+
+function ouvrirFormulaire(soiree) {
+  enModification = soiree;
+  formulaire.reset();
+  formulaire.querySelector('.erreur').textContent = '';
+  document.getElementById('titre-dialogue-soiree').textContent = soiree ? 'Modifier la soirée' : 'Proposer une soirée';
+  document.getElementById('soiree-valider').textContent = soiree ? 'Enregistrer' : 'Proposer';
+  /* Pas de soirée dans le passé. Une soirée encore affichée mais
+     commencée hier soir (elle reste visible trois heures) doit pouvoir
+     garder sa date : la limite descend alors jusqu'à elle. */
+  const aujourdhui = versTexte(new Date());
+  champs.jour.min = soiree && soiree.jour < aujourdhui ? soiree.jour : aujourdhui;
+}
+
+// Les derniers réglages, communs aux deux cas, puis la fenêtre s'ouvre.
+function afficherFormulaire() {
+  dessinerJeuxTeam();
+  mettreAJourTitre();
+  mettreAJourDispos();
+  mettreAJourAvertissement();
+  dialogue.showModal();
+}
+
+/* PROPOSER : ouvert par le bouton « Proposer une soirée », ou depuis
+   l'agenda (meilleur créneau, case touchée) avec la date et l'heure
+   déjà remplies. export : agenda.js s'en sert. */
 export function proposerSoiree({ jour, horaire } = {}) {
   if (!etat.moi) {
     ouvrirProfil();
     return;
   }
-  formulaire.reset();
-  formulaire.querySelector('.erreur').textContent = '';
-  champs.jour.min = versTexte(new Date()); // pas de soirée dans le passé
+  ouvrirFormulaire(null);
   champs.jour.value = jour || versTexte(new Date());
   champs.horaire.value = horaire || '21:00';
   selecteur.remplir([]);
-  dessinerJeuxTeam();
-  mettreAJourTitre();
-  mettreAJourDispos();
-  dialogue.showModal();
+  afficherFormulaire();
+}
+
+/* MODIFIER : le bouton « Modifier » d'une carte (seulement pour qui l'a
+   proposée). La fenêtre se remplit avec la soirée telle qu'elle est.
+   Un titre resté celui proposé d'office (« Soirée Among Us ») laisse le
+   champ vide : il suivra le jeu et l'heure si on les change, au lieu de
+   rester « Soirée Among Us » sur une soirée Fortnite. */
+function modifierSoiree(soiree) {
+  ouvrirFormulaire(soiree);
+  champs.jour.value = soiree.jour;
+  champs.horaire.value = soiree.horaire;
+  selecteur.remplir([{ id: soiree.jeu_id, nom: soiree.jeu, cover: soiree.jeu_cover }]);
+  champs.titre.value = soiree.titre === titreParDefaut() ? '' : soiree.titre;
+  champs.note.value = soiree.note;
+  afficherFormulaire();
+}
+
+/* L'avertissement « chacun devra répondre à nouveau » : seulement en
+   modification, si la date ou l'heure a changé, et si quelqu'un
+   d'autre que toi avait déjà répondu (sinon il n'y a rien à perdre).
+   Le serveur fait la même règle (soirees/[id].js). */
+function mettreAJourAvertissement() {
+  const s = enModification;
+  const autresReponses = s && Object.keys(s.reponses).some((id) => Number(id) !== etat.moi.id);
+  const autreMoment = s && (champs.jour.value !== s.jour || champs.horaire.value !== s.horaire);
+  document.getElementById('soiree-avertissement').hidden = !(autresReponses && autreMoment);
 }
 
 document.getElementById('bouton-proposer').addEventListener('click', () => proposerSoiree());
@@ -272,8 +320,12 @@ document.getElementById('soiree-jeu-recherche').addEventListener('input', mettre
 champs.horaire.addEventListener('input', () => {
   mettreAJourTitre();
   mettreAJourDispos();
+  mettreAJourAvertissement();
 });
-champs.jour.addEventListener('input', mettreAJourDispos);
+champs.jour.addEventListener('input', () => {
+  mettreAJourDispos();
+  mettreAJourAvertissement();
+});
 
 formulaire.addEventListener('submit', async (evenement) => {
   evenement.preventDefault();
@@ -284,21 +336,26 @@ formulaire.addEventListener('submit', async (evenement) => {
   }
   const bouton = formulaire.querySelector('[type="submit"]');
   bouton.disabled = true;
+  const corps = {
+    jeu,
+    titre: champs.titre.value.trim() || titreParDefaut(),
+    jour: champs.jour.value,
+    horaire: champs.horaire.value,
+    note: champs.note.value,
+  };
   try {
-    await appeler('/soirees', {
-      methode: 'POST',
-      corps: {
-        jeu,
-        titre: champs.titre.value.trim() || titreParDefaut(),
-        jour: champs.jour.value,
-        horaire: champs.horaire.value,
-        note: champs.note.value,
-      },
-    });
-    dialogue.close();
-    annoncer('Soirée proposée !');
-    // On bascule sur l'onglet Soirées pour voir la nouvelle venue.
-    document.getElementById('onglet-soirees').click();
+    if (enModification) {
+      // PATCH : « modifie cette soirée » (voir soirees/[id].js).
+      await appeler(`/soirees/${enModification.id}`, { methode: 'PATCH', corps });
+      dialogue.close();
+      annoncer('Soirée modifiée.');
+    } else {
+      await appeler('/soirees', { methode: 'POST', corps });
+      dialogue.close();
+      annoncer('Soirée proposée !');
+      // On bascule sur l'onglet Soirées pour voir la nouvelle venue.
+      document.getElementById('onglet-soirees').click();
+    }
     await charger();
   } catch (probleme) {
     formulaire.querySelector('.erreur').textContent = probleme.message;

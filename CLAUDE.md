@@ -21,7 +21,11 @@ nom de domaine à part reste à choisir.
 - **Le profil** : pseudo, couleur, jeux, et « dispos habituelles » en
   texte libre (la seconde façon de donner ses dispos, demandée).
 - **Les soirées** : « Soirée Among Us », « Aprem Fortnite »… avec les
-  réponses Chaud / Peut-être / Pas dispo.
+  réponses Chaud / Peut-être / Pas dispo. Celui qui l'a proposée peut
+  la **modifier** (demandé le 1er nov. 2026 : même fenêtre, pré-remplie)
+  ou l'annuler. Changer la date ou l'heure remet les réponses des
+  autres à zéro (la pastille « sans réponse » les prévient) ; titre,
+  jeu ou petit mot les gardent.
 - **Les jeux se cherchent dans IGDB** (la base de Twitch), avec leurs
   couvertures, au lieu d'être tapés à la main (demandé le 31 oct. 2026).
   Dans le formulaire de soirée, les jeux des profils de la team sont
@@ -315,6 +319,11 @@ nom de domaine à part reste à choisir.
   retirer `data:` de `img-src` dans la CSP. Seul son propriétaire peut
   changer ou retirer une photo, et le code d'un groupe n'ouvre que les
   photos de ses membres.
+- **Une soirée se vérifie dans `lireSoiree()`** (_outils.js), pour la
+  création (POST `soirees/index.js`) comme pour la modification (PATCH
+  `soirees/[id].js`). Une nouvelle règle (longueur, format) va là, et
+  vaut pour les deux. Dans `[id].js`, PUT = répondre, PATCH = modifier,
+  DELETE = annuler.
 - **12 jeux par profil au plus** : écrit dans `functions/_outils.js`
   (`MAX_JEUX`) ET dans `js/profil.js`. Changer les deux ensemble.
 - **Limites de D1 (offre gratuite)** : 50 requêtes SQL par appel, 100
