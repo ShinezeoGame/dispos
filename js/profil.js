@@ -12,6 +12,7 @@ import { etat, appeler, charger } from './etat.js';
 import { COULEURS, EMOJIS, PLATEFORMES, STYLES, annoncer, creer } from './commun.js';
 import { selecteurJeux, memeJeu } from './jeux.js';
 import { messageConnexion, deconnecter } from './compte.js';
+import { recadrerPhoto } from './recadrage.js';
 
 const dialogue = document.getElementById('dialogue-profil');
 const formulaire = document.getElementById('form-profil');
@@ -90,8 +91,9 @@ for (const emoji of EMOJIS) creerChoix(zoneEmojis, 'radio', 'emoji', emoji, emoj
    — photoNouvelle : celle que tu viens de choisir, déjà préparée, sous
      forme de « data URL » (data:image/webp;base64,…), un texte qui
      contient toute l'image. La règle de sécurité du site autorise ces
-     adresses data: dans les <img> : c'est ce qui permet l'aperçu. */
-const TAILLE_PHOTO = 160; // en pixels : deux fois le plus grand avatar affiché, pour les écrans fins
+     adresses data: dans les <img> : c'est ce qui permet l'aperçu.
+   Le recadrage (placer, zoomer, découper à 160 × 160) vit dans
+   js/recadrage.js. */
 const fichierPhoto = document.getElementById('profil-photo-fichier');
 let photoActuelle = null;
 let photoNouvelle = null;
@@ -102,39 +104,20 @@ function montrerPhoto(adresse) {
   if (adresse) apercuPhoto.src = adresse;
 }
 
-/* Prépare la photo choisie, entièrement dans le navigateur :
-   1. createImageBitmap lit le fichier (JPEG, PNG, WebP, HEIC sur
-      iPhone…) et le tourne dans le bon sens ;
-   2. on garde le plus grand carré possible au centre (cote × cote) ;
-   3. on le dessine réduit à 160 × 160 sur un canvas (une zone de dessin
-      invisible), sur un fond de ta couleur, pour les images
-      transparentes ;
-   4. toDataURL en tire une image WebP. Safari ne sait pas en faire : il
-      renvoie alors du PNG, bien plus lourd, et on demande du JPEG. */
-async function preparerPhoto(fichier) {
-  const image = await createImageBitmap(fichier);
-  const cote = Math.min(image.width, image.height);
-  const toile = document.createElement('canvas');
-  toile.width = TAILLE_PHOTO;
-  toile.height = TAILLE_PHOTO;
-  const pinceau = toile.getContext('2d');
-  pinceau.imageSmoothingQuality = 'high'; // une réduction plus douce
-  pinceau.fillStyle = champs.couleur.value;
-  pinceau.fillRect(0, 0, TAILLE_PHOTO, TAILLE_PHOTO);
-  pinceau.drawImage(image, (image.width - cote) / 2, (image.height - cote) / 2, cote, cote, 0, 0, TAILLE_PHOTO, TAILLE_PHOTO);
-  image.close(); // libère la mémoire de la grande image
-  const webp = toile.toDataURL('image/webp', 0.85);
-  return webp.startsWith('data:image/webp') ? webp : toile.toDataURL('image/jpeg', 0.85);
-}
-
 boutonPhoto.addEventListener('click', () => fichierPhoto.click());
 
+/* Une image choisie : la fenêtre de recadrage s'ouvre (recadrage.js).
+   Validée, la photo recadrée devient l'aperçu et l'avatar choisi ;
+   annulée, rien ne change. La couleur choisie sert de fond aux images
+   transparentes. */
 fichierPhoto.addEventListener('change', async () => {
   const fichier = fichierPhoto.files[0];
   if (!fichier) return; // fenêtre de choix fermée sans rien prendre
   const zoneErreur = formulaire.querySelector('.erreur');
   try {
-    photoNouvelle = await preparerPhoto(fichier);
+    const recadree = await recadrerPhoto(fichier, champs.couleur.value);
+    if (!recadree) return; // recadrage annulé
+    photoNouvelle = recadree;
     montrerPhoto(photoNouvelle);
     champs.emoji.value = 'photo'; // la nouvelle photo devient l'avatar choisi
     zoneErreur.textContent = '';

@@ -39,7 +39,10 @@ nom de domaine à part reste à choisir.
   jeu, plateformes, Discord (copiable d'un clic), autres pseudos. Cachée
   à l'inscription pour rejoindre vite, modifiable ensuite.
 - **La photo de profil** (1er nov. 2026) : la case « + » de « Ton
-  avatar » ouvre le choix d'une image, recadrée en carré et réduite à
+  avatar » ouvre le choix d'une image, puis la fenêtre « Recadre ta
+  photo » (`js/recadrage.js`, demandée) : glisser pour placer, zoom ×1 à
+  ×4 au curseur, à la molette ou en pinçant, flèches et +/- au clavier,
+  un cercle montre ce qui sera gardé. Validée, elle est découpée à
   160 × 160 par le navigateur (WebP, JPEG sur Safari, ~3 Ko). Elle
   remplace l'emoji partout (`avatar()` dans commun.js). Une photo par
   profil, donc par groupe. Choisir un emoji ou « Aa » la retire à
@@ -163,6 +166,7 @@ nom de domaine à part reste à choisir.
     js/jeu-de-mots.js          le jeu de mots sur le nom du groupe
     js/fiche-jeu.js            la fiche d'un jeu au survol
     js/compte.js               liens « Se connecter avec Discord », déconnexion
+    js/recadrage.js            la fenêtre « Recadre ta photo » (canvas, glisser, zoom)
     functions/_outils.js       code SERVEUR partagé : schéma, vérifs, sessions, identifier()
     functions/_discord.js      code SERVEUR : la connexion Discord (OAuth2)
     functions/api/compte/      connexion.js (départ vers Discord), retour.js

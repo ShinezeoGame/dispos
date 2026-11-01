@@ -337,6 +337,32 @@
     </form>
   </dialog>
 
+  <!-- RECADRER SA PHOTO (js/recadrage.js), par-dessus la fenêtre du
+       profil. method="dialog" : « Valider » ferme la fenêtre sans rien
+       envoyer nulle part, en laissant sa valeur « ok » dans returnValue ;
+       c'est recadrage.js qui découpe alors la photo. Le cercle par-dessus
+       la photo montre ce qui sera gardé. -->
+  <dialog id="dialogue-recadrage" class="dialogue dialogue-recadrage" aria-labelledby="titre-recadrage">
+    <form method="dialog">
+      <div class="dialogue-tete">
+        <h2 id="titre-recadrage">Recadre ta photo</h2>
+        <button type="button" class="bouton-icone" data-fermer aria-label="Fermer">×</button>
+      </div>
+      <div id="recadrage-zone" class="recadrage-zone" tabindex="0"
+           aria-label="Photo à recadrer : flèches pour la déplacer, plus et moins pour zoomer">
+        <canvas id="recadrage-toile"></canvas>
+        <div class="recadrage-cercle" aria-hidden="true"></div>
+      </div>
+      <p class="indice recadrage-indice">Glisse la photo pour la placer.</p>
+      <label for="recadrage-zoom">Zoom</label>
+      <input id="recadrage-zoom" type="range" min="1" max="4" step="0.01" value="1">
+      <div class="dialogue-actions">
+        <button type="button" class="bouton bouton-second" data-fermer>Annuler</button>
+        <button type="submit" class="bouton" value="ok">Valider</button>
+      </div>
+    </form>
+  </dialog>
+
   <!-- La fiche d'un jeu au survol (js/fiche-jeu.js), unique pour toute
        la page et déplacée à côté du jeu visé. role="tooltip" : un
        lecteur d'écran la lit comme la description du jeu. -->

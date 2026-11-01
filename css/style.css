@@ -71,6 +71,7 @@
   --sur-accent: #110f0e;     /* le texte posé sur l'accent */
   --peutetre: #ffd166;       /* jaune : peut-être */
   --non: #ff5d73;            /* rouge : pas dispo, erreur */
+  --voile-photo: rgb(0 0 0 / 0.6); /* assombrit ce que le recadrage ne garde pas */
 
   --police-titre: 'Chakra Petch', system-ui, sans-serif;
   --police: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -376,6 +377,16 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 
 /* Le calendrier et l'horloge natifs, en version sombre. */
 input[type="date"], input[type="time"] { color-scheme: dark; }
+
+/* Un curseur (le zoom du recadrage) : pas l'habit d'un champ texte.
+   accent-color peint le curseur natif dans la couleur du thème. */
+input[type="range"] {
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  accent-color: var(--accent);
+}
 
 .erreur {
   margin-top: 0.75rem;
@@ -1563,6 +1574,41 @@ button.tag-jeu:hover { border-color: var(--accent); }
   font: 500 1.6rem/1 var(--police-titre);
 }
 .choix-emoji.choix-ajout:hover { border-color: var(--accent); color: var(--texte); }
+
+/* LE RECADRAGE (js/recadrage.js)
+
+   Un carré où l'on fait glisser la photo (le canvas), et par-dessus un
+   rond transparent dont l'ombre géante (box-shadow de 100vmax) assombrit
+   tout le reste du carré : ce qui reste clair, c'est l'avatar.
+   overflow: hidden coupe cette ombre aux bords du carré.
+   touch-action: none : sur téléphone, glisser ou pincer dans le carré
+   déplace la photo au lieu de faire défiler ou zoomer la page. */
+.dialogue-recadrage { width: min(24rem, calc(100% - 1.5rem)); }
+
+.recadrage-zone {
+  position: relative;
+  width: min(18rem, 100%);
+  aspect-ratio: 1;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: var(--rayon-petit);
+  background: var(--fond);
+  touch-action: none;
+  cursor: grab;
+}
+.recadrage-zone:active { cursor: grabbing; }
+.recadrage-zone canvas { display: block; width: 100%; height: 100%; }
+
+.recadrage-cercle {
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  box-shadow: 0 0 0 100vmax var(--voile-photo);
+  pointer-events: none; /* les gestes passent au travers, jusqu'à la zone */
+}
+
+.recadrage-indice { text-align: center; }
 
 /* Sur la carte : le statut sous le pseudo, les étiquettes de style et
    de plateformes, les pseudos pour se retrouver en jeu. */
