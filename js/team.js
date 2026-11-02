@@ -5,8 +5,8 @@
    l'agenda de la semaine affichée. La tienne en premier, avec le
    bouton pour la modifier. */
 
-import { etat, quandCaChange } from './etat.js';
-import { avatar, creer, formater, lundiDe, copier, PLATEFORMES, STYLES } from './commun.js';
+import { etat, quandCaChange, appeler, charger } from './etat.js';
+import { avatar, creer, formater, lundiDe, copier, annoncer, PLATEFORMES, STYLES } from './commun.js';
 import { ouvrirProfil } from './profil.js';
 import { couverture } from './jeux.js';
 import { brancherFiche } from './fiche-jeu.js';
@@ -101,6 +101,24 @@ function fabriquerCarte(membre, estMoi) {
     const modifier = carte.querySelector('.membre-modifier');
     modifier.hidden = false;
     modifier.addEventListener('click', ouvrirProfil);
+  } else if (etat.moi && etat.moi.id === etat.admin) {
+    // Le premier membre peut retirer les autres (pas lui-même : il quitte).
+    const retirer = carte.querySelector('.membre-retirer');
+    retirer.hidden = false;
+    retirer.addEventListener('click', () => retirerMembre(membre));
   }
   return carte;
+}
+
+/* RETIRER QUELQU'UN (2 nov. 2026) : confirm() demande d'abord, la
+   suppression efface tout ce que la personne a mis dans le groupe. */
+async function retirerMembre(membre) {
+  if (!confirm(`Retirer ${membre.pseudo} du groupe ? Son profil, ses dispos et ses réponses seront effacés.`)) return;
+  try {
+    await appeler(`/membres/${membre.id}`, { methode: 'DELETE' });
+    annoncer(`${membre.pseudo} ne fait plus partie du groupe.`);
+    await charger();
+  } catch (probleme) {
+    annoncer(probleme.message, 'erreur');
+  }
 }

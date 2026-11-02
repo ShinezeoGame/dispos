@@ -427,6 +427,15 @@ export function lireSoiree(corps) {
   return { soiree: { jeu, titre, jour: corps.jour, horaire: corps.horaire, fin, places, note } };
 }
 
+/* QUI DÉCIDE DANS LE GROUPE (2 nov. 2026) : le premier membre, celui
+   qui l'a rejoint en premier (le plus petit id), en général celui qui
+   l'a créé. Lui seul renomme le groupe et retire quelqu'un. S'il s'en
+   va, le suivant prend le relais tout seul : rien à transmettre. */
+export async function adminDuGroupe(db, groupeId) {
+  const premier = await db.prepare('SELECT MIN(id) AS id FROM membres WHERE groupe_id = ?').bind(groupeId).first();
+  return premier ? premier.id : null;
+}
+
 // Deux membres d'un même groupe ne peuvent pas porter le même pseudo :
 // on ne saurait plus qui est qui. COLLATE NOCASE : « Max » et « max »
 // comptent comme le même. saufId : soi-même, quand on modifie son

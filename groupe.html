@@ -127,6 +127,28 @@
     <!-- LA TEAM (js/team.js) -->
     <section id="vue-team" class="vue" role="tabpanel" aria-labelledby="onglet-team" hidden>
       <div id="liste-membres" class="liste-membres"></div>
+
+      <!-- LE GROUPE (js/reglages.js), pour les membres : le renommer (le
+           premier membre seulement), mettre les soirées dans son agenda,
+           le quitter. -->
+      <section id="reglages" class="reglages" aria-labelledby="titre-reglages" hidden>
+        <h2 id="titre-reglages" class="titre-section">Le groupe</h2>
+        <form id="form-renommer" class="reglage" hidden>
+          <label for="nouveau-nom">Nom du groupe</label>
+          <div class="ligne-champ">
+            <input id="nouveau-nom" name="nom" maxlength="40" required autocomplete="off">
+            <button class="bouton bouton-second bouton-petit">Renommer</button>
+          </div>
+        </form>
+        <div class="reglage">
+          <p class="reglage-titre">Ton agenda</p>
+          <!-- &nbsp; : une espace insécable, pour que « et » ne se
+               retrouvent jamais seuls en bout de ligne. -->
+          <p class="indice">Les soirées dans Google Agenda («&nbsp;À partir de l'URL&nbsp;») ou Apple Calendrier («&nbsp;Nouvel abonnement&nbsp;»).</p>
+          <button id="copier-calendrier" class="bouton bouton-second bouton-petit" type="button">Copier le lien d'agenda</button>
+        </div>
+        <button id="quitter-groupe" class="lien-discret lien-danger" type="button">Quitter le groupe</button>
+      </section>
     </section>
   </main>
 
@@ -193,6 +215,8 @@
       <!-- Discord (copiable d'un clic) et les autres pseudos. -->
       <div class="membre-contacts"></div>
       <button type="button" class="bouton bouton-second bouton-petit membre-modifier" hidden>Modifier mon profil</button>
+      <!-- Pour le premier membre du groupe, sur les cartes des autres. -->
+      <button type="button" class="lien-discret membre-retirer" hidden>Retirer du groupe</button>
     </article>
   </template>
 

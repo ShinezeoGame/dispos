@@ -1383,6 +1383,28 @@ input[type="range"] {
 }
 
 
+/* LE GROUPE (js/reglages.js), sous les cartes de la team : séparé par
+   un trait, étroit, discret. « Quitter » en rouge (--non) : on ne clique
+   pas dessus par hasard. */
+.reglages {
+  display: grid;
+  gap: 1.1rem;
+  justify-items: start;
+  max-width: 36rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--bordure);
+}
+.reglage { display: grid; gap: 0.4rem; width: 100%; }
+.reglage > button { justify-self: start; } /* le bouton garde sa taille */
+.reglage label { margin: 0; }
+.reglage-titre { font-weight: 600; font-size: 0.95rem; }
+.reglage .indice { margin: 0; }
+.ligne-champ { display: flex; gap: 0.6rem; }
+.ligne-champ input { flex: 1; }
+.lien-danger { color: var(--non); }
+.membre-retirer { justify-self: start; font-size: 0.85rem; }
+
 /* 12. LA TEAM */
 .liste-membres {
   display: grid;

@@ -62,6 +62,18 @@ nom de domaine à part reste à choisir.
   `membres.semaine_type` (`{ depuis, creneaux }` ou NULL), envoyée avec
   `PUT /dispos` (champ `repeter`), fondue dans « dispos » au chargement
   du groupe (jamais renvoyée telle quelle).
+- **Le groupe, sous les cartes de « La team »** (2 nov. 2026,
+  `js/reglages.js`) : renommer (le premier membre seulement), copier le
+  lien d'agenda, quitter. Le premier membre (plus petit id,
+  `adminDuGroupe()`) peut aussi « Retirer du groupe » les autres ; s'il
+  part, le suivant prend le relais. Le dernier qui quitte supprime le
+  groupe. Routes : PATCH `[code]` (renommer), DELETE `[code]/moi`
+  (quitter), DELETE `[code]/membres/[id]` (retirer). Un membre retiré
+  peut revenir avec le lien : il n'y a pas de bannissement.
+- **Les soirées dans son agenda** : `[code]/calendrier` sert un flux
+  iCalendar (.ics), lu par Google Agenda (« À partir de l'URL ») et
+  Apple Calendrier (« Nouvel abonnement »), qui le relisent tout seuls.
+  Heures « flottantes » (sans fuseau) ; sans heure de fin, deux heures.
 - **La fiche d'un jeu** au survol (au toucher sur téléphone, au focus
   au clavier) : jaquette, année, tags traduits en français (modes, mots-
   clés comme Roguelike, thèmes comme Horreur, genres) et résumé IGDB, en

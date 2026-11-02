@@ -13,7 +13,25 @@
    « compte » dit en plus si le visiteur est connecté avec Discord :
    sinon, l'inscription commence par la connexion. */
 
-import { json, erreur, estLundi, identifier, jeuxStockes, persoStockee, adressePhoto } from '../../../_outils.js';
+import {
+  json, erreur, estLundi, identifier, jeuxStockes, persoStockee, adressePhoto,
+  lireCorps, ligne, adminDuGroupe,
+} from '../../../_outils.js';
+
+/* RENOMMER LE GROUPE — PATCH /api/groupes/ABCD2345   { nom: "…" }
+   Réservé au premier membre (adminDuGroupe, _outils.js). */
+export async function onRequestPatch(context) {
+  const { groupe, moi, refus } = await identifier(context);
+  if (refus) return refus;
+  const db = context.env.DB;
+  if (moi.id !== await adminDuGroupe(db, groupe.id)) {
+    return erreur(403, 'Seul le premier membre du groupe peut le renommer.');
+  }
+  const nom = ligne((await lireCorps(context.request)).nom);
+  if (nom.length < 1 || nom.length > 40) return erreur(400, 'Donne un nom au groupe (40 caractères au plus).');
+  await db.prepare('UPDATE groupes SET nom = ? WHERE id = ?').bind(nom, groupe.id).run();
+  return json(200, { nom });
+}
 
 export async function onRequestGet(context) {
   const { groupe, moi, compte, refus } = await identifier(context, false);
@@ -89,6 +107,9 @@ export async function onRequestGet(context) {
     semaine,
     // As-tu une semaine type ? (coche « Répéter chaque semaine »)
     semaineType: maSemaineType,
+    // Qui décide (renommer, retirer quelqu'un) : le premier membre, le
+    // plus petit id (les membres arrivent rangés par id). Voir adminDuGroupe.
+    admin: membres.results.length ? membres.results[0].id : null,
     // Les jeux et la personnalisation sont stockés en texte JSON : on
     // les rend sous forme de vraies listes et de vrais objets.
     // La photo : son adresse, prête à mettre dans un <img>, ou null.

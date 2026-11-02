@@ -12,6 +12,7 @@ import { messageConnexion } from './compte.js';
 import './agenda.js';
 import './soirees.js';
 import './team.js';
+import './reglages.js'; // la section « Le groupe » de l'onglet La team
 import './apparence.js'; // le choix de la couleur du site
 import { jeuDeMots } from './jeu-de-mots.js';
 
