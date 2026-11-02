@@ -1437,27 +1437,23 @@ input[type="range"] {
 
 /* 12. LA TEAM */
 
-/* LA TEAM EN CHIFFRES (js/stats.js) : des tuiles côte à côte, qui
-   passent à la ligne quand la place manque (deux par ligne sur un
-   téléphone). Discrètes : même fond que les cartes, texte court. */
+/* LA TEAM EN CHIFFRES (js/stats.js) : deux repères côte à côte, qui
+   passent à la ligne quand la place manque. En simple texte, sans
+   cadre ni fond (2 nov. 2026) : encadrés, ils passaient pour des
+   boutons. */
 .stats-team {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
-  margin: 0 0 1rem;
+  gap: 0.75rem 2.5rem;
+  margin: 0 0 1.25rem;
   padding: 0;
   list-style: none;
 }
 .stat {
-  flex: 1 1 9.5rem;
   display: grid;
   align-content: start;
-  gap: 0.2rem;
+  gap: 0.15rem;
   min-width: 0;
-  padding: 0.7rem 0.95rem;
-  border: 1px solid var(--bordure);
-  border-radius: var(--rayon);
-  background: var(--surface);
 }
 .stat-etiquette {
   color: var(--texte-doux);
@@ -1472,15 +1468,7 @@ input[type="range"] {
   white-space: nowrap;
 }
 .stat-detail { color: var(--texte-doux); font-size: 0.82rem; }
-/* Sur ordinateur, une tuile ne s'étire pas sur toute la largeur ; sur
-   téléphone, la dernière d'une ligne prend toute la place restante,
-   plutôt que de laisser un trou à sa droite. */
-@media (min-width: 40rem) {
-  .stat { max-width: 17rem; }
-}
-/* Le nombre de soirées en rose (la couleur des soirées), le champion
-   dans l'accent du thème. */
-.stat-soirees { color: var(--soiree); }
+/* Le champion, dans l'accent du thème. */
 .stat-chaud { color: var(--accent); }
 /* Le jeu : sa petite jaquette puis son nom. En bouton (fiche au
    survol), il est remis à plat comme les étiquettes de jeu. */
@@ -1495,8 +1483,8 @@ input[type="range"] {
   text-align: left;
 }
 .stat-jeu .jeu-nom { overflow: hidden; text-overflow: ellipsis; }
-/* Une jaquette plus petite qu'ailleurs : la tuile du jeu garde la
-   hauteur des autres. */
+/* Une jaquette plus petite qu'ailleurs : la ligne du jeu garde la
+   hauteur de celle du champion. */
 .stat-jeu .couverture.mini { width: 1.2rem; }
 button.stat-jeu { cursor: help; }
 

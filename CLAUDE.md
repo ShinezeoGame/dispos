@@ -85,13 +85,14 @@ nom de domaine à part reste à choisir.
   ligne », étape 7. Routes : PUT/DELETE `[code]/discord` (brancher,
   débrancher), POST `/api/rappels` (le réveil).
 - **La team en chiffres** (2 nov. 2026, `js/stats.js`) : au-dessus
-  des cartes de La team, trois tuiles au plus : « Soirées proposées »
-  (toutes, « dont N à venir »), « Le plus chaud » (le plus de « Chaud »,
-  à partir de 2 ; deux ex æquo au plus, sinon cachée) et « Le jeu de la
-  team » (dans le plus de profils, à partir de 2, fiche au survol).
-  Chaque tuile se cache si elle ne veut rien dire, la rangée aussi. Le
-  serveur envoie `stats: { soirees, chauds }` avec le groupe ; le jeu
-  se calcule dans la page.
+  des cartes de La team, deux repères au plus, en simple texte (sans
+  cadre : encadrés, ils passaient pour des boutons) : « Le plus chaud »
+  (le plus de « Chaud », à partir de 2 ; deux ex æquo au plus, sinon
+  caché) et « Le jeu de la team » (dans le plus de profils, à partir de
+  2, fiche au survol). Chacun se cache s'il ne veut rien dire, la
+  rangée aussi. Le serveur envoie `stats: { chauds }` avec le groupe ;
+  le jeu se calcule dans la page. « Soirées proposées » retiré le même
+  jour (demandé : seule, la tuile avait l'air d'un bouton bizarre).
 - **La fiche d'un jeu** au survol (au toucher sur téléphone, au focus
   au clavier) : jaquette, année, tags traduits en français (modes, mots-
   clés comme Roguelike, thèmes comme Horreur, genres) et résumé IGDB, en

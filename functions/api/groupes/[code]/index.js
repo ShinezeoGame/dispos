@@ -45,7 +45,7 @@ export async function onRequestGet(context) {
      que date('now') est l'heure de Londres (UTC), pas la tienne : le
      navigateur fait ensuite le tri exact, à son heure. */
   const db = context.env.DB;
-  const [membres, dispos, soirees, reponses, total, chauds] = await db.batch([
+  const [membres, dispos, soirees, reponses, chauds] = await db.batch([
     // LEFT JOIN : chaque membre, avec la version de sa photo s'il en a
     // une (NULL sinon). Jamais l'image elle-même : la page la demande à
     // part, par son adresse (voir photos/[id].js).
@@ -72,9 +72,8 @@ export async function onRequestGet(context) {
                 WHERE s.groupe_id = ? AND s.jour >= MIN(?, date('now', '-1 day'))`)
       .bind(groupe.id, semaine),
 
-    // LA TEAM EN CHIFFRES (js/stats.js) : toutes les soirées du groupe,
-    // passées comprises, et combien de « Chaud » chacun a donnés.
-    db.prepare('SELECT COUNT(*) AS nombre FROM soirees WHERE groupe_id = ?').bind(groupe.id),
+    // LA TEAM EN CHIFFRES (js/stats.js) : combien de « Chaud » chacun a
+    // donnés, toutes soirées du groupe confondues, passées comprises.
     db.prepare(`SELECT r.membre_id, COUNT(*) AS nombre FROM reponses r
                 JOIN soirees s ON s.id = r.soiree_id
                 WHERE s.groupe_id = ? AND r.reponse = 'oui'
@@ -137,10 +136,8 @@ export async function onRequestGet(context) {
       soutien: membre.soutien === 1,
     })),
     dispos: disposParMembre,
-    // { soirees: 12, chauds: { 3: 8, 5: 2 } } : chauds = nombre de
-    // « Chaud » par membre.
+    // { chauds: { 3: 8, 5: 2 } } : le nombre de « Chaud » par membre.
     stats: {
-      soirees: total.results[0].nombre,
       chauds: Object.fromEntries(chauds.results.map((rangee) => [rangee.membre_id, rangee.nombre])),
     },
     soirees: soirees.results.map((soiree) => ({

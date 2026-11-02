@@ -1,20 +1,19 @@
 /* LA TEAM EN CHIFFRES (2 nov. 2026)
 
-   Une petite rangée au-dessus des cartes de l'onglet La team, trois
+   Une petite rangée au-dessus des cartes de l'onglet La team, deux
    repères au plus :
-   — « Soirées proposées » : toutes celles du groupe, passées comprises
-     (une soirée annulée est effacée, elle ne compte donc pas) ;
    — « Le plus chaud » : qui a dit « Chaud » le plus souvent ;
    — « Le jeu de la team » : le jeu qui revient dans le plus de profils.
+   (Le nombre de soirées proposées a été retiré le 2 nov. 2026 : seule
+   dans son cadre, la tuile passait pour un bouton.)
 
-   Chacun n'apparaît que s'il veut dire quelque chose (pas de « 0
-   soirée », pas de champion à égalité avec toute la team), et la
-   rangée entière se cache s'il ne reste rien. Les chiffres viennent du
-   serveur (etat.stats, voir le chargement du groupe), sauf le jeu,
-   calculé ici à partir des profils. */
+   Chacun n'apparaît que s'il veut dire quelque chose (pas de champion
+   à égalité avec toute la team), et la rangée entière se cache s'il ne
+   reste rien. Les « Chaud » sont comptés par le serveur (etat.stats,
+   voir le chargement du groupe) ; le jeu, ici, à partir des profils. */
 
 import { etat, quandCaChange } from './etat.js';
-import { creer, versTexte } from './commun.js';
+import { creer } from './commun.js';
 import { couverture } from './jeux.js';
 import { brancherFiche } from './fiche-jeu.js';
 
@@ -79,17 +78,6 @@ function leJeu() {
 quandCaChange(() => {
   if (!etat.stats) return;
   const tuiles = [];
-  /* Les soirées, et combien sont encore à venir (celles d'aujourd'hui
-     comprises). versTexte : la date du jour à l'heure locale, sous la
-     même forme que soiree.jour (« 2026-11-06 »), donc comparable. */
-  const nombre = etat.stats.soirees;
-  if (nombre > 0) {
-    const aujourdhui = versTexte(new Date());
-    const aVenir = etat.soirees.filter((soiree) => soiree.jour >= aujourdhui).length;
-    tuiles.push(tuile(nombre > 1 ? 'Soirées proposées' : 'Soirée proposée',
-      creer('strong', 'stat-valeur stat-soirees', String(nombre)),
-      aVenir && aVenir < nombre ? `dont ${aVenir} à venir` : ''));
-  }
   const chaud = lePlusChaud();
   if (chaud) tuiles.push(chaud);
   const jeu = leJeu();
