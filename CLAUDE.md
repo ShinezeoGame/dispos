@@ -319,9 +319,10 @@ nom de domaine à part reste à choisir.
    configurée », et personne ne peut rejoindre de groupe.
 7. **Le réveil des rappels Discord** : un site Pages ne fait que
    répondre, il ne se réveille jamais seul. Un petit Worker le fait à
-   sa place (offre gratuite). Workers & Pages → Créer → Worker →
-   « Hello World », nom `allready-reveil`, Déployer. Puis « Modifier le
-   code », tout remplacer par ce qui suit, Déployer :
+   sa place (offre gratuite). Workers & Pages → bouton bleu *Create
+   application* (en haut à droite) → *Start with Hello World!*, nom
+   `allready-reveil`, *Deploy*. Puis *Edit code*, tout remplacer par ce
+   qui suit, *Deploy* :
 
        // Le réveil d'AllReady : tous les quarts d'heure, demande au
        // site d'envoyer les rappels de soirée (functions/api/rappels.js).
@@ -331,7 +332,8 @@ nom de domaine à part reste à choisir.
          },
        };
 
-   Enfin, dans ce Worker : Settings → Triggers → Cron Triggers → Add,
+   Enfin, dans ce Worker : *Settings* → *Trigger Events* → *Add* →
+   *Cron Triggers*,
    `*/15 * * * *` (tous les quarts d'heure). Pas de secret : appeler
    `/api/rappels` en trop n'envoie rien deux fois. Sans ce réveil, les
    annonces marchent, seuls les rappels manquent. Adresse à changer le
