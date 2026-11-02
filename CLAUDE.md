@@ -25,7 +25,14 @@ nom de domaine à part reste à choisir.
   la **modifier** (demandé le 1er nov. 2026 : même fenêtre, pré-remplie)
   ou l'annuler. Changer la date ou l'heure remet les réponses des
   autres à zéro (la pastille « sans réponse » les prévient) ; titre,
-  jeu ou petit mot les gardent.
+  jeu ou petit mot les gardent. **Une tranche horaire** (2 nov. 2026,
+  demandé) : « De » et « À » (fin facultative, plus tôt que le début =
+  le lendemain), pré-remplis par un meilleur créneau ; sur l'agenda, le
+  cadre rose couvre toute la tranche (`dureeEnHeures()`). **Des
+  places** facultatives (2 à 50) : « 3/4 places », puis « Complet » (le
+  bouton Chaud se bloque, le serveur refuse le « oui » de trop).
+  Colonnes `soirees.fin` ('' = pas de fin) et `soirees.places` (NULL =
+  illimité).
 - **Les jeux se cherchent dans IGDB** (la base de Twitch), avec leurs
   couvertures, au lieu d'être tapés à la main (demandé le 31 oct. 2026).
   Dans le formulaire de soirée, les jeux des profils de la team sont

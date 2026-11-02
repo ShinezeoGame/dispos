@@ -15,7 +15,7 @@ import { json, erreur, lireCorps, identifier, lireSoiree, REPONSES } from '../..
    soirées d'un autre groupe en changeant le numéro dans l'adresse. */
 async function trouverSoiree(db, groupeId, id) {
   return db
-    .prepare('SELECT id, createur_id, jour, horaire FROM soirees WHERE id = ? AND groupe_id = ?')
+    .prepare('SELECT id, createur_id, jour, horaire, places FROM soirees WHERE id = ? AND groupe_id = ?')
     .bind(Number(id), groupeId)
     .first();
 }
@@ -30,6 +30,17 @@ export async function onRequestPut(context) {
 
   const { reponse } = await lireCorps(context.request);
   if (!REPONSES.includes(reponse)) return erreur(400, 'Réponse inconnue.');
+
+  /* Les places : une soirée complète refuse un « oui » de plus. Les
+     autres « oui » sont comptés sans le tien : redire « oui » quand on
+     y est déjà reste possible. */
+  if (reponse === 'oui' && soiree.places) {
+    const { nombre } = await db
+      .prepare("SELECT COUNT(*) AS nombre FROM reponses WHERE soiree_id = ? AND reponse = 'oui' AND membre_id != ?")
+      .bind(soiree.id, moi.id)
+      .first();
+    if (nombre >= soiree.places) return erreur(409, "C'est complet.");
+  }
 
   // Même principe que pour les dispos : crée la réponse ou la remplace.
   await db
@@ -69,10 +80,10 @@ export async function onRequestPatch(context) {
 
   const autreMoment = soiree.jour !== ancienne.jour || soiree.horaire !== ancienne.horaire;
   const instructions = [
-    db.prepare(`UPDATE soirees SET titre = ?, jeu = ?, jeu_cover = ?, jeu_id = ?, jour = ?, horaire = ?, note = ?
-                WHERE id = ?`)
+    db.prepare(`UPDATE soirees SET titre = ?, jeu = ?, jeu_cover = ?, jeu_id = ?, jour = ?, horaire = ?,
+                fin = ?, places = ?, note = ? WHERE id = ?`)
       .bind(soiree.titre, soiree.jeu.nom, soiree.jeu.cover, soiree.jeu.id, soiree.jour, soiree.horaire,
-        soiree.note, ancienne.id),
+        soiree.fin, soiree.places, soiree.note, ancienne.id),
   ];
   if (autreMoment) {
     instructions.push(db.prepare('DELETE FROM reponses WHERE soiree_id = ? AND membre_id != ?').bind(ancienne.id, moi.id));

@@ -41,7 +41,7 @@ export async function onRequestGet(context) {
                 WHERE m.groupe_id = ? AND d.semaine = ?`)
       .bind(groupe.id, semaine),
 
-    db.prepare(`SELECT id, createur_id, titre, jeu, jeu_cover, jeu_id, jour, horaire, note FROM soirees
+    db.prepare(`SELECT id, createur_id, titre, jeu, jeu_cover, jeu_id, jour, horaire, fin, places, note FROM soirees
                 WHERE groupe_id = ? AND jour >= MIN(?, date('now', '-1 day'))
                 ORDER BY jour, horaire LIMIT 200`)
       .bind(groupe.id, semaine),

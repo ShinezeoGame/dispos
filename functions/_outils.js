@@ -142,6 +142,8 @@ export const SCHEMA = [
     jeu_id INTEGER,
     jour TEXT NOT NULL,
     horaire TEXT NOT NULL,
+    fin TEXT NOT NULL DEFAULT '',
+    places INTEGER,
     note TEXT NOT NULL DEFAULT '',
     cree_le TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
@@ -208,6 +210,11 @@ export const MIGRATIONS = [
      échouerait faute de colonne. IF NOT EXISTS : ne fait rien la
      seconde fois, sans erreur. */
   'CREATE UNIQUE INDEX IF NOT EXISTS membre_par_compte ON membres (groupe_id, compte_id) WHERE compte_id IS NOT NULL',
+  // 2 nov. 2026 : l'heure de fin d'une soirée ('' = pas de fin donnée,
+  // au format 01:30 ; plus tôt que le début = le lendemain) et son
+  // nombre de places (NULL = illimité).
+  "ALTER TABLE soirees ADD COLUMN fin TEXT NOT NULL DEFAULT ''",
+  'ALTER TABLE soirees ADD COLUMN places INTEGER',
 ];
 
 
@@ -390,11 +397,27 @@ export function lireSoiree(corps) {
   if (titre.length > 80) return { probleme: 'Le titre est trop long (80 caractères au plus).' };
   if (!estDate(corps.jour)) return { probleme: 'Choisis une date.' };
   // De 00:00 à 23:59, toujours sur deux chiffres.
-  if (typeof corps.horaire !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(corps.horaire)) {
+  const HEURE = /^([01]\d|2[0-3]):[0-5]\d$/;
+  if (typeof corps.horaire !== 'string' || !HEURE.test(corps.horaire)) {
     return { probleme: 'Choisis une heure.' };
   }
+  /* La fin, facultative ('' = pas de fin). Plus tôt que le début, elle
+     tombe le lendemain (22:00 → 01:00) : c'est permis. Égale au début,
+     la soirée ne durerait rien : refusé. */
+  const fin = typeof corps.fin === 'string' ? corps.fin : '';
+  if (fin && (!HEURE.test(fin) || fin === corps.horaire)) {
+    return { probleme: 'Choisis une heure de fin différente du début.' };
+  }
+  // Les places, facultatives (vide = illimité), de 2 à 50.
+  let places = null;
+  if (corps.places !== undefined && corps.places !== null && corps.places !== '') {
+    places = Number(corps.places);
+    if (!Number.isInteger(places) || places < 2 || places > 50) {
+      return { probleme: 'Le nombre de places va de 2 à 50.' };
+    }
+  }
   if (note.length > 300) return { probleme: 'Le petit mot est trop long (300 caractères au plus).' };
-  return { soiree: { jeu, titre, jour: corps.jour, horaire: corps.horaire, note } };
+  return { soiree: { jeu, titre, jour: corps.jour, horaire: corps.horaire, fin, places, note } };
 }
 
 // Deux membres d'un même groupe ne peuvent pas porter le même pseudo :

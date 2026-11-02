@@ -1281,6 +1281,8 @@ input[type="range"] {
 }
 .soiree-jour { color: var(--texte-doux); font: 600 0.82rem/1.2 var(--police-titre); text-transform: uppercase; }
 .soiree-heure { font: 700 1.5rem var(--police-titre); }
+/* « jusqu'à 1h », sous l'heure de début. */
+.soiree-fin { color: var(--texte-doux); font-size: 0.78rem; white-space: nowrap; }
 .soiree.aujourdhui .soiree-jour { color: var(--soiree); }
 
 .soiree-corps { display: grid; gap: 0.6rem; min-width: 0; }
@@ -1789,6 +1791,24 @@ button.tag-jeu:hover { border-color: var(--accent); }
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0 0.9rem;
+}
+
+/* La soirée (2 nov. 2026) : Date, De, À sur une ligne ; le titre et les
+   places côte à côte (les places dans une case étroite : deux chiffres).
+   Sur téléphone, la date prend sa propre ligne, De et À en dessous. */
+.champs-horaires {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 0 0.9rem;
+}
+.champs-titre {
+  display: grid;
+  grid-template-columns: 1fr 5.5rem;
+  gap: 0 0.9rem;
+}
+@media (max-width: 30rem) {
+  .champs-horaires { grid-template-columns: 1fr 1fr; }
+  .champ-date { grid-column: 1 / -1; }
 }
 
 /* Les pastilles de couleur du profil. Le bouton radio est caché sous

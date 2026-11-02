@@ -137,6 +137,8 @@
       <div class="soiree-date">
         <span class="soiree-jour"></span>
         <span class="soiree-heure"></span>
+        <!-- « jusqu'à 1h », si la soirée a une heure de fin. -->
+        <span class="soiree-fin" hidden></span>
       </div>
       <div class="soiree-corps">
         <!-- La couverture du jeu (posée par js/soirees.js) à côté du titre. -->
@@ -224,14 +226,20 @@
         <p class="indice jeux-note"></p>
       </div>
 
-      <div class="champs-cote">
-        <div>
+      <!-- Date, début et fin (facultative : vide = pas d'heure de fin).
+           Une fin plus tôt que le début tombe le lendemain : 22:00 → 01:00. -->
+      <div class="champs-horaires">
+        <div class="champ-date">
           <label for="soiree-jour">Date</label>
           <input id="soiree-jour" name="jour" type="date" required>
         </div>
         <div>
-          <label for="soiree-horaire">Heure</label>
+          <label for="soiree-horaire">De</label>
           <input id="soiree-horaire" name="horaire" type="time" required step="900">
+        </div>
+        <div>
+          <label for="soiree-fin">À</label>
+          <input id="soiree-fin" name="fin" type="time" step="900">
         </div>
       </div>
       <p id="soiree-dispos" class="indice"></p>
@@ -239,8 +247,17 @@
            (js/soirees.js) : prévient que les réponses repartent de zéro. -->
       <p id="soiree-avertissement" class="indice soiree-avertissement" hidden>Nouvelle date ou heure : chacun devra répondre à nouveau.</p>
 
-      <label for="soiree-titre">Titre</label>
-      <input id="soiree-titre" name="titre" maxlength="60" autocomplete="off">
+      <!-- Le titre, et le nombre de places (vide = illimité, « ∞ »). -->
+      <div class="champs-titre">
+        <div>
+          <label for="soiree-titre">Titre</label>
+          <input id="soiree-titre" name="titre" maxlength="60" autocomplete="off">
+        </div>
+        <div>
+          <label for="soiree-places">Places</label>
+          <input id="soiree-places" name="places" type="number" min="2" max="50" inputmode="numeric" placeholder="∞">
+        </div>
+      </div>
 
       <label for="soiree-note">Petit mot</label>
       <textarea id="soiree-note" name="note" maxlength="300" rows="3" placeholder="On se retrouve sur le Discord, salon Jeux."></textarea>

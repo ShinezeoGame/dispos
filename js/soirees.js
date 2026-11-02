@@ -37,9 +37,11 @@ function soireesAVenir() {
   return etat.soirees.filter((soiree) => debutSoiree(soiree) > limite);
 }
 
-// "21:00" → "21h", "21:30" → "21h30".
+// "21:00" → "21h", "21:30" → "21h30", "00:00" → "0h", "09:15" → "9h15".
+// Number() retire le zéro de tête de l'heure.
 function joliHoraire(horaire) {
-  return horaire.replace(':00', 'h').replace(':', 'h');
+  const [heures, minutes] = horaire.split(':');
+  return `${Number(heures)}h${minutes === '00' ? '' : minutes}`;
 }
 
 
@@ -69,6 +71,10 @@ function fabriquerCarte(soiree) {
   carte.classList.toggle('aujourdhui', versTexte(debut) === versTexte(new Date()));
   remplir('.soiree-jour', jourRelatif(debut));
   remplir('.soiree-heure', joliHoraire(soiree.horaire));
+  // « jusqu'à 1h », sous l'heure de début, si la soirée a une fin.
+  const fin = carte.querySelector('.soiree-fin');
+  fin.textContent = soiree.fin ? `jusqu'à ${joliHoraire(soiree.fin)}` : '';
+  fin.hidden = !soiree.fin;
   remplir('.soiree-titre', soiree.titre);
   /* La couverture du jeu, devant le titre. Si le jeu vient d'IGDB (les
      soirées créées depuis le 31 oct. 2026 retiennent son numéro), elle
@@ -117,16 +123,27 @@ function fabriquerCarte(soiree) {
     avatars.append(rond);
   }
 
+  /* Les places, s'il y a une limite : « 3/4 places », puis « Complet ».
+     Complet = autant de « Chaud » que de places. */
+  const complet = Boolean(soiree.places) && chauds.length >= soiree.places;
+
   const morceaux = [];
   if (chauds.length) morceaux.push(`Chaud${chauds.length > 1 ? 's' : ''} : ${chauds.map(nom).join(', ')}`);
   if (peutEtre.length) morceaux.push(`Peut-être : ${peutEtre.map(nom).join(', ')}`);
   if (absents.length) morceaux.push(`${absents.length} pas dispo`);
+  if (soiree.places) morceaux.push(complet ? 'Complet' : `${chauds.length}/${soiree.places} places`);
   remplir('.soiree-compte', morceaux.join(' · ') || 'Personne pour l\'instant');
 
-  // Tes trois boutons : celui de ta réponse actuelle est enfoncé.
+  /* Tes trois boutons : celui de ta réponse actuelle est enfoncé. Une
+     soirée complète où tu n'es pas « Chaud » : le bouton devient
+     « Complet » et ne répond plus (le serveur refuserait de toute façon). */
   const maReponse = moi ? soiree.reponses[moi.id] : null;
   for (const bouton of carte.querySelectorAll('[data-reponse]')) {
     bouton.setAttribute('aria-pressed', bouton.dataset.reponse === maReponse);
+    if (bouton.dataset.reponse === 'oui' && complet && maReponse !== 'oui') {
+      bouton.textContent = 'Complet';
+      bouton.disabled = true;
+    }
     bouton.addEventListener('click', () => repondre(soiree, bouton.dataset.reponse, carte));
   }
 
@@ -200,7 +217,7 @@ function afficherFormulaire() {
 /* PROPOSER : ouvert par le bouton « Proposer une soirée », ou depuis
    l'agenda (meilleur créneau, case touchée) avec la date et l'heure
    déjà remplies. export : agenda.js s'en sert. */
-export function proposerSoiree({ jour, horaire } = {}) {
+export function proposerSoiree({ jour, horaire, fin } = {}) {
   if (!etat.moi) {
     ouvrirProfil();
     return;
@@ -208,6 +225,8 @@ export function proposerSoiree({ jour, horaire } = {}) {
   ouvrirFormulaire(null);
   champs.jour.value = jour || versTexte(new Date());
   champs.horaire.value = horaire || '21:00';
+  // La fin : donnée par un meilleur créneau (« 22h → 0h »), sinon vide.
+  champs.fin.value = fin || '';
   selecteur.remplir([]);
   afficherFormulaire();
 }
@@ -223,6 +242,8 @@ function modifierSoiree(soiree) {
   champs.horaire.value = soiree.horaire;
   selecteur.remplir([{ id: soiree.jeu_id, nom: soiree.jeu, cover: soiree.jeu_cover }]);
   champs.titre.value = soiree.titre === titreParDefaut() ? '' : soiree.titre;
+  champs.fin.value = soiree.fin || '';
+  champs.places.value = soiree.places || '';
   champs.note.value = soiree.note;
   afficherFormulaire();
 }
@@ -346,6 +367,8 @@ formulaire.addEventListener('submit', async (evenement) => {
     titre: champs.titre.value.trim() || titreParDefaut(),
     jour: champs.jour.value,
     horaire: champs.horaire.value,
+    fin: champs.fin.value,          // '' = pas d'heure de fin
+    places: champs.places.value,    // '' = illimité
     note: champs.note.value,
   };
   try {

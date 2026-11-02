@@ -79,16 +79,34 @@ function compterDispos() {
   return parCase;
 }
 
-// Les soirées de la semaine affichée, rangées de la même façon.
+/* Les soirées de la semaine affichée, rangées de la même façon. Une
+   soirée avec une heure de fin couvre toutes ses heures (21:00 → 00:00 :
+   21h, 22h et 23h) ; sans fin, seulement son heure de début. */
 function soireesParCase() {
   const parCase = new Map();
   for (const soiree of etat.soirees) {
-    const cle = caseDe(soiree.jour, soiree.horaire);
-    if (!cle) continue;
-    if (!parCase.has(cle)) parCase.set(cle, []);
-    parCase.get(cle).push(soiree);
+    const debut = caseDe(soiree.jour, soiree.horaire);
+    if (!debut) continue;
+    const [jour, heure] = debut.split('-').map(Number);
+    for (let h = heure; h < heure + dureeEnHeures(soiree) && h < HEURE_FIN; h++) {
+      const cle = `${jour}-${h}`;
+      if (!parCase.has(cle)) parCase.set(cle, []);
+      parCase.get(cle).push(soiree);
+    }
   }
   return parCase;
+}
+
+/* Le nombre de cases d'heure qu'une soirée touche. Une fin plus tôt
+   que le début tombe le lendemain (+ 24 h). Les heures entamées
+   comptent : 21:30 → 23:00 touche 21h et 22h. */
+function dureeEnHeures(soiree) {
+  if (!soiree.fin) return 1;
+  const [h1, m1] = soiree.horaire.split(':').map(Number);
+  const [h2, m2] = soiree.fin.split(':').map(Number);
+  let minutes = (h2 * 60 + m2) - (h1 * 60 + m1);
+  if (minutes <= 0) minutes += 24 * 60;
+  return Math.ceil((m1 + minutes) / 60);
 }
 
 
@@ -426,7 +444,11 @@ function dessinerMeilleurs() {
     carte.append(quand, equipe, creer('span', 'creneau-action', 'Proposer une soirée'));
     // Ce qu'un lecteur d'écran annonce, au lieu des initiales des avatars une à une.
     carte.setAttribute('aria-label', `Proposer une soirée : ${quand.textContent}, ${equipe.lastChild.textContent}`);
-    carte.addEventListener('click', () => proposerSoiree(soireeDepuisCase(creneau.jour, creneau.debut)));
+    // Le créneau entier : son début et sa fin (« 22h → 0h ») pré-remplis.
+    carte.addEventListener('click', () => proposerSoiree({
+      ...soireeDepuisCase(creneau.jour, creneau.debut),
+      fin: soireeDepuisCase(creneau.jour, creneau.fin).horaire,
+    }));
     meilleurs.append(carte);
   }
 }
