@@ -54,6 +54,14 @@ nom de domaine à part reste à choisir.
   dans la marge ; tout se met à jour chaque heure. Une seule case de la
   grille est dans l'ordre du Tab, les flèches vont de case en case (les
   cases grisées sont sautées), Entrée ou Espace font comme un clic.
+- **« Chaud ce soir » en un clic** (2 nov. 2026, `dessinerChaud()` et
+  `ceSoir()` dans agenda.js) : un bouton dans la barre de l'agenda,
+  membres seulement. Il coche d'un coup tes heures de ce soir, de 19 h
+  (ou de l'heure en cours) jusqu'à 3 h ; un second clic les décoche.
+  Avant 3 h du matin, « ce soir » est encore la soirée de la veille.
+  Si l'agenda montre une autre semaine, il ramène d'abord à la bonne.
+  À côté : « 2 autres aussi » (les membres qui ont au moins une heure
+  ce soir).
 - **La semaine type** (2 nov. 2026) : en mode « Mes dispos », la case
   « Répéter chaque semaine » fait de la semaine affichée ton modèle ;
   les semaines suivantes où tu n'as rien coché le reprennent. Modifier

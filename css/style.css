@@ -970,6 +970,13 @@ input[type="range"] {
 .bascule button:hover { color: var(--texte); }
 .bascule button[aria-pressed="true"] { background: var(--accent); color: var(--sur-accent); }
 
+/* CHAUD CE SOIR (js/agenda.js) : le bouton, puis « 2 autres aussi ».
+   Enfoncé, il se remplit de l'accent, comme le mode choisi juste à
+   côté. */
+.chaud-soir { display: flex; align-items: center; gap: 0.6rem; }
+#chaud-ce-soir[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--sur-accent); }
+.chaud-autres { color: var(--texte-doux); font-size: 0.85rem; }
+
 /* Les meilleurs créneaux : des cartes côte à côte. auto-fill crée
    autant de colonnes de 14rem qu'il en tient. */
 .meilleurs { margin-bottom: 1.75rem; }

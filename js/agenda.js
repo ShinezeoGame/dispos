@@ -15,7 +15,7 @@
 
 import {
   etat, quandCaChange, charger, appeler, trouverMembre, mesCases,
-  debutCase, caseDe,
+  debutCase, caseDe, redessiner,
 } from './etat.js';
 import {
   HEURE_DEBUT, HEURE_FIN, ajouterJours, lundiDe, versTexte, formater,
@@ -218,9 +218,83 @@ function dessiner() {
   dessinerGrille();
   dessinerMeilleurs();
   dessinerDetail();
+  dessinerChaud();
   ajusterHauteur();
 }
 quandCaChange(dessiner);
+
+
+/* CHAUD CE SOIR, EN UN CLIC (2 nov. 2026)
+
+   L'usage le plus courant : « je suis dispo ce soir », sans ouvrir
+   « Mes dispos » ni cocher case par case. Le bouton coche toutes tes
+   heures de ce soir, de 19 h (ou de l'heure en cours, si elle est
+   passée) jusqu'à 3 h du matin ; un second clic les décoche. Les
+   autres le voient aussitôt sur l'agenda, comme si tu avais coché. */
+const zoneChaud = document.getElementById('chaud-soir');
+const boutonChaud = document.getElementById('chaud-ce-soir');
+const autresChauds = document.getElementById('chaud-autres');
+const DEBUT_DU_SOIR = 19;
+
+/* Les cases de « ce soir » : leur semaine (un lundi) et leurs clés
+   ("2-19", "2-20"…). Avant 3 h du matin, on est encore dans la soirée
+   de la veille : à 1 h dans la nuit de mardi à mercredi, ce soir =
+   mardi, heures 25 et 26 (voir « Les heures dépassent 23 »). */
+function ceSoir() {
+  const maintenant = new Date();
+  let jour = new Date(maintenant.getFullYear(), maintenant.getMonth(), maintenant.getDate());
+  let depart = Math.max(maintenant.getHours(), DEBUT_DU_SOIR);
+  if (maintenant.getHours() < HEURE_FIN - 24) {
+    jour = ajouterJours(jour, -1);
+    depart = maintenant.getHours() + 24;
+  }
+  const semaine = lundiDe(jour);
+  const numero = Math.round((jour - semaine) / 86400000);
+  const cles = [];
+  for (let heure = depart; heure < HEURE_FIN; heure++) cles.push(`${numero}-${heure}`);
+  return { semaine, cles };
+}
+
+/* Le bouton est « enfoncé » (aria-pressed) quand toutes tes heures
+   restantes de ce soir sont cochées. À côté, combien d'autres ont au
+   moins une heure ce soir : de quoi se décider. Ces deux informations
+   ne se lisent que si l'agenda montre la semaine de ce soir. */
+function dessinerChaud() {
+  zoneChaud.hidden = !etat.moi;
+  if (!etat.moi) return;
+  const { semaine, cles } = ceSoir();
+  const bonneSemaine = etat.semaine.getTime() === semaine.getTime();
+  const miennes = etat.dispos.get(etat.moi.id) || new Set();
+  const actif = bonneSemaine && cles.every((cle) => miennes.has(cle));
+  boutonChaud.setAttribute('aria-pressed', actif);
+  boutonChaud.textContent = actif ? 'Chaud ce soir ✓' : '🔥 Chaud ce soir';
+  let autres = 0;
+  if (bonneSemaine) {
+    for (const membre of etat.membres) {
+      const cases = etat.dispos.get(membre.id);
+      if (membre.id !== etat.moi.id && cases && cles.some((cle) => cases.has(cle))) autres++;
+    }
+  }
+  autresChauds.textContent = autres ? `${autres} autre${autres > 1 ? 's' : ''} aussi` : '';
+}
+
+/* Le clic : d'abord revenir à la semaine de ce soir si l'agenda en
+   montre une autre, puis cocher (ou décocher) d'un coup, redessiner
+   toute la page (agenda, cartes de la team…) et enregistrer aussitôt. */
+boutonChaud.addEventListener('click', async () => {
+  const { semaine, cles } = ceSoir();
+  if (etat.semaine.getTime() !== semaine.getTime()) await changerSemaine(semaine);
+  const miennes = mesCases();
+  const retirer = cles.every((cle) => miennes.has(cle));
+  for (const cle of cles) {
+    if (retirer) miennes.delete(cle);
+    else miennes.add(cle);
+  }
+  redessiner();
+  programmerSauvegarde();
+  await sauvegarder();
+  annoncer(retirer ? 'Plus dispo ce soir.' : 'Chaud ce soir ! Ça se voit sur l\'agenda.');
+});
 
 
 /* TOUT L'AGENDA D'UN COUP D'ŒIL (ordinateur, 2 nov. 2026, demandé :

@@ -79,6 +79,12 @@
           <button type="button" data-mode="groupe" aria-pressed="true">Le groupe</button>
           <button type="button" data-mode="moi" aria-pressed="false">Mes dispos</button>
         </div>
+        <!-- CHAUD CE SOIR (js/agenda.js) : un clic coche toutes tes heures
+             de ce soir, un second les décoche. Membres seulement. -->
+        <div id="chaud-soir" class="chaud-soir" hidden>
+          <button id="chaud-ce-soir" class="bouton bouton-second bouton-petit" type="button" aria-pressed="false"></button>
+          <span id="chaud-autres" class="chaud-autres"></span>
+        </div>
         <!-- « Enregistré ✓ » après avoir coché ses dispos (js/agenda.js) :
              en haut, toujours en vue, plutôt que sous la grille. -->
         <p id="statut-sauvegarde" class="statut" aria-live="polite"></p>
