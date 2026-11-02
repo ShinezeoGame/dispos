@@ -66,6 +66,7 @@ export async function charger() {
 
   etat.groupe = donnees.groupe;
   etat.compte = donnees.compte;
+  etat.semaineType = donnees.semaineType; // ta case « Répéter chaque semaine »
   etat.membres = donnees.membres;
   etat.moi = donnees.membres.find((membre) => membre.id === donnees.moi) || null;
   etat.semaineChargee = donnees.semaine;

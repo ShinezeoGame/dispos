@@ -110,6 +110,7 @@ export const SCHEMA = [
     jeux TEXT NOT NULL DEFAULT '',
     bio TEXT NOT NULL DEFAULT '',
     perso TEXT NOT NULL DEFAULT '{}',
+    semaine_type TEXT,
     jeton_hash TEXT NOT NULL UNIQUE,
     cree_le TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
@@ -215,6 +216,12 @@ export const MIGRATIONS = [
   // nombre de places (NULL = illimité).
   "ALTER TABLE soirees ADD COLUMN fin TEXT NOT NULL DEFAULT ''",
   'ALTER TABLE soirees ADD COLUMN places INTEGER',
+  /* 2 nov. 2026 : la semaine type d'un membre, en JSON :
+     { "depuis": "2026-11-02", "creneaux": [[0,21],[4,22]] }. NULL = pas
+     de semaine type. Les semaines à partir de « depuis » où le membre
+     n'a rien enregistré reprennent ces créneaux (voir dispos.js et le
+     chargement du groupe). */
+  'ALTER TABLE membres ADD COLUMN semaine_type TEXT',
 ];
 
 

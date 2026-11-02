@@ -54,6 +54,14 @@ nom de domaine à part reste à choisir.
   dans la marge ; tout se met à jour chaque heure. Une seule case de la
   grille est dans l'ordre du Tab, les flèches vont de case en case (les
   cases grisées sont sautées), Entrée ou Espace font comme un clic.
+- **La semaine type** (2 nov. 2026) : en mode « Mes dispos », la case
+  « Répéter chaque semaine » fait de la semaine affichée ton modèle ;
+  les semaines suivantes où tu n'as rien coché le reprennent. Modifier
+  une autre semaine = une exception pour elle seule ; modifier la
+  semaine modèle met le modèle à jour ; décocher arrête. Rangée dans
+  `membres.semaine_type` (`{ depuis, creneaux }` ou NULL), envoyée avec
+  `PUT /dispos` (champ `repeter`), fondue dans « dispos » au chargement
+  du groupe (jamais renvoyée telle quelle).
 - **La fiche d'un jeu** au survol (au toucher sur téléphone, au focus
   au clavier) : jaquette, année, tags traduits en français (modes, mots-
   clés comme Roguelike, thèmes comme Horreur, genres) et résumé IGDB, en

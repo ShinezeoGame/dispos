@@ -92,7 +92,12 @@
            en dessous (voir « L'agenda sur grand écran », style.css). -->
       <div class="agenda-corps">
         <div class="agenda-principal">
-          <p id="aide-agenda" class="aide"></p>
+          <!-- En mode « Mes dispos » seulement (js/agenda.js) : l'aide du
+               geste, et la semaine type (« Répéter chaque semaine »). -->
+          <div id="agenda-aide" class="agenda-aide" hidden>
+            <p id="aide-agenda" class="aide"></p>
+            <label class="repeter"><input type="checkbox" id="repeter"> Répéter chaque semaine</label>
+          </div>
           <!-- La grille est entièrement fabriquée par js/agenda.js :
                7 jours × 18 heures, chaque case est un bouton. -->
           <div id="grille" class="grille"></div>

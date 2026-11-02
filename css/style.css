@@ -1019,6 +1019,39 @@ input[type="range"] {
   font-size: 0.92rem;
 }
 
+/* En mode « Mes dispos » : l'aide du geste à gauche, « Répéter chaque
+   semaine » à droite (ou dessous, si la place manque). */
+.agenda-aide {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 1.25rem;
+  margin-bottom: 0.4rem;
+}
+.agenda-aide .aide { margin: 0; }
+/* La case à cocher : toute la ligne est cliquable, 44 px de haut pour le
+   doigt. Les règles générales des champs (pleine largeur, cadre) ne
+   valent pas pour une case à cocher : on les annule. */
+.repeter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  margin: 0;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+.repeter input {
+  width: 1.1rem;
+  height: 1.1rem;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
 /* LA GRILLE
 
    Une colonne étroite pour les heures, puis sept colonnes égales.

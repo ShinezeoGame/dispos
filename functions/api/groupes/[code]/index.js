@@ -31,7 +31,7 @@ export async function onRequestGet(context) {
     // LEFT JOIN : chaque membre, avec la version de sa photo s'il en a
     // une (NULL sinon). Jamais l'image elle-même : la page la demande à
     // part, par son adresse (voir photos/[id].js).
-    db.prepare(`SELECT m.id, m.pseudo, m.couleur, m.jeux, m.bio, m.perso, p.version AS photo
+    db.prepare(`SELECT m.id, m.pseudo, m.couleur, m.jeux, m.bio, m.perso, m.semaine_type, p.version AS photo
                 FROM membres m LEFT JOIN photos p ON p.membre_id = m.id
                 WHERE m.groupe_id = ? ORDER BY m.id`)
       .bind(groupe.id),
@@ -59,6 +59,20 @@ export async function onRequestGet(context) {
     disposParMembre[rangee.membre_id] = JSON.parse(rangee.creneaux);
   }
 
+  /* LA SEMAINE TYPE (voir dispos.js) : un membre qui n'a rien
+     enregistré pour cette semaine, et qui a un modèle commencé cette
+     semaine-là ou avant (« depuis », comparé comme du texte : les dates
+     AAAA-MM-JJ se rangent dans le bon ordre), reprend ses créneaux. */
+  let maSemaineType = false;
+  for (const membre of membres.results) {
+    if (!membre.semaine_type) continue;
+    if (moi && membre.id === moi.id) maSemaineType = true;
+    const modele = JSON.parse(membre.semaine_type);
+    if (!(membre.id in disposParMembre) && modele.depuis <= semaine) {
+      disposParMembre[membre.id] = modele.creneaux;
+    }
+  }
+
   // Les réponses rangées par soirée : { 12: { 3: "oui", 5: "peutetre" } }.
   const reponsesParSoiree = {};
   for (const rangee of reponses.results) {
@@ -73,10 +87,14 @@ export async function onRequestGet(context) {
     // n'en a pas besoin.
     compte: compte ? { nom: compte.nom, discord: compte.discord } : null,
     semaine,
+    // As-tu une semaine type ? (coche « Répéter chaque semaine »)
+    semaineType: maSemaineType,
     // Les jeux et la personnalisation sont stockés en texte JSON : on
     // les rend sous forme de vraies listes et de vrais objets.
     // La photo : son adresse, prête à mettre dans un <img>, ou null.
-    membres: membres.results.map((membre) => ({
+    // ({ semaine_type, ...membre }) : la semaine type reste au serveur ;
+    // elle est déjà fondue dans « dispos ».
+    membres: membres.results.map(({ semaine_type, ...membre }) => ({
       ...membre,
       jeux: jeuxStockes(membre.jeux),
       perso: persoStockee(membre.perso),

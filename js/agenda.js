@@ -27,6 +27,9 @@ import { ouvrirProfil } from './profil.js';
 const grille = document.getElementById('grille');
 const boutonsMode = document.querySelectorAll('.bascule button');
 const aide = document.getElementById('aide-agenda');
+const ligneAide = document.getElementById('agenda-aide'); // l'aide + « Répéter chaque semaine »
+const caseRepeter = document.getElementById('repeter');
+let repeterAEnvoyer = null; // true/false à joindre au prochain enregistrement, ou null
 const statut = document.getElementById('statut-sauvegarde');
 const detail = document.getElementById('detail-case');
 const meilleurs = document.getElementById('meilleurs-contenu');
@@ -209,6 +212,8 @@ function dessiner() {
     : tactile ? 'Touche ou glisse sur tes heures dispos. Pour faire défiler, glisse sur les heures.'
     : 'Clique ou glisse sur tes heures dispos.';
   aide.hidden = mode !== 'moi';
+  ligneAide.hidden = mode !== 'moi';
+  caseRepeter.checked = Boolean(etat.semaineType);
 
   dessinerGrille();
   dessinerMeilleurs();
@@ -647,14 +652,29 @@ async function sauvegarder() {
   statut.textContent = 'Enregistrement…';
   // "4-21" → [4, 21], le format attendu par le serveur.
   const creneaux = [...mesCases()].map((cle) => cle.split('-').map(Number));
+  // La semaine type, si la case vient de changer (voir plus bas).
+  const corps = { semaine: versTexte(etat.semaine), creneaux };
+  if (repeterAEnvoyer !== null) corps.repeter = repeterAEnvoyer;
+  repeterAEnvoyer = null;
   try {
-    await appeler('/dispos', { methode: 'PUT', corps: { semaine: versTexte(etat.semaine), creneaux } });
+    await appeler('/dispos', { methode: 'PUT', corps });
+    if ('repeter' in corps) etat.semaineType = corps.repeter;
     statut.textContent = 'Enregistré ✓';
   } catch (probleme) {
     statut.textContent = '';
     annoncer(probleme.message, 'erreur');
   }
 }
+
+/* LA SEMAINE TYPE (2 nov. 2026) : cocher « Répéter chaque semaine »
+   fait de la semaine affichée ton modèle ; les semaines où tu n'as rien
+   coché le reprennent. Décocher arrête. On enregistre tout de suite,
+   avec la semaine (le serveur range les deux ensemble, voir dispos.js). */
+caseRepeter.addEventListener('change', () => {
+  repeterAEnvoyer = caseRepeter.checked;
+  etat.sauvegardeEnAttente = true;
+  sauvegarder();
+});
 
 // Si tu quittes l'onglet juste après avoir coché, on envoie sans attendre.
 document.addEventListener('visibilitychange', () => {
