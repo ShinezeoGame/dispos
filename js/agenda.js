@@ -259,7 +259,12 @@ function ajusterHauteur() {
   if (!premiere || !grille.offsetParent) return;
   const actuelle = premiere.offsetHeight;
   const fixe = grille.offsetHeight - LIGNES * actuelle;
-  const place = window.innerHeight - hautDansLaPage(grille) - fixe - 16; // 16 px d'air en bas
+  /* Sous la grille, il reste la marge du bas de la page (1rem sur
+     l'onglet Agenda, voir style.css). On la lit plutôt que de l'écrire
+     en dur : si elle change, le calcul suit, et la page ne dépasse
+     jamais de l'écran (sinon : un petit défilement pour rien). */
+  const marge = parseFloat(getComputedStyle(grille.closest('main')).paddingBottom);
+  const place = window.innerHeight - hautDansLaPage(grille) - fixe - marge;
   const hauteur = Math.max(17, Math.min(34, Math.floor(place / LIGNES)));
   if (hauteur !== actuelle) grille.style.setProperty('--hauteur-case', `${hauteur}px`);
 }

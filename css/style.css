@@ -858,6 +858,13 @@ input[type="range"] {
   flex: 1;
   padding-block: 1.5rem 4rem;
 }
+/* Sur ordinateur, l'onglet Agenda tient dans l'écran (ajusterHauteur,
+   agenda.js) : sous la grille, juste 1rem d'air. Avec les 4rem
+   habituels, la page dépassait de 3rem et défilait pour rien (2 nov.
+   2026, « un micro scroll quasi inutile »). Même seuil que agenda.js. */
+@media (min-width: 64rem) {
+  .groupe:has(> #vue-agenda:not([hidden])) { padding-bottom: 1rem; }
+}
 
 .message-centre {
   display: grid;

@@ -461,7 +461,10 @@ nom de domaine à part reste à choisir.
 - **La hauteur des cases sur ordinateur est calculée par
   `ajusterHauteur()`** (agenda.js) et posée dans `--hauteur-case` : la
   fenêtre, moins la position de la grille, moins ce qu'elle a de fixe
-  (ligne des jours, espaces, coupure de minuit), partagé en 18 lignes.
+  (ligne des jours, espaces, coupure de minuit), moins la marge du bas
+  de `main` (lue dans le CSS : 1rem sur l'onglet Agenda, au lieu des
+  4rem des autres onglets), partagé en 18 lignes. Oublier cette marge
+  laissait un petit défilement inutile sur les portables (2 nov. 2026).
   Recalculée au redessin, au redimensionnement, à l'arrivée de la police
   et quand l'onglet réapparaît (ResizeObserver). Ne pas fixer de hauteur
   en dur sur `.case` : seulement le repli `var(--hauteur-case, 1,9rem)`.
