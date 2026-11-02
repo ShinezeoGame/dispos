@@ -85,11 +85,16 @@ function fabriquerCarte(soiree) {
   }
   carte.querySelector('.soiree-tete').prepend(visuel);
 
-  // « Among Us · proposée par Max », ou le jeu seul si son auteur est parti.
+  /* « Among Us · proposée par Max ». Le jeu n'est rappelé que si le
+     titre ne le dit pas déjà : sous « Soirée Among Us », la ligne dit
+     seulement « proposée par Max » (la jaquette le montre aussi). Rien
+     si l'auteur est parti et que le titre nomme le jeu. */
   const auteur = trouverMembre(soiree.createur_id);
-  remplir('.soiree-infos', auteur
-    ? `${soiree.jeu} · proposée par ${auteur.id === moi?.id ? 'toi' : auteur.pseudo}`
-    : soiree.jeu);
+  const infos = [];
+  if (!soiree.titre.toLowerCase().includes(soiree.jeu.toLowerCase())) infos.push(soiree.jeu);
+  if (auteur) infos.push(`proposée par ${auteur.id === moi?.id ? 'toi' : auteur.pseudo}`);
+  remplir('.soiree-infos', infos.join(' · '));
+  carte.querySelector('.soiree-infos').hidden = infos.length === 0;
 
   const note = carte.querySelector('.soiree-note');
   note.textContent = soiree.note;

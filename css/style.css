@@ -743,9 +743,11 @@ input[type="range"] {
 .bouton-profil.bouton { border-radius: var(--rayon-petit); font-family: var(--police-titre); }
 
 /* Sur téléphone, dans l'en-tête d'un groupe : le logo réduit à son
-   icône, le pseudo à l'avatar. (.barre : l'accueil, lui, garde le nom.) */
+   icône, le pseudo à l'avatar, et pas de rond de couleur (il reste sur
+   l'accueil, où mène le logo). Tout ça pour que le nom du groupe tienne
+   au lieu de finir en « Le Ga… ». (.barre : l'accueil, lui, garde tout.) */
 @media (max-width: 40rem) {
-  .barre .logo-texte, .bouton-profil-nom { display: none; }
+  .barre .logo-texte, .bouton-profil-nom, .barre .bouton-theme { display: none; }
   .titre-groupe { padding-left: 0.5rem; }
 }
 
@@ -901,14 +903,24 @@ input[type="range"] {
   align-items: start;
 }
 
+/* Une carte de créneau est un bouton tout entier : un clic propose une
+   soirée à ce moment-là. Un bouton a d'office un texte centré, une
+   police et une couleur à lui : on lui rend celles de la page. */
 .creneau {
   display: grid;
   gap: 0.7rem;
+  width: 100%;
   padding: 1rem;
   border: 1px solid var(--bordure);
   border-radius: var(--rayon);
   background: var(--surface);
+  color: var(--texte);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
+/* La petite ligne qui dit ce que fait le clic, sans le poids d'un bouton. */
+.creneau-action { color: var(--accent); font: 600 0.9rem var(--police-titre); }
 /* Tout le monde est là : la carte s'allume. */
 .creneau.complet {
   border-color: var(--accent);
@@ -997,8 +1009,8 @@ input[type="range"] {
    mélange se fait comme s'additionne la lumière. Le mélange ordinaire
    (« in srgb ») donnait un brun terne aux cases à une ou deux
    personnes ; celui-ci donne déjà un orange chaud, sans changer les
-   cases vides ni les cases pleines. Garder le même espace dans la
-   légende (.legende-degrade) et l'aperçu de l'accueil (.apercu .n1…). */
+   cases vides ni les cases pleines. Garder le même espace dans
+   l'aperçu de l'accueil (.apercu .n1…). */
 .case {
   position: relative;
   height: 1.9rem;
@@ -1114,54 +1126,14 @@ input[type="range"] {
   .grille-heure { padding-right: 0.3rem; font-size: 0.66rem; }
 }
 
+/* Sous la grille : « Enregistré » après avoir coché ses dispos. La
+   hauteur est réservée d'avance, pour que la page ne saute pas quand le
+   message apparaît. (La légende qui était là a été retirée le
+   2 nov. 2026 : les couleurs se comprennent seules, et toucher une case
+   affiche le détail en clair.) */
 .sous-grille {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.75rem 1.5rem;
   margin-top: 1rem;
   min-height: 1.5rem;
-}
-
-/* La légende : le dégradé, le cadre rose, le point. */
-.legende {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 1.25rem;
-  color: var(--texte-doux);
-  font-size: 0.82rem;
-}
-.legende > span { display: inline-flex; align-items: center; gap: 0.45rem; }
-.legende i { display: inline-block; flex: none; }
-.legende-degrade i {
-  width: 4.5rem;
-  height: 0.7rem;
-  border-radius: 4px;
-  /* « in srgb-linear » : le dégradé passe par les mêmes couleurs que
-     les cases de l'agenda (voir « Une case »). */
-  background: linear-gradient(90deg in srgb-linear, var(--case), color-mix(in srgb-linear, var(--accent) 20%, var(--case)), var(--accent));
-}
-.legende-soiree {
-  width: 1rem;
-  height: 0.8rem;
-  border: 2px solid var(--soiree);
-  border-radius: 3px;
-}
-.legende-moi {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--texte);
-}
-/* Une petite case pleine qui rayonne, comme celles de l'agenda. */
-.legende-brille {
-  width: 1rem;
-  height: 0.8rem;
-  border-radius: 3px;
-  background: var(--accent);
-  box-shadow: 0 0 10px 1px color-mix(in srgb, var(--accent) 80%, transparent);
 }
 
 .statut { color: var(--accent); font-size: 0.88rem; font-weight: 600; }

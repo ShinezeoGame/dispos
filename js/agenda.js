@@ -27,7 +27,6 @@ import { ouvrirProfil } from './profil.js';
 const grille = document.getElementById('grille');
 const boutonsMode = document.querySelectorAll('.bascule button');
 const aide = document.getElementById('aide-agenda');
-const legende = document.getElementById('legende');
 const statut = document.getElementById('statut-sauvegarde');
 const detail = document.getElementById('detail-case');
 const meilleurs = document.getElementById('meilleurs-contenu');
@@ -163,12 +162,12 @@ function dessiner() {
   }
   /* Une seule aide, en mode « Mes dispos » : le geste (glisser pour
      cocher plusieurs cases) ne se devine pas. Sur écran tactile, elle dit
-     aussi comment faire défiler. En mode groupe, la légende suffit. */
+     aussi comment faire défiler. En mode groupe, rien : les couleurs se
+     comprennent seules, et toucher une case affiche son détail. */
   aide.textContent = mode !== 'moi' ? ''
     : tactile ? 'Touche ou glisse sur tes heures dispos. Pour faire défiler, glisse sur les heures.'
     : 'Clique ou glisse sur tes heures dispos.';
   aide.hidden = mode !== 'moi';
-  legende.hidden = mode === 'moi';
 
   dessinerGrille();
   dessinerMeilleurs();
@@ -286,36 +285,41 @@ function dessinerGrille() {
    un créneau à proposer. Seul dans le groupe, ou sans créneau commun, il
    n'y a rien à montrer : pas de message pour le dire. Pour inviter, le
    bouton « Inviter » de l'en-tête suffit (il passe en orange tant qu'on
-   est seul, voir groupe.js). */
+   est seul, voir groupe.js). En mode « Mes dispos » non plus : on y
+   coche ses heures, les cartes ne feraient que repousser la grille. */
 function dessinerMeilleurs() {
   meilleurs.replaceChildren();
-  const creneaux = etat.membres.length < 2 ? [] : trouverMeilleurs(compterDispos());
+  const creneaux = etat.membres.length < 2 || mode === 'moi' ? [] : trouverMeilleurs(compterDispos());
   sectionMeilleurs.hidden = creneaux.length === 0;
 
   for (const creneau of creneaux) {
-    const carte = creer('article', 'creneau');
+    /* La carte entière est le bouton : un clic propose une soirée à ce
+       moment-là. Plus léger que trois gros boutons « Proposer une
+       soirée » identiques, un par carte. Les div et span sont permis
+       dans un bouton (pas les p ni les titres). */
+    const carte = creer('button', 'creneau');
+    carte.type = 'button';
     const tousLa = creneau.ids.length === etat.membres.length;
     carte.classList.toggle('complet', tousLa);
 
     const jour = ajouterJours(etat.semaine, creneau.jour);
-    const quand = creer('p', 'creneau-quand');
+    const quand = creer('span', 'creneau-quand');
     quand.append(
       creer('strong', '', majuscule(formater(jour, { weekday: 'short', day: 'numeric', month: 'short' }))),
       ` ${libelleHeure(creneau.debut)} → ${libelleHeure(creneau.fin)}`,
     );
 
     // Les avatars et « 4 potes sur 5 » sur une même ligne.
-    const equipe = creer('div', 'creneau-equipe');
-    const avatars = creer('div', 'avatars');
+    const equipe = creer('span', 'creneau-equipe');
+    const avatars = creer('span', 'avatars');
     for (const id of creneau.ids) avatars.append(avatar(trouverMembre(id)));
-    equipe.append(avatars, creer('p', 'creneau-combien',
+    equipe.append(avatars, creer('span', 'creneau-combien',
       tousLa ? 'Tout le monde !' : `${creneau.ids.length} sur ${etat.membres.length}`));
 
-    const bouton = creer('button', 'bouton bouton-second bouton-petit', 'Proposer une soirée');
-    bouton.type = 'button';
-    bouton.addEventListener('click', () => proposerSoiree(soireeDepuisCase(creneau.jour, creneau.debut)));
-
-    carte.append(quand, equipe, bouton);
+    carte.append(quand, equipe, creer('span', 'creneau-action', 'Proposer une soirée'));
+    // Ce qu'un lecteur d'écran annonce, au lieu des initiales des avatars une à une.
+    carte.setAttribute('aria-label', `Proposer une soirée : ${quand.textContent}, ${equipe.lastChild.textContent}`);
+    carte.addEventListener('click', () => proposerSoiree(soireeDepuisCase(creneau.jour, creneau.debut)));
     meilleurs.append(carte);
   }
 }

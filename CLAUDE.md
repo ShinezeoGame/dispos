@@ -283,8 +283,8 @@ nom de domaine à part reste à choisir.
 - **La couleur des cases se mélange `in srgb-linear`** (1er nov. 2026,
   « trop foncé ») : `color-mix(in srgb-linear, accent niveau%, case)`.
   Le mélange ordinaire (`in srgb`) donnait un brun terne aux cases à une
-  ou deux personnes. Garder le même espace dans `.legende-degrade` et
-  `.apercu .n1…n3`. Le chiffre passe en sombre (`forte`) au-delà de
+  ou deux personnes. Garder le même espace dans `.apercu .n1…n3`
+  (l'aperçu de l'accueil). Le chiffre passe en sombre (`forte`) au-delà de
   0,5 (agenda.js), lisible sur ces couleurs plus claires. Un créneau
   passé est à 0,55 d'opacité (0,35 rendait la semaine illisible le
   dimanche).
