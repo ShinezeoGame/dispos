@@ -28,7 +28,8 @@ const champWebhook = document.getElementById('webhook');
 const discordBranche = document.getElementById('discord-branche');
 
 quandCaChange(() => {
-  const admin = Boolean(etat.moi) && etat.moi.id === etat.admin;
+  // Les organisateurs (le premier membre, et ceux qu'il a nommés en AllReady+).
+  const admin = etat.peutGerer;
   section.hidden = !etat.moi;
   formRenommer.hidden = !admin;
   // Le nom actuel dans le champ, sauf si on est en train de le taper.

@@ -48,6 +48,13 @@ export const STYLES = [
 export const LIEN_SOUTIEN = '';
 export const LIEN_PRIX = '';
 
+/* LIEN_PREMIUM (2 nov. 2026) : la page d'abonnement AllReady+ (un
+   abonnement Ko-fi, par exemple 'https://ko-fi.com/allready/tiers').
+   Vide : la fenêtre AllReady+ dit « Bientôt disponible ». Rempli : un
+   bouton « S'abonner », et la consigne de donner le code du groupe dans
+   son message, pour l'activer à la main (groupes.premium). */
+export const LIEN_PREMIUM = '';
+
 
 /* PARLER AU SERVEUR
 

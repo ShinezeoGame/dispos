@@ -36,6 +36,8 @@
         <span class="logo-texte">All<span class="logo-ready">Ready</span></span>
       </a>
       <h1 id="titre-groupe" class="titre-groupe"></h1>
+      <!-- « + » : le groupe est abonné à AllReady+ (js/plus.js). -->
+      <span id="pastille-plus" class="pastille-plus" title="Groupe AllReady+" hidden>+</span>
       <button id="bouton-inviter" class="bouton bouton-second bouton-petit" type="button" hidden>Inviter</button>
       <!-- LE CHOIX DE LA COULEUR (js/apparence.js) : le rond montre le
            thème en cours ; popovertarget ouvre la palette. -->
@@ -205,6 +207,13 @@
           <p class="indice">Branché&nbsp;: les soirées y sont annoncées, avec un rappel une heure avant.</p>
           <button id="debrancher-discord" class="lien-discret" type="button">Débrancher</button>
         </div>
+        <!-- ALLREADY+ (js/plus.js) : « actif » pour un groupe abonné, sinon
+             ce que l'abonnement apporte et de quoi en savoir plus. -->
+        <div id="reglage-plus" class="reglage reglage-plus">
+          <p class="reglage-titre">AllReady+</p>
+          <p id="plus-etat" class="indice"></p>
+          <button id="decouvrir-plus" class="bouton bouton-second bouton-petit" type="button">Découvrir AllReady+</button>
+        </div>
         <button id="quitter-groupe" class="lien-discret lien-danger" type="button">Quitter le groupe</button>
       </section>
     </section>
@@ -264,6 +273,8 @@
           <p class="membre-semaine"></p>
         </div>
         <span class="membre-toi" hidden>toi</span>
+        <!-- AllReady+ : le premier membre et les organisateurs qu'il a nommés. -->
+        <span class="membre-orga" hidden>orga</span>
       </div>
       <!-- Le style de jeu et les plateformes, en petites étiquettes. -->
       <ul class="membre-badges"></ul>
@@ -275,6 +286,8 @@
       <button type="button" class="bouton bouton-second bouton-petit membre-modifier" hidden>Modifier mon profil</button>
       <!-- Pour le premier membre du groupe, sur les cartes des autres. -->
       <button type="button" class="lien-discret membre-retirer" hidden>Retirer du groupe</button>
+      <!-- AllReady+, pour le premier membre : nommer ou retirer un organisateur. -->
+      <button type="button" class="lien-discret membre-nommer" hidden></button>
     </article>
   </template>
 
@@ -462,6 +475,33 @@
        envoyer nulle part, en laissant sa valeur « ok » dans returnValue ;
        c'est recadrage.js qui découpe alors la photo. Le cercle par-dessus
        la photo montre ce qui sera gardé. -->
+  <!-- LA FENÊTRE ALLREADY+ (js/plus.js) : ce que l'abonnement apporte,
+       son prix, et comment s'abonner. Ouverte depuis Le groupe, et
+       depuis chaque fonctionnalité réservée (le petit « + »). -->
+  <dialog id="dialogue-plus" class="dialogue" aria-labelledby="titre-plus">
+    <form method="dialog">
+      <div class="dialogue-tete">
+        <h2 id="titre-plus">AllReady<span class="accent">+</span></h2>
+        <button type="button" class="bouton-icone" data-fermer aria-label="Fermer">×</button>
+      </div>
+      <p>Pour les guildes, les équipes et les grandes teams, tout le groupe profite de :</p>
+      <ul class="liste-plus">
+        <li><strong>Rôles et liste d'attente</strong> : tank, heal, DPS…, titulaires et remplaçants.</li>
+        <li><strong>Bot Discord</strong> : répondre aux soirées depuis Discord, rôle mentionné dans les annonces.</li>
+        <li><strong>Synchro d'agenda</strong> : tes créneaux occupés se grisent tout seuls.</li>
+        <li><strong>Jusqu'à 100 membres</strong> et plusieurs organisateurs.</li>
+        <li><strong>Présence</strong> : qui vient vraiment, taux de présence.</li>
+        <li><strong>Thèmes exclusifs</strong> et bannière de groupe.</li>
+      </ul>
+      <p class="prix-plus">3 € par mois ou 25 € par an, pour tout le groupe.</p>
+      <p id="plus-consigne" class="indice"></p>
+      <div class="dialogue-actions">
+        <button type="button" class="bouton bouton-second" data-fermer>Fermer</button>
+        <a id="plus-abonner" class="bouton" target="_blank" rel="noopener" hidden>S'abonner</a>
+      </div>
+    </form>
+  </dialog>
+
   <dialog id="dialogue-recadrage" class="dialogue dialogue-recadrage" aria-labelledby="titre-recadrage">
     <form method="dialog">
       <div class="dialogue-tete">

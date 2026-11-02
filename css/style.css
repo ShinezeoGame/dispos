@@ -360,7 +360,9 @@ label, legend {
   font-size: 0.95rem;
 }
 
-input, textarea {
+/* select : le « Fuseau horaire » (Le groupe) prend le même habit que
+   les champs de texte, au lieu de la petite liste blanche du navigateur. */
+input, textarea, select {
   width: 100%;
   min-height: 44px;
   padding: 0.6rem 0.8rem;
@@ -373,7 +375,9 @@ input, textarea {
 
 textarea { resize: vertical; }
 
-input:focus, textarea:focus {
+select { color-scheme: dark; cursor: pointer; }
+
+input:focus, textarea:focus, select:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
@@ -787,7 +791,10 @@ input[type="range"] {
    600 au lieu de 700 laisse le nom du site plus fort : changer de
    graisse ne déplace pas la ligne de base. */
 .titre-groupe {
-  flex: 1;
+  /* Le nom prend la place dont il a besoin, sans plus : le « + »
+     d'AllReady+ (pastille-plus) se colle juste après lui, et c'est
+     « Inviter » qui part à droite (margin-left: auto, plus bas). */
+  flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -797,6 +804,7 @@ input[type="range"] {
   padding-left: 0.75rem;
   border-left: 1px solid var(--bordure);
 }
+#bouton-inviter { margin-left: auto; }
 
 .bouton-profil {
   display: inline-flex;
@@ -1654,6 +1662,36 @@ button.stat-jeu { cursor: help; }
     0 0 16px 2px color-mix(in srgb, var(--soiree) 45%, transparent);
 }
 .membre-semaine { color: var(--texte-doux); font-size: 0.85rem; }
+
+/* « orga » (AllReady+) : même pastille que « toi », en rose. */
+.membre-orga {
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--soiree);
+  border-radius: 99px;
+  color: var(--soiree);
+  font: 600 0.75rem var(--police-titre);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.membre-nommer { justify-self: start; font-size: 0.85rem; }
+
+/* ALLREADY+ (js/plus.js) : le « + » à côté du nom d'un groupe abonné,
+   la liste de la fenêtre, le prix. */
+.pastille-plus {
+  display: inline-grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--sur-accent);
+  font: 700 1rem/1 var(--police-titre);
+}
+.liste-plus { display: grid; gap: 0.45rem; margin: 0.8rem 0; padding-left: 1.1rem; }
+.liste-plus li { color: var(--texte-doux); }
+.liste-plus strong { color: var(--texte); }
+.prix-plus { font: 600 1.05rem var(--police-titre); color: var(--accent); }
+.reglage-plus .reglage-titre { color: var(--accent); }
 
 .membre-toi {
   padding: 0.1rem 0.5rem;

@@ -80,6 +80,12 @@ export async function charger() {
   etat.admin = donnees.admin;             // l'id du premier membre, qui décide
   etat.membres = donnees.membres;
   etat.moi = donnees.membres.find((membre) => membre.id === donnees.moi) || null;
+  /* Gérer le groupe (renommer, fuseau, Discord, retirer quelqu'un ; en
+     AllReady+, modifier n'importe quelle soirée) : le premier membre, et
+     dans un groupe AllReady+ les organisateurs. Même règle que peutGerer()
+     côté serveur (functions/_outils.js), qui vérifie de toute façon. */
+  etat.peutGerer = Boolean(etat.moi)
+    && (etat.moi.id === donnees.admin || (donnees.groupe.premium && etat.moi.organisateur));
   etat.semaineChargee = donnees.semaine;
 
   /* Le serveur envoie { 3: [[0,21],[0,22]] }. On en fait une Map dont

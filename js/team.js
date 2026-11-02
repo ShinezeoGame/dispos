@@ -111,13 +111,41 @@ function fabriquerCarte(membre, estMoi) {
     const modifier = carte.querySelector('.membre-modifier');
     modifier.hidden = false;
     modifier.addEventListener('click', ouvrirProfil);
-  } else if (etat.moi && etat.moi.id === etat.admin) {
-    // Le premier membre peut retirer les autres (pas lui-même : il quitte).
-    const retirer = carte.querySelector('.membre-retirer');
-    retirer.hidden = false;
-    retirer.addEventListener('click', () => retirerMembre(membre));
+  } else {
+    /* Retirer quelqu'un : les organisateurs (etat.peutGerer). Mais un
+       organisateur ne retire ni le premier membre ni un autre
+       organisateur : seul le premier membre le peut (même règle côté
+       serveur, membres/[id].js). */
+    const jeSuisPremier = etat.moi?.id === etat.admin;
+    const protege = membre.id === etat.admin || membre.organisateur;
+    if (etat.peutGerer && (jeSuisPremier || !protege)) {
+      const retirer = carte.querySelector('.membre-retirer');
+      retirer.hidden = false;
+      retirer.addEventListener('click', () => retirerMembre(membre));
+    }
+    // AllReady+ : le premier membre nomme ou retire les organisateurs.
+    if (etat.groupe.premium && jeSuisPremier) {
+      const nommer = carte.querySelector('.membre-nommer');
+      nommer.hidden = false;
+      nommer.textContent = membre.organisateur ? 'Retirer organisateur' : 'Nommer organisateur';
+      nommer.addEventListener('click', () => nommerOrganisateur(membre, !membre.organisateur));
+    }
   }
+  // Le badge « orga » : en AllReady+, le premier membre et les organisateurs.
+  carte.querySelector('.membre-orga').hidden = !(etat.groupe.premium && (membre.id === etat.admin || membre.organisateur));
   return carte;
+}
+
+/* NOMMER UN ORGANISATEUR (AllReady+, 2 nov. 2026) : il pourra gérer
+   le groupe comme le premier membre (voir peutGerer, _outils.js). */
+async function nommerOrganisateur(membre, organisateur) {
+  try {
+    await appeler(`/membres/${membre.id}`, { methode: 'PATCH', corps: { organisateur } });
+    annoncer(organisateur ? `${membre.pseudo} organise le groupe avec toi.` : `${membre.pseudo} n'est plus organisateur.`);
+    await charger();
+  } catch (probleme) {
+    annoncer(probleme.message, 'erreur');
+  }
 }
 
 /* RETIRER QUELQU'UN (2 nov. 2026) : confirm() demande d'abord, la

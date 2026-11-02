@@ -9,15 +9,15 @@
    lui qui décide où parle le groupe. Le fonctionnement des annonces
    est expliqué en tête de functions/_annonces.js. */
 
-import { json, erreur, lireCorps, identifier, adminDuGroupe } from '../../../_outils.js';
+import { json, erreur, lireCorps, identifier, peutGerer } from '../../../_outils.js';
 import { adresseWebhook, envoyer, sansMarkdown } from '../../../_annonces.js';
 
 // Les deux routes commencent pareil : qui appelle, et a-t-il le droit ?
 async function verifierAdmin(context) {
   const { groupe, moi, refus } = await identifier(context);
   if (refus) return { refus };
-  if (moi.id !== await adminDuGroupe(context.env.DB, groupe.id)) {
-    return { refus: erreur(403, 'Seul le premier membre du groupe peut brancher Discord.') };
+  if (!await peutGerer(context.env.DB, groupe, moi)) {
+    return { refus: erreur(403, 'Seuls les organisateurs du groupe peuvent brancher Discord.') };
   }
   return { groupe };
 }

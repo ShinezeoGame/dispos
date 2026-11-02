@@ -31,7 +31,13 @@ export async function onRequestPost(context) {
     .prepare('SELECT COUNT(*) AS nombre FROM membres WHERE groupe_id = ?')
     .bind(groupe.id)
     .first();
-  if (nombre >= MAX_MEMBRES) return erreur(403, `Ce groupe est complet (${MAX_MEMBRES} membres).`);
+  // 15 membres pour un groupe gratuit, 100 en AllReady+ (MAX_MEMBRES).
+  const maximum = groupe.premium ? MAX_MEMBRES.plus : MAX_MEMBRES.gratuit;
+  if (nombre >= maximum) {
+    return erreur(403, groupe.premium
+      ? `Ce groupe est complet (${maximum} membres).`
+      : `Ce groupe est complet (${maximum} membres). En AllReady+, il peut accueillir jusqu'à ${MAX_MEMBRES.plus} membres.`);
+  }
 
   if (await pseudoPris(db, groupe.id, profil.pseudo)) {
     return erreur(409, 'Ce pseudo est déjà pris dans le groupe.');

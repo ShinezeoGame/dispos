@@ -35,7 +35,11 @@ export const COULEURS = [
 // Les trois réponses possibles à une soirée proposée.
 export const REPONSES = ['oui', 'peutetre', 'non'];
 
-export const MAX_MEMBRES = 50;
+/* Membres par groupe (2 nov. 2026) : 15 pour un groupe gratuit, 100
+   pour un groupe AllReady+ (voir « Le modèle payant » dans CLAUDE.md).
+   Un groupe déjà plus grand garde tout le monde ; il n'accueille
+   simplement plus personne. */
+export const MAX_MEMBRES = { gratuit: 15, plus: 100 };
 export const MAX_JEUX = 12; // par profil
 
 // La personnalisation des profils (voir lirePerso plus bas). À garder
@@ -71,6 +75,7 @@ export const SCHEMA = [
     nom TEXT NOT NULL,
     webhook TEXT NOT NULL DEFAULT '',
     fuseau TEXT NOT NULL DEFAULT 'Europe/Paris',
+    premium INTEGER NOT NULL DEFAULT 0,
     cree_le TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
 
@@ -117,6 +122,7 @@ export const SCHEMA = [
     bio TEXT NOT NULL DEFAULT '',
     perso TEXT NOT NULL DEFAULT '{}',
     semaine_type TEXT,
+    organisateur INTEGER NOT NULL DEFAULT 0,
     jeton_hash TEXT NOT NULL UNIQUE,
     cree_le TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
@@ -282,6 +288,12 @@ export const MIGRATIONS = [
      (« Europe/Paris », « America/Montreal »…). Les heures des soirées
      et de l'agenda sont des heures de ce fuseau. */
   "ALTER TABLE groupes ADD COLUMN fuseau TEXT NOT NULL DEFAULT 'Europe/Paris'",
+  /* 2 nov. 2026 : AllReady+, l'abonnement d'un groupe. groupes.premium
+     = 1 pour un groupe abonné, posé à la main dans la console D1 (voir
+     CLAUDE.md). membres.organisateur = 1 pour un membre que le premier
+     membre a nommé organisateur (groupes AllReady+ seulement). */
+  'ALTER TABLE groupes ADD COLUMN premium INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE membres ADD COLUMN organisateur INTEGER NOT NULL DEFAULT 0',
 ];
 
 
@@ -566,6 +578,18 @@ export async function adminDuGroupe(db, groupeId) {
   return premier ? premier.id : null;
 }
 
+/* QUI PEUT GÉRER LE GROUPE (2 nov. 2026) : le premier membre, et dans
+   un groupe AllReady+ les organisateurs qu'il a nommés. Gérer =
+   renommer, changer le fuseau, brancher Discord, retirer quelqu'un ;
+   en AllReady+ seulement, modifier ou annuler n'importe quelle soirée
+   (soirees/[id].js). Seul le premier membre nomme ou retire les
+   organisateurs (membres/[id].js). */
+export async function peutGerer(db, groupe, moi) {
+  if (!moi) return false;
+  if (groupe.premium && moi.organisateur) return true;
+  return moi.id === await adminDuGroupe(db, groupe.id);
+}
+
 // Deux membres d'un même groupe ne peuvent pas porter le même pseudo :
 // on ne saurait plus qui est qui. COLLATE NOCASE : « Max » et « max »
 // comptent comme le même. saufId : soi-même, quand on modifie son
@@ -771,7 +795,7 @@ export async function identifier({ request, env, params }, membreObligatoire = t
   const db = env.DB;
   const code = String(params.code || '').toUpperCase();
   const groupe = await db
-    .prepare('SELECT id, code, nom, webhook, fuseau FROM groupes WHERE code = ?')
+    .prepare('SELECT id, code, nom, webhook, fuseau, premium FROM groupes WHERE code = ?')
     .bind(code)
     .first();
   if (!groupe) {
@@ -782,7 +806,7 @@ export async function identifier({ request, env, params }, membreObligatoire = t
   let moi = null;
   if (compte) {
     moi = await db
-      .prepare('SELECT id, pseudo FROM membres WHERE groupe_id = ? AND compte_id = ?')
+      .prepare('SELECT id, pseudo, organisateur FROM membres WHERE groupe_id = ? AND compte_id = ?')
       .bind(groupe.id, compte.id)
       .first();
   }
@@ -790,7 +814,7 @@ export async function identifier({ request, env, params }, membreObligatoire = t
   const jeton = (request.headers.get('Authorization') || '').replace(/^Bearer /, '');
   if (!moi && /^[0-9a-f]{64}$/.test(jeton)) {
     moi = await db
-      .prepare('SELECT id, pseudo FROM membres WHERE groupe_id = ? AND jeton_hash = ? AND compte_id IS NULL')
+      .prepare('SELECT id, pseudo, organisateur FROM membres WHERE groupe_id = ? AND jeton_hash = ? AND compte_id IS NULL')
       .bind(groupe.id, await hacher(jeton))
       .first();
     if (moi && compte) {

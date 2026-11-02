@@ -656,6 +656,31 @@ streamers qui jouent avec leurs viewers.
 - **Avant de vendre** : un statut (micro-entreprise), des mentions
   légales et des CGV. Ko-fi encaisse, mais les revenus se déclarent.
 
+**Le socle d'AllReady+ (en place)** :
+- `groupes.premium` = 1 pour un groupe abonné. **Activer** : Cloudflare
+  → D1 → `dispos` → Console,
+  `UPDATE groupes SET premium = 1 WHERE code = 'ABCD2345';` (0 pour
+  arrêter). Le code est celui que l'abonné donne dans son message Ko-fi.
+- `LIEN_PREMIUM` (js/commun.js) : la page d'abonnement. Vide, la
+  fenêtre AllReady+ dit « Bientôt disponible » ; remplie, un bouton
+  « S'abonner » et la consigne de donner le code du groupe.
+- La fenêtre AllReady+ (`js/plus.js`, `ouvrirPlus()`) : les six
+  avantages et le prix. Ouverte depuis « Découvrir AllReady+ » dans Le
+  groupe ; chaque fonctionnalité réservée l'ouvrira par son « + ».
+  Un groupe abonné a un « + » à côté de son nom.
+- **15 membres pour un groupe gratuit, 100 en AllReady+**
+  (`MAX_MEMBRES` dans _outils.js) ; un groupe déjà plus grand garde
+  tout le monde mais n'accueille plus personne.
+- **Les organisateurs** (`membres.organisateur`) : en AllReady+, le
+  premier membre nomme ou retire des organisateurs (« Nommer
+  organisateur » sur leur carte, badge « orga »). Ils gèrent le groupe
+  comme lui (`peutGerer()` : renommer, fuseau, Discord, retirer
+  quelqu'un) et peuvent modifier ou annuler n'importe quelle soirée.
+  Un organisateur ne retire ni le premier membre ni un autre
+  organisateur. Sans abonnement, plus aucun droit d'organisateur ; le
+  premier membre garde les siens, et seul l'auteur d'une soirée la
+  modifie, comme avant.
+
 **Payant (AllReady+)** :
 1. Inscriptions avec rôles (tank / heal / DPS…), liste d'attente et
    composition affichée.

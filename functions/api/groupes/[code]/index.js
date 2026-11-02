@@ -15,7 +15,7 @@
 
 import {
   json, erreur, estLundi, identifier, jeuxStockes, persoStockee, adressePhoto,
-  lireCorps, ligne, adminDuGroupe, recalerHebdos, lireFuseau,
+  lireCorps, ligne, peutGerer, recalerHebdos, lireFuseau,
 } from '../../../_outils.js';
 import { heureDuGroupe } from '../../../_annonces.js';
 
@@ -27,8 +27,8 @@ export async function onRequestPatch(context) {
   const { groupe, moi, refus } = await identifier(context);
   if (refus) return refus;
   const db = context.env.DB;
-  if (moi.id !== await adminDuGroupe(db, groupe.id)) {
-    return erreur(403, 'Seul le premier membre du groupe peut le modifier.');
+  if (!await peutGerer(db, groupe, moi)) {
+    return erreur(403, 'Seuls les organisateurs du groupe peuvent le modifier.');
   }
   const corps = await lireCorps(context.request);
   if ('fuseau' in corps) {
@@ -63,7 +63,7 @@ export async function onRequestGet(context) {
     // une (NULL sinon). Jamais l'image elle-même : la page la demande à
     // part, par son adresse (voir photos/[id].js).
     // Et, par son compte, s'il soutient AllReady (0 sans compte).
-    db.prepare(`SELECT m.id, m.pseudo, m.couleur, m.jeux, m.bio, m.perso, m.semaine_type, p.version AS photo,
+    db.prepare(`SELECT m.id, m.pseudo, m.couleur, m.jeux, m.bio, m.perso, m.semaine_type, m.organisateur, p.version AS photo,
                        COALESCE(c.soutien, 0) AS soutien
                 FROM membres m LEFT JOIN photos p ON p.membre_id = m.id
                 LEFT JOIN comptes c ON c.id = m.compte_id
@@ -138,7 +138,8 @@ export async function onRequestGet(context) {
   return json(200, {
     // discord : un salon est-il branché ? Oui ou non, jamais l'adresse
     // du webhook (qui l'a peut écrire dans le salon).
-    groupe: { code: groupe.code, nom: groupe.nom, discord: groupe.webhook !== '', fuseau: groupe.fuseau },
+    // premium : le groupe est-il abonné à AllReady+ ?
+    groupe: { code: groupe.code, nom: groupe.nom, discord: groupe.webhook !== '', fuseau: groupe.fuseau, premium: groupe.premium === 1 },
     moi: moi ? moi.id : null,
     // Le nom et le pseudo Discord, sans le numéro du compte : la page
     // n'en a pas besoin.
@@ -160,6 +161,7 @@ export async function onRequestGet(context) {
       perso: persoStockee(membre.perso),
       photo: membre.photo ? adressePhoto(groupe.code, membre.id, membre.photo) : null,
       soutien: membre.soutien === 1,
+      organisateur: membre.organisateur === 1,
     })),
     dispos: disposParMembre,
     // { chauds: { 3: 8, 5: 2 } } : le nombre de « Chaud » par membre.

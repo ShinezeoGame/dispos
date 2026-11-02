@@ -8,7 +8,7 @@
    pour l'une, onRequestPatch pour l'autre, etc. Modifier et annuler
    sont réservés à la personne qui a proposé la soirée. */
 
-import { json, erreur, lireCorps, identifier, lireSoiree, REPONSES } from '../../../../_outils.js';
+import { json, erreur, lireCorps, identifier, lireSoiree, peutGerer, REPONSES } from '../../../../_outils.js';
 import { annoncerSoiree, heureDuGroupe } from '../../../../_annonces.js';
 
 /* La soirée doit appartenir AU groupe du lien. Sans ce
@@ -110,7 +110,8 @@ export async function onRequestPatch(context) {
   const db = context.env.DB;
   const ancienne = await trouverSoiree(db, groupe.id, context.params.id);
   if (!ancienne) return erreur(404, "Cette soirée n'existe plus.");
-  if (ancienne.createur_id !== moi.id) {
+  // Celle ou celui qui l'a proposée ; en AllReady+, les organisateurs aussi.
+  if (ancienne.createur_id !== moi.id && !(groupe.premium && await peutGerer(db, groupe, moi))) {
     return erreur(403, 'Seule la personne qui a proposé la soirée peut la modifier.');
   }
 
@@ -157,7 +158,7 @@ export async function onRequestDelete(context) {
   if (!soiree) return erreur(404, "Cette soirée n'existe plus.");
 
   // 403 = « interdit » : on sait qui tu es, mais ce n'est pas à toi.
-  if (soiree.createur_id !== moi.id) {
+  if (soiree.createur_id !== moi.id && !(groupe.premium && await peutGerer(db, groupe, moi))) {
     return erreur(403, "Seule la personne qui a proposé la soirée peut l'annuler.");
   }
 

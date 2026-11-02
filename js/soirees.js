@@ -173,8 +173,9 @@ function fabriquerCarte(soiree) {
 
   if (vote) carte.querySelector('.soiree-note').before(blocVote(soiree));
 
-  // Seule la personne qui a proposé peut modifier ou annuler.
-  if (moi && soiree.createur_id === moi.id) {
+  // La personne qui l'a proposée peut la modifier ou l'annuler ; en
+  // AllReady+, les organisateurs du groupe aussi (etat.peutGerer).
+  if (moi && (soiree.createur_id === moi.id || (etat.groupe.premium && etat.peutGerer))) {
     carte.querySelector('.soiree-gestion').hidden = false;
     carte.querySelector('.soiree-modifier').addEventListener('click', () => modifierSoiree(soiree));
     carte.querySelector('.soiree-annuler').addEventListener('click', () => annulerSoiree(soiree));
