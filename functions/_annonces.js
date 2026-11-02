@@ -127,7 +127,9 @@ function encadreSoiree(request, groupe, soiree) {
   const details = soiree.choix?.length > 1
     ? [`Au vote : ${soiree.choix.map((jeu) => jeu.nom).join(', ')}`]
     : [soiree.jeu];
-  if (soiree.places) details.push(`${soiree.places} places`);
+  // Avec des rôles : « Tank 2 · Heal 2 · DPS 6 » plutôt que « 10 places ».
+  if (soiree.roles?.length) details.push(...soiree.roles.map((role) => `${role.nom} ${role.places}`));
+  else if (soiree.places) details.push(`${soiree.places} places`);
   if (soiree.hebdo) details.push('chaque semaine');
   const lignes = [`**${texteMoment(soiree)}**`, sansMarkdown(details.join(' · '))];
   if (soiree.note) lignes.push('', '> ' + sansMarkdown(soiree.note).replace(/\n/g, '\n> '));

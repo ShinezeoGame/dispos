@@ -161,6 +161,7 @@ export const SCHEMA = [
     rappel INTEGER NOT NULL DEFAULT 0,
     choix TEXT NOT NULL DEFAULT '',
     hebdo INTEGER NOT NULL DEFAULT 0,
+    roles TEXT NOT NULL DEFAULT '',
     cree_le TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
 
@@ -169,6 +170,8 @@ export const SCHEMA = [
     soiree_id INTEGER NOT NULL REFERENCES soirees(id) ON DELETE CASCADE,
     membre_id INTEGER NOT NULL REFERENCES membres(id) ON DELETE CASCADE,
     reponse TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT '',
+    inscrit_le TEXT NOT NULL DEFAULT '',
     PRIMARY KEY (soiree_id, membre_id)
   )`,
 
@@ -294,6 +297,14 @@ export const MIGRATIONS = [
      membre a nommé organisateur (groupes AllReady+ seulement). */
   'ALTER TABLE groupes ADD COLUMN premium INTEGER NOT NULL DEFAULT 0',
   'ALTER TABLE membres ADD COLUMN organisateur INTEGER NOT NULL DEFAULT 0',
+  /* 2 nov. 2026 : les rôles et la liste d'attente (AllReady+).
+     soirees.roles : [{ nom: "Tank", places: 2 }, …] en JSON ('' = pas de
+     rôles). reponses.role : le rôle choisi avec un « Chaud ».
+     reponses.inscrit_le : quand ce « Chaud » a été donné ; c'est l'ordre
+     d'arrivée qui décide qui joue et qui attend (repartir, plus bas). */
+  "ALTER TABLE soirees ADD COLUMN roles TEXT NOT NULL DEFAULT ''",
+  "ALTER TABLE reponses ADD COLUMN role TEXT NOT NULL DEFAULT ''",
+  "ALTER TABLE reponses ADD COLUMN inscrit_le TEXT NOT NULL DEFAULT ''",
 ];
 
 
@@ -510,11 +521,68 @@ export function lireSoiree(corps) {
       return { probleme: 'Le nombre de places va de 2 à 50.' };
     }
   }
+  /* Les rôles (AllReady+, 2 nov. 2026) : [{ nom: "Tank", places: 2 }, …],
+     8 au plus, chacun avec un nom (20 caractères au plus) et de 1 à 50
+     places, sans doublon. Avec des rôles, le nombre de places de la
+     soirée est leur total (100 au plus : un raid de 40, c'est permis).
+     Les routes les ignorent dans un groupe sans abonnement. */
+  const roles = [];
+  if (Array.isArray(corps.roles) && corps.roles.length) {
+    if (corps.roles.length > 8) return { probleme: '8 rôles au plus.' };
+    for (const brut of corps.roles) {
+      const nom = ligne(brut?.nom);
+      const nombre = Number(brut?.places);
+      if (nom.length < 1 || nom.length > 20 || !Number.isInteger(nombre) || nombre < 1 || nombre > 50) {
+        return { probleme: 'Un rôle, c\'est un nom (20 caractères au plus) et un nombre de places (1 à 50).' };
+      }
+      if (roles.some((role) => role.nom.toLowerCase() === nom.toLowerCase())) {
+        return { probleme: `Le rôle « ${nom} » est en double.` };
+      }
+      roles.push({ nom, places: nombre });
+    }
+    places = roles.reduce((total, role) => total + role.places, 0);
+    if (places > 100) return { probleme: '100 places au plus, tous rôles confondus.' };
+  }
   if (note.length > 300) return { probleme: 'Le petit mot est trop long (300 caractères au plus).' };
   // « Chaque semaine » : true ou rien.
   const hebdo = corps.hebdo === true;
-  return { soiree: { jeu, titre, jour: corps.jour, horaire: corps.horaire, fin, places, note, choix, hebdo } };
+  return { soiree: { jeu, titre, jour: corps.jour, horaire: corps.horaire, fin, places, note, choix, hebdo, roles } };
 }
+
+/* QUI JOUE, QUI ATTEND (AllReady+, 2 nov. 2026)
+
+   Dans un groupe AllReady+, une soirée complète ne refuse plus les
+   « Chaud » : les derniers arrivés passent en liste d'attente. Rien
+   n'est rangé pour ça : on recalcule à chaque fois, dans l'ordre
+   d'arrivée (inscrit_le), les premiers jusqu'à la limite jouent, les
+   autres attendent. Par rôle s'il y en a (2 tanks, 2 heals…), sinon sur
+   le total des places. Ainsi, dès qu'un « Chaud » se désiste ou quitte
+   le groupe, le premier qui attendait joue, sans rien à mettre à jour.
+
+   soiree : { roles: [...] (déjà lus), places } ; oui : les « Chaud »,
+   [{ membre_id, role, inscrit_le }]. Renvoie l'ensemble (Set) des
+   membres en attente : vide sans abonnement ou sans limite. */
+export function repartir(soiree, oui, premium) {
+  const enAttente = new Set();
+  if (!premium || (!soiree.roles.length && !soiree.places)) return enAttente;
+  const parArrivee = [...oui].sort((a, b) => (a.inscrit_le === b.inscrit_le
+    ? a.membre_id - b.membre_id
+    : (a.inscrit_le < b.inscrit_le ? -1 : 1)));
+  const pris = new Map(); // rôle (ou '' sans rôles) → places déjà prises
+  for (const inscrit of parArrivee) {
+    const cle = soiree.roles.length ? inscrit.role : '';
+    const limite = soiree.roles.length
+      ? (soiree.roles.find((role) => role.nom === inscrit.role)?.places ?? 0)
+      : soiree.places;
+    const deja = pris.get(cle) || 0;
+    if (deja >= limite) enAttente.add(inscrit.membre_id);
+    else pris.set(cle, deja + 1);
+  }
+  return enAttente;
+}
+
+// soirees.roles tel que la base le rend → une liste ([] sans rôles).
+export const rolesStockes = (texte) => (texte ? JSON.parse(texte) : []);
 
 /* UN FUSEAU HORAIRE VALABLE (2 nov. 2026) : un nom que Intl connaît
    (« Europe/Paris »). Intl refuse un nom inconnu en levant une erreur :

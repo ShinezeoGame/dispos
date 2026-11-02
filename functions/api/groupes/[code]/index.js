@@ -15,7 +15,7 @@
 
 import {
   json, erreur, estLundi, identifier, jeuxStockes, persoStockee, adressePhoto,
-  lireCorps, ligne, peutGerer, recalerHebdos, lireFuseau,
+  lireCorps, ligne, peutGerer, recalerHebdos, lireFuseau, repartir, rolesStockes,
 } from '../../../_outils.js';
 import { heureDuGroupe } from '../../../_annonces.js';
 
@@ -75,12 +75,12 @@ export async function onRequestGet(context) {
                 WHERE m.groupe_id = ? AND d.semaine = ?`)
       .bind(groupe.id, semaine),
 
-    db.prepare(`SELECT id, createur_id, titre, jeu, jeu_cover, jeu_id, jour, horaire, fin, places, note, choix, hebdo FROM soirees
+    db.prepare(`SELECT id, createur_id, titre, jeu, jeu_cover, jeu_id, jour, horaire, fin, places, note, choix, hebdo, roles FROM soirees
                 WHERE groupe_id = ? AND jour >= MIN(?, date('now', '-1 day'))
                 ORDER BY jour, horaire LIMIT 200`)
       .bind(groupe.id, semaine),
 
-    db.prepare(`SELECT r.soiree_id, r.membre_id, r.reponse FROM reponses r
+    db.prepare(`SELECT r.soiree_id, r.membre_id, r.reponse, r.role, r.inscrit_le FROM reponses r
                 JOIN soirees s ON s.id = r.soiree_id
                 WHERE s.groupe_id = ? AND s.jour >= MIN(?, date('now', '-1 day'))`)
       .bind(groupe.id, semaine),
@@ -130,9 +130,19 @@ export async function onRequestGet(context) {
 
   // Les réponses rangées par soirée : { 12: { 3: "oui", 5: "peutetre" } }.
   const reponsesParSoiree = {};
+  const ouiParSoiree = {}; // les « Chaud », avec leur rôle et leur heure d'arrivée
   for (const rangee of reponses.results) {
     if (!reponsesParSoiree[rangee.soiree_id]) reponsesParSoiree[rangee.soiree_id] = {};
     reponsesParSoiree[rangee.soiree_id][rangee.membre_id] = rangee.reponse;
+    if (rangee.reponse === 'oui') (ouiParSoiree[rangee.soiree_id] ||= []).push(rangee);
+  }
+
+  /* Les inscrits (rôles et liste d'attente, AllReady+) :
+     { 3: { role: "Tank", attente: false } } pour chaque « Chaud ». */
+  function inscrits(soiree, roles) {
+    const oui = ouiParSoiree[soiree.id] || [];
+    const enAttente = repartir({ roles, places: soiree.places }, oui, groupe.premium === 1);
+    return Object.fromEntries(oui.map((r) => [r.membre_id, { role: r.role, attente: enAttente.has(r.membre_id) }]));
   }
 
   return json(200, {
@@ -172,6 +182,8 @@ export async function onRequestGet(context) {
     // voté pour quelle place.
     soirees: soirees.results.map((soiree) => ({
       ...soiree,
+      roles: rolesStockes(soiree.roles),
+      inscrits: inscrits(soiree, rolesStockes(soiree.roles)),
       choix: soiree.choix ? JSON.parse(soiree.choix) : [],
       hebdo: soiree.hebdo === 1,
       votes: votesParSoiree[soiree.id] || {},

@@ -135,7 +135,13 @@ function fabriquerCarte(soiree) {
      seulement comptés. */
   const avecReponse = (reponse) => etat.membres.filter((membre) => soiree.reponses[membre.id] === reponse);
   const nom = (membre) => (membre.id === moi?.id ? 'toi' : membre.pseudo);
-  const chauds = avecReponse('oui');
+  /* Les « Chaud » se partagent en deux en AllReady+ (soiree.inscrits,
+     calculé par le serveur) : ceux qui jouent, et ceux qui attendent
+     une place (liste d'attente, dans l'ordre d'arrivée). */
+  const inscrits = soiree.inscrits || {};
+  const tousLesChauds = avecReponse('oui');
+  const chauds = tousLesChauds.filter((membre) => !inscrits[membre.id]?.attente);
+  const enAttente = tousLesChauds.filter((membre) => inscrits[membre.id]?.attente);
   const peutEtre = avecReponse('peutetre');
   const absents = avecReponse('non');
 
@@ -152,10 +158,20 @@ function fabriquerCarte(soiree) {
   const complet = Boolean(soiree.places) && chauds.length >= soiree.places;
 
   const morceaux = [];
-  if (chauds.length) morceaux.push(`Chaud${chauds.length > 1 ? 's' : ''} : ${chauds.map(nom).join(', ')}`);
+  if (soiree.roles.length) {
+    // Avec des rôles, la compo : « Tank 1/1 : Max · Heal 0/1 · DPS 2/2 : Léa, Sam ».
+    for (const role of soiree.roles) {
+      const joueurs = chauds.filter((membre) => inscrits[membre.id]?.role === role.nom);
+      morceaux.push(`${role.nom} ${joueurs.length}/${role.places}${joueurs.length ? ' : ' + joueurs.map(nom).join(', ') : ''}`);
+    }
+  } else if (chauds.length) morceaux.push(`Chaud${chauds.length > 1 ? 's' : ''} : ${chauds.map(nom).join(', ')}`);
+  if (enAttente.length) {
+    const avecRole = (membre) => (inscrits[membre.id].role ? `${nom(membre)} (${inscrits[membre.id].role})` : nom(membre));
+    morceaux.push(`En attente : ${enAttente.map(avecRole).join(', ')}`);
+  }
   if (peutEtre.length) morceaux.push(`Peut-être : ${peutEtre.map(nom).join(', ')}`);
   if (absents.length) morceaux.push(`${absents.length} pas dispo`);
-  if (soiree.places) morceaux.push(complet ? 'Complet' : `${chauds.length}/${soiree.places} places`);
+  if (soiree.places && !soiree.roles.length) morceaux.push(complet ? 'Complet' : `${chauds.length}/${soiree.places} places`);
   remplir('.soiree-compte', morceaux.join(' · ') || 'Personne pour l\'instant');
 
   /* Tes trois boutons : celui de ta réponse actuelle est enfoncé. Une
@@ -164,11 +180,37 @@ function fabriquerCarte(soiree) {
   const maReponse = moi ? soiree.reponses[moi.id] : null;
   for (const bouton of carte.querySelectorAll('[data-reponse]')) {
     bouton.setAttribute('aria-pressed', bouton.dataset.reponse === maReponse);
+    /* Complète : en AllReady+, « Liste d'attente » (on s'inscrit quand
+       même, on jouera si une place se libère) ; sinon « Complet », et le
+       bouton ne répond plus (le serveur refuserait de toute façon). */
     if (bouton.dataset.reponse === 'oui' && complet && maReponse !== 'oui') {
-      bouton.textContent = 'Complet';
-      bouton.disabled = true;
+      bouton.textContent = etat.groupe.premium ? "Liste d'attente" : 'Complet';
+      bouton.disabled = !etat.groupe.premium;
     }
     bouton.addEventListener('click', () => repondre(soiree, bouton.dataset.reponse, carte));
+  }
+  /* Avec des rôles : un bouton par rôle à la place de « Chaud »
+     (« Tank 1/2 »), le tien enfoncé ; un rôle plein mène à la liste
+     d'attente (« Tank · attente »). */
+  if (soiree.roles.length) {
+    const boutonChaud = carte.querySelector('[data-reponse="oui"]');
+    boutonChaud.hidden = true;
+    const monRole = maReponse === 'oui' ? inscrits[moi.id]?.role : null;
+    for (const role of [...soiree.roles].reverse()) {
+      const pris = chauds.filter((membre) => inscrits[membre.id]?.role === role.nom).length;
+      const bouton = creer('button', 'role-choix');
+      bouton.type = 'button';
+      bouton.dataset.reponse = 'oui';
+      bouton.textContent = pris >= role.places && monRole !== role.nom ? `${role.nom} · attente` : `${role.nom} ${pris}/${role.places}`;
+      bouton.setAttribute('aria-pressed', String(monRole === role.nom));
+      bouton.addEventListener('click', () => repondre(soiree, 'oui', carte, role.nom));
+      boutonChaud.after(bouton);
+    }
+  }
+  // Toi, en liste d'attente : on te le dit clairement.
+  if (moi && inscrits[moi.id]?.attente) {
+    morceaux.push("tu es en liste d'attente");
+    remplir('.soiree-compte', morceaux.join(' · '));
   }
 
   if (vote) carte.querySelector('.soiree-note').before(blocVote(soiree));
@@ -183,7 +225,7 @@ function fabriquerCarte(soiree) {
   return carte;
 }
 
-async function repondre(soiree, reponse, carte) {
+async function repondre(soiree, reponse, carte, role) {
   if (!etat.moi) {
     ouvrirProfil();
     return;
@@ -191,7 +233,8 @@ async function repondre(soiree, reponse, carte) {
   const boutons = carte.querySelectorAll('[data-reponse]');
   for (const bouton of boutons) bouton.disabled = true;
   try {
-    await appeler(`/soirees/${soiree.id}`, { methode: 'PUT', corps: { reponse } });
+    const { attente } = await appeler(`/soirees/${soiree.id}`, { methode: 'PUT', corps: { reponse, role } });
+    if (attente) annoncer("C'est complet : tu es en liste d'attente. Tu joueras si une place se libère.");
     await charger(); // redessine tout, boutons compris
   } catch (probleme) {
     annoncer(probleme.message, 'erreur');
@@ -296,6 +339,8 @@ export function proposerSoiree({ jour, horaire, fin, jeux } = {}) {
   // La fin : donnée par un meilleur créneau (« 22h → 0h »), sinon vide.
   champs.fin.value = fin || '';
   champs.hebdo.checked = false;
+  champs.roles.value = '';
+  mettreAJourRoles();
   // Le jeu : donné par « À quoi jouer ce soir » (js/ce-soir.js), sinon aucun.
   selecteur.remplir(jeux || []);
   afficherFormulaire();
@@ -317,6 +362,9 @@ function modifierSoiree(soiree) {
   champs.places.value = soiree.places || '';
   champs.note.value = soiree.note;
   champs.hebdo.checked = soiree.hebdo;
+  champs.roles.value = ecrireRoles(soiree.roles);
+  mettreAJourRoles();
+  if (soiree.roles.length) champs.places.value = '';
   afficherFormulaire();
 }
 
@@ -349,6 +397,38 @@ const selecteur = selecteurJeux(document.getElementById('soiree-jeu'), {
 /* Le jeu de la soirée : celui choisi dans le sélecteur ; à défaut, ce
    qui est tapé dans le champ, pris tel quel (on ne perd pas une saisie
    parce qu'on a oublié de cliquer sur une proposition). */
+/* LES RÔLES (AllReady+, 2 nov. 2026) : le champ « Tank 2, Heal 2,
+   DPS 6 » devient [{ nom: 'Tank', places: 2 }, …] ; chaque morceau
+   entre virgules finit par son nombre de places. null si un morceau
+   n'a pas de nombre (le formulaire le dit). Et le chemin inverse, pour
+   remplir le champ quand on modifie une soirée. */
+function lireRoles(texte) {
+  const morceaux = texte.split(',').map((morceau) => morceau.trim()).filter(Boolean);
+  const roles = [];
+  for (const morceau of morceaux) {
+    const trouve = morceau.match(/^(.+?)\s*(\d+)$/);
+    if (!trouve) return null;
+    roles.push({ nom: trouve[1].trim(), places: Number(trouve[2]) });
+  }
+  return roles;
+}
+const ecrireRoles = (roles) => roles.map((role) => `${role.nom} ${role.places}`).join(', ');
+
+/* Avec des rôles, les places sont leur total : le champ Places se grise
+   et montre ce total. Sans abonnement, le champ Rôles est grisé et le
+   « + » mène à la fenêtre AllReady+. */
+function mettreAJourRoles() {
+  const plus = etat.groupe?.premium;
+  champs.roles.disabled = !plus;
+  document.getElementById('roles-plus').hidden = Boolean(plus);
+  const roles = plus ? lireRoles(champs.roles.value) : [];
+  const avecRoles = Boolean(roles && roles.length);
+  champs.places.disabled = avecRoles;
+  champs.places.placeholder = avecRoles ? String(roles.reduce((total, role) => total + role.places, 0)) : '∞';
+  if (avecRoles) champs.places.value = '';
+}
+champs.roles.addEventListener('input', mettreAJourRoles);
+
 function jeuxChoisis() {
   const texte = selecteur.texte();
   const choisis = selecteur.lire();
@@ -450,6 +530,11 @@ formulaire.addEventListener('submit', async (evenement) => {
     formulaire.querySelector('.erreur').textContent = 'Choisis un jeu.';
     return;
   }
+  const roles = champs.roles.disabled ? [] : lireRoles(champs.roles.value);
+  if (!roles) {
+    formulaire.querySelector('.erreur').textContent = 'Écris chaque rôle suivi de son nombre de places : Tank 2, Heal 2, DPS 6.';
+    return;
+  }
   const bouton = formulaire.querySelector('[type="submit"]');
   bouton.disabled = true;
   const corps = {
@@ -461,6 +546,7 @@ formulaire.addEventListener('submit', async (evenement) => {
     fin: champs.fin.value,          // '' = pas d'heure de fin
     places: champs.places.value,    // '' = illimité
     hebdo: champs.hebdo.checked,    // chaque semaine
+    roles,                          // [] = pas de rôles (AllReady+)
     note: champs.note.value,
   };
   try {

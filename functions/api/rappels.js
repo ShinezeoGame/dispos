@@ -32,7 +32,7 @@
    Renvoie : { rappels: 2, notifications: 3 } (messages Discord envoyés,
    notifications déposées) */
 
-import { json, recalerHebdos } from '../_outils.js';
+import { json, recalerHebdos, repartir, rolesStockes } from '../_outils.js';
 import { envoyerAuGroupe, heureDuGroupe, sansMarkdown, lienDuGroupe } from '../_annonces.js';
 import { abonnementsDe, envoyerA } from '../_push.js';
 
@@ -54,7 +54,7 @@ export async function onRequestPost({ request, env }) {
      commencent dans l'heure (« 2026-11-06 21:00 » entre maintenant et
      dans 60 minutes, voir heureDuGroupe). 20 au plus par réveil. */
   const { results: candidates } = await db
-    .prepare(`SELECT s.id, s.titre, s.jour, s.horaire, g.id AS groupe_id, g.code, g.webhook, g.fuseau
+    .prepare(`SELECT s.id, s.titre, s.jour, s.horaire, s.places, s.roles, g.id AS groupe_id, g.code, g.webhook, g.fuseau, g.premium
               FROM soirees s JOIN groupes g ON g.id = s.groupe_id
               WHERE s.rappel = 0 AND s.jour >= date('now', '-1 day') AND s.jour <= date('now', '+2 days')
               ORDER BY s.jour, s.horaire LIMIT 300`)
@@ -70,7 +70,7 @@ export async function onRequestPost({ request, env }) {
   const numeros = JSON.stringify(soirees.map((soiree) => soiree.id));
   const [, chauds] = await db.batch([
     db.prepare('UPDATE soirees SET rappel = 1 WHERE id IN (SELECT value FROM json_each(?))').bind(numeros),
-    db.prepare(`SELECT r.soiree_id, m.pseudo, c.discord_id, c.id AS compte_id
+    db.prepare(`SELECT r.soiree_id, r.membre_id, r.role, r.inscrit_le, m.pseudo, c.discord_id, c.id AS compte_id
                 FROM reponses r
                 JOIN membres m ON m.id = r.membre_id
                 LEFT JOIN comptes c ON c.id = m.compte_id
@@ -90,7 +90,11 @@ export async function onRequestPost({ request, env }) {
   let envoyes = 0;
   let notifications = 0;
   await Promise.all(soirees.map(async (soiree) => {
-    const venus = chauds.results.filter((rangee) => rangee.soiree_id === soiree.id);
+    /* Ceux qui ont dit « Chaud »… sauf ceux qui sont en liste d'attente
+       (AllReady+, repartir) : ils ne jouent pas, pas de rappel. */
+    const tousLesChauds = chauds.results.filter((rangee) => rangee.soiree_id === soiree.id);
+    const enAttente = repartir({ roles: rolesStockes(soiree.roles), places: soiree.places }, tousLesChauds, soiree.premium === 1);
+    const venus = tousLesChauds.filter((rangee) => !enAttente.has(rangee.membre_id));
     const [h, m] = soiree.horaire.split(':');
     const heureLisible = `${Number(h)}h${m === '00' ? '' : m}`;
     const leurs = appareils.filter((appareil) => venus.some((venu) => venu.compte_id === appareil.compte_id));

@@ -681,6 +681,26 @@ streamers qui jouent avec leurs viewers.
   premier membre garde les siens, et seul l'auteur d'une soirée la
   modifie, comme avant.
 
+**Rôles et liste d'attente (en place)** :
+- Champ « Rôles » du formulaire (« Tank 2, Heal 2, DPS 6 »,
+  `soirees.roles`), grisé avec un « + » dans un groupe gratuit (les
+  routes ignorent aussi les rôles envoyés par un groupe gratuit). Les
+  places deviennent leur total. Sur la carte, un bouton par rôle à la
+  place de « Chaud » (« Tank 1/2 », « Tank · attente » quand il est
+  plein), et la compo dans la ligne des réponses. L'auteur n'est pas
+  inscrit d'office : il choisit son rôle.
+- Liste d'attente (AllReady+, avec ou sans rôles) : une soirée complète
+  ne refuse plus, « Liste d'attente ». **Rien n'est rangé** :
+  `repartir()` (_outils.js) recalcule à chaque lecture, dans l'ordre
+  d'arrivée (`reponses.inscrit_le`), qui joue et qui attend. Un
+  désistement ou un départ du groupe fait jouer le suivant tout seul ;
+  quand c'est un désistement, il reçoit « Une place s'est libérée ».
+  Redire la même chose garde l'heure d'arrivée. Les rappels ne
+  préviennent que ceux qui jouent. Renommer ou retirer un rôle remet
+  en « Peut-être » ceux qui l'avaient ; retirer tous les rôles garde
+  les « Chaud ». Dans un groupe gratuit, une soirée complète refuse
+  toujours (« Complet »).
+
 **Payant (AllReady+)** :
 1. Inscriptions avec rôles (tank / heal / DPS…), liste d'attente et
    composition affichée.

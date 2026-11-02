@@ -46,3 +46,8 @@ quandCaChange(() => {
 });
 
 boutonDecouvrir.addEventListener('click', ouvrirPlus);
+
+// Le petit « + » de chaque fonctionnalité réservée (attribut data-plus).
+document.addEventListener('click', (evenement) => {
+  if (evenement.target.closest('[data-plus]')) ouvrirPlus();
+});

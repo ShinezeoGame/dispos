@@ -8,15 +8,18 @@
    pour l'une, onRequestPatch pour l'autre, etc. Modifier et annuler
    sont réservés à la personne qui a proposé la soirée. */
 
-import { json, erreur, lireCorps, identifier, lireSoiree, peutGerer, REPONSES } from '../../../../_outils.js';
+import {
+  json, erreur, lireCorps, identifier, lireSoiree, peutGerer, repartir, rolesStockes, REPONSES,
+} from '../../../../_outils.js';
 import { annoncerSoiree, heureDuGroupe } from '../../../../_annonces.js';
+import { notifierComptes } from '../../../../_push.js';
 
 /* La soirée doit appartenir AU groupe du lien. Sans ce
    « AND groupe_id = ? », un membre d'un groupe pourrait répondre aux
    soirées d'un autre groupe en changeant le numéro dans l'adresse. */
 async function trouverSoiree(db, groupeId, id) {
   return db
-    .prepare('SELECT id, createur_id, titre, jour, horaire, places, choix FROM soirees WHERE id = ? AND groupe_id = ?')
+    .prepare('SELECT id, createur_id, titre, jour, horaire, places, choix, roles FROM soirees WHERE id = ? AND groupe_id = ?')
     .bind(Number(id), groupeId)
     .first();
 }
@@ -35,10 +38,18 @@ export async function onRequestPut(context) {
   const { reponse } = corps;
   if (!REPONSES.includes(reponse)) return erreur(400, 'Réponse inconnue.');
 
-  /* Les places : une soirée complète refuse un « oui » de plus. Les
-     autres « oui » sont comptés sans le tien : redire « oui » quand on
-     y est déjà reste possible. */
-  if (reponse === 'oui' && soiree.places) {
+  // Avec des rôles (AllReady+), un « Chaud » dit lequel.
+  const roles = rolesStockes(soiree.roles);
+  const role = reponse === 'oui' && roles.length ? String(corps.role || '') : '';
+  if (reponse === 'oui' && roles.length && !roles.some((r) => r.nom === role)) {
+    return erreur(400, 'Choisis ton rôle.');
+  }
+
+  /* Les places, dans un groupe gratuit : une soirée complète refuse un
+     « oui » de plus. Les autres « oui » sont comptés sans le tien :
+     redire « oui » quand on y est déjà reste possible. En AllReady+,
+     pas de refus : liste d'attente (repartir, _outils.js). */
+  if (reponse === 'oui' && soiree.places && !groupe.premium) {
     const { nombre } = await db
       .prepare("SELECT COUNT(*) AS nombre FROM reponses WHERE soiree_id = ? AND reponse = 'oui' AND membre_id != ?")
       .bind(soiree.id, moi.id)
@@ -46,14 +57,44 @@ export async function onRequestPut(context) {
     if (nombre >= soiree.places) return erreur(409, "C'est complet.");
   }
 
-  // Même principe que pour les dispos : crée la réponse ou la remplace.
+  /* Qui attendait AVANT ce changement : pour savoir, après, à qui une
+     place vient de se libérer (et le prévenir). */
+  const limitee = groupe.premium && (roles.length || soiree.places);
+  const lireOui = async () => (await db
+    .prepare("SELECT membre_id, role, inscrit_le FROM reponses WHERE soiree_id = ? AND reponse = 'oui'")
+    .bind(soiree.id).all()).results;
+  const avant = limitee ? repartir({ roles, places: soiree.places }, await lireOui(), true) : new Set();
+
+  /* Même principe que pour les dispos : crée la réponse ou la remplace.
+     inscrit_le : l'heure d'arrivée, qui décide de la place dans la file.
+     Redire la même chose (même réponse, même rôle) garde l'ancienne
+     heure : on ne perd pas sa place pour un double clic. Dans un UPDATE,
+     « reponses.… » désigne la ligne telle qu'elle était. */
   await db
-    .prepare(`INSERT INTO reponses (soiree_id, membre_id, reponse) VALUES (?, ?, ?)
-              ON CONFLICT (soiree_id, membre_id) DO UPDATE SET reponse = excluded.reponse`)
-    .bind(soiree.id, moi.id, reponse)
+    .prepare(`INSERT INTO reponses (soiree_id, membre_id, reponse, role, inscrit_le) VALUES (?, ?, ?, ?, ?)
+              ON CONFLICT (soiree_id, membre_id) DO UPDATE SET
+                inscrit_le = CASE WHEN reponses.reponse = excluded.reponse AND reponses.role = excluded.role
+                                  THEN reponses.inscrit_le ELSE excluded.inscrit_le END,
+                reponse = excluded.reponse, role = excluded.role`)
+    .bind(soiree.id, moi.id, reponse, role, new Date().toISOString())
     .run();
 
-  return json(200, { ok: true });
+  if (!limitee) return json(200, { ok: true, attente: false });
+  const apres = repartir({ roles, places: soiree.places }, await lireOui(), true);
+  /* Ceux qui attendaient et qui jouent maintenant : une notification. */
+  const promus = [...avant].filter((id) => !apres.has(id) && id !== moi.id);
+  if (promus.length) {
+    const { results } = await db
+      .prepare('SELECT compte_id FROM membres WHERE id IN (SELECT value FROM json_each(?)) AND compte_id IS NOT NULL')
+      .bind(JSON.stringify(promus)).all();
+    context.waitUntil(notifierComptes(db, new URL(context.request.url).origin, results.map((r) => r.compte_id), {
+      titre: 'Une place s\'est libérée',
+      corps: `Tu joues : ${soiree.titre}.`,
+      url: `/groupe?g=${groupe.code}`,
+      tag: `place-${soiree.id}`,
+    }).catch(() => {}));
+  }
+  return json(200, { ok: true, attente: apres.has(moi.id) });
 }
 
 /* LE VOTE « À QUOI ON JOUE ? » (2 nov. 2026) — PUT { vote: 1 }
@@ -120,12 +161,30 @@ export async function onRequestPatch(context) {
 
   const autreMoment = soiree.jour !== ancienne.jour || soiree.horaire !== ancienne.horaire;
   const choix = soiree.choix.length ? JSON.stringify(soiree.choix) : '';
+  // Les rôles : AllReady+ seulement (sinon ignorés, comme à la création).
+  if (!groupe.premium && soiree.roles.length) {
+    soiree.roles = [];
+    soiree.places = null;
+  }
+  const roles = soiree.roles.length ? JSON.stringify(soiree.roles) : '';
   const instructions = [
     db.prepare(`UPDATE soirees SET titre = ?, jeu = ?, jeu_cover = ?, jeu_id = ?, jour = ?, horaire = ?,
-                fin = ?, places = ?, note = ?, choix = ?, hebdo = ? WHERE id = ?`)
+                fin = ?, places = ?, note = ?, choix = ?, hebdo = ?, roles = ? WHERE id = ?`)
       .bind(soiree.titre, soiree.jeu.nom, soiree.jeu.cover, soiree.jeu.id, soiree.jour, soiree.horaire,
-        soiree.fin, soiree.places, soiree.note, choix, soiree.hebdo ? 1 : 0, ancienne.id),
+        soiree.fin, soiree.places, soiree.note, choix, soiree.hebdo ? 1 : 0, roles, ancienne.id),
   ];
+  /* Un rôle supprimé ou renommé : ceux qui l'avaient choisi repassent
+     en « Peut-être » (ils voient la soirée « sans réponse » et
+     choisissent un nouveau rôle). Les autres gardent leur place. */
+  if (roles !== ancienne.roles && roles) {
+    instructions.push(db.prepare(`UPDATE reponses SET reponse = 'peutetre', role = ''
+                                  WHERE soiree_id = ? AND reponse = 'oui'
+                                  AND role NOT IN (SELECT json_extract(value, '$.nom') FROM json_each(?))`)
+      .bind(ancienne.id, roles));
+  } else if (roles !== ancienne.roles) {
+    // Plus de rôles du tout : chacun garde son « Chaud », sans rôle.
+    instructions.push(db.prepare("UPDATE reponses SET role = '' WHERE soiree_id = ?").bind(ancienne.id));
+  }
   // Les jeux du vote ont changé : les votes déjà donnés ne veulent plus
   // rien dire (la place 1 n'est peut-être plus le même jeu).
   if (choix !== ancienne.choix) {

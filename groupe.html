@@ -364,6 +364,15 @@
         </div>
       </div>
 
+      <!-- LES RÔLES (AllReady+, js/soirees.js) : « Tank 2, Heal 2, DPS 6 ».
+           Les places deviennent leur total. Dans un groupe gratuit, le
+           champ est grisé et le « + » ouvre la fenêtre AllReady+. -->
+      <div class="ligne-label">
+        <label for="soiree-roles">Rôles</label>
+        <button id="roles-plus" class="bouton-plus" type="button" data-plus aria-label="Les rôles : réservé à AllReady+, en savoir plus" hidden>+</button>
+      </div>
+      <input id="soiree-roles" name="roles" autocomplete="off" placeholder="Tank 2, Heal 2, DPS 6">
+
       <label for="soiree-note">Petit mot</label>
       <textarea id="soiree-note" name="note" maxlength="300" rows="3" placeholder="On se retrouve sur le Discord, salon Jeux."></textarea>
 
