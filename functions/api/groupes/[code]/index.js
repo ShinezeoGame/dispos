@@ -45,7 +45,7 @@ export async function onRequestGet(context) {
      que date('now') est l'heure de Londres (UTC), pas la tienne : le
      navigateur fait ensuite le tri exact, à son heure. */
   const db = context.env.DB;
-  const [membres, dispos, soirees, reponses, chauds] = await db.batch([
+  const [membres, dispos, soirees, reponses, chauds, votes] = await db.batch([
     // LEFT JOIN : chaque membre, avec la version de sa photo s'il en a
     // une (NULL sinon). Jamais l'image elle-même : la page la demande à
     // part, par son adresse (voir photos/[id].js).
@@ -62,7 +62,7 @@ export async function onRequestGet(context) {
                 WHERE m.groupe_id = ? AND d.semaine = ?`)
       .bind(groupe.id, semaine),
 
-    db.prepare(`SELECT id, createur_id, titre, jeu, jeu_cover, jeu_id, jour, horaire, fin, places, note FROM soirees
+    db.prepare(`SELECT id, createur_id, titre, jeu, jeu_cover, jeu_id, jour, horaire, fin, places, note, choix FROM soirees
                 WHERE groupe_id = ? AND jour >= MIN(?, date('now', '-1 day'))
                 ORDER BY jour, horaire LIMIT 200`)
       .bind(groupe.id, semaine),
@@ -79,7 +79,20 @@ export async function onRequestGet(context) {
                 WHERE s.groupe_id = ? AND r.reponse = 'oui'
                 GROUP BY r.membre_id`)
       .bind(groupe.id),
+
+    // Les votes « À quoi on joue ? » des mêmes soirées.
+    db.prepare(`SELECT v.soiree_id, v.membre_id, v.choix FROM votes v
+                JOIN soirees s ON s.id = v.soiree_id
+                WHERE s.groupe_id = ? AND s.jour >= MIN(?, date('now', '-1 day'))`)
+      .bind(groupe.id, semaine),
   ]);
+
+  // Les votes rangés par soirée : { 12: { 3: 0, 5: 1 } } (membre → place du jeu).
+  const votesParSoiree = {};
+  for (const rangee of votes.results) {
+    if (!votesParSoiree[rangee.soiree_id]) votesParSoiree[rangee.soiree_id] = {};
+    votesParSoiree[rangee.soiree_id][rangee.membre_id] = rangee.choix;
+  }
 
   // Les dispos rangées par membre : { 3: [[0,21],[0,22]], 5: [[4,20]] }.
   // JSON.parse retransforme le texte stocké en vrai tableau.
@@ -140,8 +153,12 @@ export async function onRequestGet(context) {
     stats: {
       chauds: Object.fromEntries(chauds.results.map((rangee) => [rangee.membre_id, rangee.nombre])),
     },
+    // choix : la liste des jeux du vote ([] sans vote), votes : qui a
+    // voté pour quelle place.
     soirees: soirees.results.map((soiree) => ({
       ...soiree,
+      choix: soiree.choix ? JSON.parse(soiree.choix) : [],
+      votes: votesParSoiree[soiree.id] || {},
       reponses: reponsesParSoiree[soiree.id] || {},
     })),
   });

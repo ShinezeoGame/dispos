@@ -1400,6 +1400,40 @@ input[type="range"] {
 .soiree-tete > div { min-width: 0; }
 .soiree-titre { font-size: 1.3rem; overflow-wrap: anywhere; }
 .soiree-infos { color: var(--texte-doux); font-size: 0.9rem; }
+
+/* « À QUOI ON JOUE ? » (js/soirees.js, blocVote) : un bouton par jeu,
+   jaquette, nom, nombre de votes. Ton vote est rempli de rose (la
+   couleur des soirées) ; le jeu en tête a une bordure rose. */
+.vote { display: grid; gap: 0.45rem; }
+.vote-titre { color: var(--texte-doux); font: 600 0.75rem var(--police-titre); text-transform: uppercase; letter-spacing: 0.08em; }
+.vote-jeux { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+.vote-jeu {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.3rem 0.7rem 0.3rem 0.35rem;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-petit);
+  background: var(--surface-haute);
+  color: var(--texte);
+  font: 600 0.88rem var(--police-titre);
+  cursor: pointer;
+}
+.vote-jeu:hover:not(:disabled) { border-color: var(--soiree); }
+.vote-jeu:disabled { cursor: default; }
+.vote-jeu.en-tete { border-color: var(--soiree); }
+.vote-jeu[aria-pressed="true"] { background: color-mix(in srgb, var(--soiree) 22%, var(--surface-haute)); }
+.vote-nombre {
+  min-width: 1.5rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: var(--fond);
+  color: var(--texte-doux);
+  font-size: 0.8rem;
+  text-align: center;
+}
+.vote-jeu.en-tete .vote-nombre { color: var(--soiree); }
 /* « Voir le prix · lien affilié » (LIEN_PRIX, js/commun.js) : petit et
    discret, sous les infos ; seul le lien prend la couleur du thème. */
 .soiree-prix { color: var(--texte-doux); font-size: 0.8rem; }

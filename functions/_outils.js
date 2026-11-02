@@ -152,6 +152,7 @@ export const SCHEMA = [
     places INTEGER,
     note TEXT NOT NULL DEFAULT '',
     rappel INTEGER NOT NULL DEFAULT 0,
+    choix TEXT NOT NULL DEFAULT '',
     cree_le TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
 
@@ -177,6 +178,16 @@ export const SCHEMA = [
     version TEXT NOT NULL
   )`,
 
+  // Le vote « À quoi on joue ? » (2 nov. 2026) : une ligne par membre
+  // et par soirée. « choix » est la place du jeu dans soirees.choix
+  // (0 pour le premier). Voter à nouveau remplace le vote.
+  // Une table neuve : le CREATE TABLE suffit, pas de MIGRATIONS.
+  `CREATE TABLE IF NOT EXISTS votes (
+    soiree_id INTEGER NOT NULL REFERENCES soirees(id) ON DELETE CASCADE,
+    membre_id INTEGER NOT NULL REFERENCES membres(id) ON DELETE CASCADE,
+    choix INTEGER NOT NULL,
+    PRIMARY KEY (soiree_id, membre_id)
+  )`,
   // Les index sont des tables des matières : ils évitent de relire
   // toute la table pour trouver les membres ou les soirées d'un groupe.
   `CREATE INDEX IF NOT EXISTS membres_par_groupe ON membres (groupe_id)`,
@@ -238,6 +249,11 @@ export const MIGRATIONS = [
      AllReady (Ko-fi, Tipeee). Posé à la main dans la console D1 (voir
      CLAUDE.md) ; donne un petit cœur sur ses cartes de membre. */
   'ALTER TABLE comptes ADD COLUMN soutien INTEGER NOT NULL DEFAULT 0',
+  /* 2 nov. 2026 : soirees.choix, les jeux soumis au vote « À quoi on
+     joue ? », en JSON : [{ id, nom, cover }, …], de 2 à 4. '' = pas de
+     vote, un seul jeu. Le jeu de la soirée (jeu, jeu_cover, jeu_id)
+     suit alors celui qui est en tête (voir soirees/[id].js). */
+  "ALTER TABLE soirees ADD COLUMN choix TEXT NOT NULL DEFAULT ''",
 ];
 
 
@@ -412,7 +428,22 @@ export function lireProfil(corps) {
    ne peuvent pas diverger. Renvoie soit { soiree }, soit { probleme }
    avec la phrase à afficher. */
 export function lireSoiree(corps) {
-  const jeu = lireJeu(corps.jeu);
+  /* Plusieurs jeux (2 nov. 2026) : de 2 à 4 dans « choix », et la team
+     vote. Chacun est vérifié comme un jeu seul, les doublons (même id
+     IGDB, ou même nom) sont écartés. Il en reste un ? Pas de vote. Le
+     premier sert de jeu de la soirée en attendant les votes. */
+  let choix = [];
+  if (Array.isArray(corps.choix)) {
+    for (const brut of corps.choix.slice(0, 8)) {
+      const candidat = lireJeu(brut);
+      const doublon = candidat && choix.some((deja) => (candidat.id && deja.id === candidat.id)
+        || deja.nom.toLowerCase() === candidat.nom.toLowerCase());
+      if (candidat && !doublon) choix.push(candidat);
+    }
+    if (choix.length > MAX_CHOIX) return { probleme: `${MAX_CHOIX} jeux au plus pour un vote.` };
+    if (choix.length < 2) choix = [];
+  }
+  const jeu = choix[0] || lireJeu(corps.jeu);
   if (!jeu) return { probleme: 'Choisis un jeu.' };
   // Sans titre, le nom du jeu fait l'affaire.
   const titre = ligne(corps.titre) || jeu.nom;
@@ -440,8 +471,12 @@ export function lireSoiree(corps) {
     }
   }
   if (note.length > 300) return { probleme: 'Le petit mot est trop long (300 caractères au plus).' };
-  return { soiree: { jeu, titre, jour: corps.jour, horaire: corps.horaire, fin, places, note } };
+  return { soiree: { jeu, titre, jour: corps.jour, horaire: corps.horaire, fin, places, note, choix } };
 }
+
+// Le vote « À quoi on joue ? » : 4 jeux au plus. Même nombre dans
+// js/soirees.js (le sélecteur de jeux).
+export const MAX_CHOIX = 4;
 
 /* QUI DÉCIDE DANS LE GROUPE (2 nov. 2026) : le premier membre, celui
    qui l'a rejoint en premier (le plus petit id), en général celui qui

@@ -23,10 +23,12 @@ export async function onRequestPost(context) {
 
   const db = context.env.DB;
   const { id } = await db
-    .prepare(`INSERT INTO soirees (groupe_id, createur_id, titre, jeu, jeu_cover, jeu_id, jour, horaire, fin, places, note)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`)
+    // choix : les jeux du vote en JSON, ou '' s'il n'y a qu'un jeu.
+    .prepare(`INSERT INTO soirees (groupe_id, createur_id, titre, jeu, jeu_cover, jeu_id, jour, horaire, fin, places, note, choix)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`)
     .bind(groupe.id, moi.id, soiree.titre, soiree.jeu.nom, soiree.jeu.cover, soiree.jeu.id,
-      soiree.jour, soiree.horaire, soiree.fin, soiree.places, soiree.note)
+      soiree.jour, soiree.horaire, soiree.fin, soiree.places, soiree.note,
+      soiree.choix.length ? JSON.stringify(soiree.choix) : '')
     .first();
 
   await db

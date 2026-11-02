@@ -33,6 +33,17 @@ nom de domaine à part reste à choisir.
   bouton Chaud se bloque, le serveur refuse le « oui » de trop).
   Colonnes `soirees.fin` ('' = pas de fin) et `soirees.places` (NULL =
   illimité).
+- **« À quoi on joue ? »** (2 nov. 2026) : dans le formulaire, choisir
+  2 à 4 jeux au lieu d'un (aide : « Choisis-en plusieurs pour faire
+  voter la team »). La carte montre alors un bouton par jeu avec son
+  nombre de votes ; un clic vote, revoter ailleurs déplace le vote,
+  recliquer le retire. Le serveur remet à chaque vote le jeu en tête
+  dans `jeu`, `jeu_cover`, `jeu_id` (égalité : le premier de la liste) :
+  jaquette, agenda, flux .ics et Discord suivent sans rien calculer.
+  `soirees.choix` (JSON, '' sans vote), table `votes`, PUT `{ vote }`
+  sur `soirees/[id]` (null = retirer). Changer les jeux du vote efface
+  les votes. 4 jeux au plus : `MAX_CHOIX` dans `_outils.js` ET
+  `js/soirees.js`.
 - **Les jeux se cherchent dans IGDB** (la base de Twitch), avec leurs
   couvertures, au lieu d'être tapés à la main (demandé le 31 oct. 2026).
   Dans le formulaire de soirée, les jeux des profils de la team sont

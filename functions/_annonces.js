@@ -124,7 +124,10 @@ export function lienDuGroupe(request, code) {
 const ROSE_SOIREE = 0xff4f8b;
 
 function encadreSoiree(request, groupe, soiree) {
-  const details = [soiree.jeu];
+  // Un vote : les jeux en lice plutôt qu'un seul.
+  const details = soiree.choix?.length > 1
+    ? [`Au vote : ${soiree.choix.map((jeu) => jeu.nom).join(', ')}`]
+    : [soiree.jeu];
   if (soiree.places) details.push(`${soiree.places} places`);
   const lignes = [`**${texteMoment(soiree)}**`, sansMarkdown(details.join(' · '))];
   if (soiree.note) lignes.push('', '> ' + sansMarkdown(soiree.note).replace(/\n/g, '\n> '));

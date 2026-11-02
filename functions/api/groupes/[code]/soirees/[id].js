@@ -16,7 +16,7 @@ import { annoncerSoiree, heureDeParis } from '../../../../_annonces.js';
    soirées d'un autre groupe en changeant le numéro dans l'adresse. */
 async function trouverSoiree(db, groupeId, id) {
   return db
-    .prepare('SELECT id, createur_id, titre, jour, horaire, places FROM soirees WHERE id = ? AND groupe_id = ?')
+    .prepare('SELECT id, createur_id, titre, jour, horaire, places, choix FROM soirees WHERE id = ? AND groupe_id = ?')
     .bind(Number(id), groupeId)
     .first();
 }
@@ -29,7 +29,10 @@ export async function onRequestPut(context) {
   const soiree = await trouverSoiree(db, groupe.id, context.params.id);
   if (!soiree) return erreur(404, "Cette soirée n'existe plus.");
 
-  const { reponse } = await lireCorps(context.request);
+  const corps = await lireCorps(context.request);
+  // Un vote « À quoi on joue ? » plutôt qu'une réponse : voir plus bas.
+  if ('vote' in corps) return voter(db, soiree, moi, corps.vote);
+  const { reponse } = corps;
   if (!REPONSES.includes(reponse)) return erreur(400, 'Réponse inconnue.');
 
   /* Les places : une soirée complète refuse un « oui » de plus. Les
@@ -50,6 +53,41 @@ export async function onRequestPut(context) {
     .bind(soiree.id, moi.id, reponse)
     .run();
 
+  return json(200, { ok: true });
+}
+
+/* LE VOTE « À QUOI ON JOUE ? » (2 nov. 2026) — PUT { vote: 1 }
+
+   vote = la place du jeu dans soirees.choix (0, 1, 2 ou 3) ; null
+   retire ton vote. Après chaque vote, le jeu de la soirée devient celui
+   qui est en tête : sa jaquette, l'agenda, le flux d'agenda et Discord
+   suivent sans rien calculer de leur côté. À égalité, le premier de la
+   liste l'emporte (ORDER BY nombre DESC, choix). Sans aucun vote, c'est
+   le premier.
+
+   Le tout en un seul batch : le vote, puis la mise à jour du jeu, qui
+   relit les votes dans la même transaction (sous-requête). */
+async function voter(db, soiree, moi, vote) {
+  const choix = soiree.choix ? JSON.parse(soiree.choix) : [];
+  if (!choix.length) return erreur(400, "Cette soirée n'a pas de vote.");
+  const retirer = vote === null;
+  if (!retirer && !(Number.isInteger(vote) && vote >= 0 && vote < choix.length)) {
+    return erreur(400, 'Vote inconnu.');
+  }
+  const enTete = `(SELECT choix FROM votes WHERE soiree_id = ?1
+                   GROUP BY choix ORDER BY COUNT(*) DESC, choix LIMIT 1)`;
+  // Les trois champs du jeu, pris dans la liste JSON à la place du
+  // gagnant (0 si personne n'a voté).
+  const champ = (nom) => `json_extract(choix, '$[' || COALESCE(${enTete}, 0) || '].${nom}')`;
+  await db.batch([
+    retirer
+      ? db.prepare('DELETE FROM votes WHERE soiree_id = ? AND membre_id = ?').bind(soiree.id, moi.id)
+      : db.prepare(`INSERT INTO votes (soiree_id, membre_id, choix) VALUES (?, ?, ?)
+                    ON CONFLICT (soiree_id, membre_id) DO UPDATE SET choix = excluded.choix`)
+        .bind(soiree.id, moi.id, vote),
+    db.prepare(`UPDATE soirees SET jeu = ${champ('nom')}, jeu_cover = COALESCE(${champ('cover')}, ''),
+                jeu_id = ${champ('id')} WHERE id = ?1`).bind(soiree.id),
+  ]);
   return json(200, { ok: true });
 }
 
@@ -80,12 +118,18 @@ export async function onRequestPatch(context) {
   if (probleme) return erreur(400, probleme);
 
   const autreMoment = soiree.jour !== ancienne.jour || soiree.horaire !== ancienne.horaire;
+  const choix = soiree.choix.length ? JSON.stringify(soiree.choix) : '';
   const instructions = [
     db.prepare(`UPDATE soirees SET titre = ?, jeu = ?, jeu_cover = ?, jeu_id = ?, jour = ?, horaire = ?,
-                fin = ?, places = ?, note = ? WHERE id = ?`)
+                fin = ?, places = ?, note = ?, choix = ? WHERE id = ?`)
       .bind(soiree.titre, soiree.jeu.nom, soiree.jeu.cover, soiree.jeu.id, soiree.jour, soiree.horaire,
-        soiree.fin, soiree.places, soiree.note, ancienne.id),
+        soiree.fin, soiree.places, soiree.note, choix, ancienne.id),
   ];
+  // Les jeux du vote ont changé : les votes déjà donnés ne veulent plus
+  // rien dire (la place 1 n'est peut-être plus le même jeu).
+  if (choix !== ancienne.choix) {
+    instructions.push(db.prepare('DELETE FROM votes WHERE soiree_id = ?').bind(ancienne.id));
+  }
   if (autreMoment) {
     instructions.push(db.prepare('DELETE FROM reponses WHERE soiree_id = ? AND membre_id != ?').bind(ancienne.id, moi.id));
     // Le rappel Discord « dans moins d'une heure » vaudra pour la

@@ -97,7 +97,8 @@ function fabriquerCarte(soiree) {
      si l'auteur est parti et que le titre nomme le jeu. */
   const auteur = trouverMembre(soiree.createur_id);
   const infos = [];
-  if (!soiree.titre.toLowerCase().includes(soiree.jeu.toLowerCase())) infos.push(soiree.jeu);
+  const vote = soiree.choix.length > 1; // plusieurs jeux : la team vote (plus bas)
+  if (!vote && !soiree.titre.toLowerCase().includes(soiree.jeu.toLowerCase())) infos.push(soiree.jeu);
   if (auteur) infos.push(`proposée par ${auteur.id === moi?.id ? 'toi' : auteur.pseudo}`);
   remplir('.soiree-infos', infos.join(' · '));
   carte.querySelector('.soiree-infos').hidden = infos.length === 0;
@@ -165,6 +166,8 @@ function fabriquerCarte(soiree) {
     bouton.addEventListener('click', () => repondre(soiree, bouton.dataset.reponse, carte));
   }
 
+  if (vote) carte.querySelector('.soiree-note').before(blocVote(soiree));
+
   // Seule la personne qui a proposé peut modifier ou annuler.
   if (moi && soiree.createur_id === moi.id) {
     carte.querySelector('.soiree-gestion').hidden = false;
@@ -187,6 +190,44 @@ async function repondre(soiree, reponse, carte) {
   } catch (probleme) {
     annoncer(probleme.message, 'erreur');
     for (const bouton of boutons) bouton.disabled = false;
+  }
+}
+
+/* « À QUOI ON JOUE ? » (2 nov. 2026) : un bouton par jeu en lice, avec
+   sa jaquette, son nom et son nombre de votes. Le tien est enfoncé
+   (aria-pressed) ; le jeu en tête est mis en avant (classe en-tete) :
+   c'est lui que la soirée affiche, le serveur le recalcule à chaque
+   vote. Revoter ailleurs déplace ton vote ; recliquer sur le tien le
+   retire. Un simple visiteur voit le vote sans pouvoir voter. */
+function blocVote(soiree) {
+  const bloc = creer('div', 'vote');
+  bloc.append(creer('p', 'vote-titre', 'À quoi on joue ?'));
+  const comptes = soiree.choix.map((_, place) => Object.values(soiree.votes).filter((v) => v === place).length);
+  const record = Math.max(...comptes);
+  const enTete = record > 0 ? comptes.indexOf(record) : -1;
+  const monVote = etat.moi ? soiree.votes[etat.moi.id] : undefined;
+  const liste = creer('div', 'vote-jeux');
+  soiree.choix.forEach((jeu, place) => {
+    const bouton = creer('button', place === enTete ? 'vote-jeu en-tete' : 'vote-jeu');
+    bouton.type = 'button';
+    bouton.setAttribute('aria-pressed', String(monVote === place));
+    bouton.append(couverture(jeu, 'mini'), creer('span', 'jeu-nom', jeu.nom),
+      creer('span', 'vote-nombre', String(comptes[place])));
+    bouton.setAttribute('aria-label', `${jeu.nom} : ${comptes[place]} vote${comptes[place] > 1 ? 's' : ''}`);
+    bouton.disabled = !etat.moi;
+    bouton.addEventListener('click', () => voter(soiree, monVote === place ? null : place));
+    liste.append(bouton);
+  });
+  bloc.append(liste);
+  return bloc;
+}
+
+async function voter(soiree, place) {
+  try {
+    await appeler(`/soirees/${soiree.id}`, { methode: 'PUT', corps: { vote: place } });
+    await charger();
+  } catch (probleme) {
+    annoncer(probleme.message, 'erreur');
   }
 }
 
@@ -258,7 +299,8 @@ function modifierSoiree(soiree) {
   ouvrirFormulaire(soiree);
   champs.jour.value = soiree.jour;
   champs.horaire.value = soiree.horaire;
-  selecteur.remplir([{ id: soiree.jeu_id, nom: soiree.jeu, cover: soiree.jeu_cover }]);
+  selecteur.remplir(soiree.choix.length ? soiree.choix : [{ id: soiree.jeu_id, nom: soiree.jeu, cover: soiree.jeu_cover }]);
+  dessinerJeuxTeam();
   champs.titre.value = soiree.titre === titreParDefaut() ? '' : soiree.titre;
   champs.fin.value = soiree.fin || '';
   champs.places.value = soiree.places || '';
@@ -279,8 +321,13 @@ function mettreAJourAvertissement() {
 
 document.getElementById('bouton-proposer').addEventListener('click', () => proposerSoiree());
 
-// Le sélecteur de jeux (js/jeux.js), en mode « un seul jeu ».
+/* Le sélecteur de jeux (js/jeux.js). Plusieurs jeux permis (4 au plus,
+   MAX_CHOIX dans functions/_outils.js) : un seul = une soirée sur ce
+   jeu, plusieurs = la team vote (2 nov. 2026). */
+const MAX_CHOIX = 4;
 const selecteur = selecteurJeux(document.getElementById('soiree-jeu'), {
+  multiple: true,
+  max: MAX_CHOIX,
   auChangement: () => {
     mettreAJourTitre();
     dessinerJeuxTeam(); // pour marquer le jeu choisi parmi les raccourcis
@@ -290,9 +337,11 @@ const selecteur = selecteurJeux(document.getElementById('soiree-jeu'), {
 /* Le jeu de la soirée : celui choisi dans le sélecteur ; à défaut, ce
    qui est tapé dans le champ, pris tel quel (on ne perd pas une saisie
    parce qu'on a oublié de cliquer sur une proposition). */
-function jeuChoisi() {
+function jeuxChoisis() {
   const texte = selecteur.texte();
-  return selecteur.lire()[0] || (texte ? { id: null, nom: texte, cover: '' } : null);
+  const choisis = selecteur.lire();
+  if (choisis.length) return choisis;
+  return texte ? [{ id: null, nom: texte, cover: '' }] : [];
 }
 
 /* LES JEUX DE LA TEAM
@@ -316,14 +365,24 @@ function jeuxDeLaTeam() {
 function dessinerJeuxTeam() {
   const zone = document.getElementById('soiree-jeux-team');
   const jeux = jeuxDeLaTeam();
-  const choisi = selecteur.lire()[0];
+  const choisis = selecteur.lire();
   zone.replaceChildren(...jeux.map((jeu) => {
     const bouton = creer('button', 'jeu-team');
     bouton.type = 'button';
-    // aria-pressed : enfoncé pour le jeu actuellement choisi.
-    bouton.setAttribute('aria-pressed', String(Boolean(choisi && memeJeu(choisi, jeu))));
+    // aria-pressed : enfoncé pour un jeu déjà choisi. Un clic l'ajoute,
+    // un second le retire (plusieurs jeux = un vote).
+    const choisi = choisis.some((autre) => memeJeu(autre, jeu));
+    bouton.setAttribute('aria-pressed', String(choisi));
     bouton.append(couverture(jeu), creer('span', 'jeu-nom', jeu.nom));
-    bouton.addEventListener('click', () => selecteur.ajouter(jeu));
+    bouton.addEventListener('click', () => {
+      if (!choisi) {
+        selecteur.ajouter(jeu);
+        return;
+      }
+      selecteur.remplir(selecteur.lire().filter((autre) => !memeJeu(autre, jeu)));
+      mettreAJourTitre();
+      dessinerJeuxTeam();
+    });
     return bouton;
   }));
   zone.hidden = jeux.length === 0;
@@ -333,11 +392,12 @@ function dessinerJeuxTeam() {
    « Soirée Among Us ». Il s'affiche en gris dans le champ titre
    (placeholder) ; s'il reste vide, c'est lui qui est envoyé. */
 function titreParDefaut() {
-  const jeu = jeuChoisi();
-  if (!jeu) return '';
+  const jeux = jeuxChoisis();
+  if (!jeux.length) return '';
   const heure = Number((champs.horaire.value || '21').split(':')[0]);
   const moment = heure < 6 ? 'Nuit' : heure < 12 ? 'Matinée' : heure < 18 ? 'Aprem' : 'Soirée';
-  return `${moment} ${jeu.nom}`;
+  // Plusieurs jeux : le jeu n'est pas encore choisi, « Soirée jeux ».
+  return `${moment} ${jeux.length > 1 ? 'jeux' : jeux[0].nom}`;
 }
 
 function mettreAJourTitre() {
@@ -373,15 +433,16 @@ champs.jour.addEventListener('input', () => {
 
 formulaire.addEventListener('submit', async (evenement) => {
   evenement.preventDefault();
-  const jeu = jeuChoisi();
-  if (!jeu) {
+  const jeux = jeuxChoisis();
+  if (!jeux.length) {
     formulaire.querySelector('.erreur').textContent = 'Choisis un jeu.';
     return;
   }
   const bouton = formulaire.querySelector('[type="submit"]');
   bouton.disabled = true;
   const corps = {
-    jeu,
+    jeu: jeux[0],
+    choix: jeux.length > 1 ? jeux : [], // plusieurs jeux : la team vote
     titre: champs.titre.value.trim() || titreParDefaut(),
     jour: champs.jour.value,
     horaire: champs.horaire.value,
