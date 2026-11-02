@@ -1,7 +1,7 @@
 /* LA PAGE D'ACCUEIL : créer un groupe, en rejoindre un, retrouver
    les siens, se connecter. */
 
-import { api, lireGroupes, retenirGroupe, creer, annoncer } from './commun.js';
+import { api, lireGroupes, retenirGroupe, oublierGroupe, creer, annoncer } from './commun.js';
 import { messageConnexion, deconnecter } from './compte.js';
 import './apparence.js'; // le choix de la couleur du site
 
@@ -102,6 +102,9 @@ afficherGroupes([]);
    soit ton nom et « Se déconnecter », soit « Se connecter ». Si le
    serveur ne répond pas, on propose de se connecter : c'est le cas le
    plus courant, et le bouton mène de toute façon au serveur. */
+const boutonSupprimer = document.getElementById('supprimer-compte');
+let groupesDuCompte = []; // retenus pour la question de la suppression
+
 api('/compte')
   .then(({ compte, groupes }) => {
     if (!compte) {
@@ -110,6 +113,8 @@ api('/compte')
     }
     document.getElementById('compte-nom').textContent = compte.nom;
     document.getElementById('compte').hidden = false;
+    boutonSupprimer.hidden = false;
+    groupesDuCompte = groupes;
     afficherGroupes(groupes);
   })
   .catch(() => {
@@ -117,3 +122,36 @@ api('/compte')
   });
 
 document.getElementById('bouton-deconnexion').addEventListener('click', deconnecter);
+
+
+/* SUPPRIMER SON COMPTE (2 nov. 2026)
+
+   confirm() pose la question, en disant ce qui disparaît : c'est
+   définitif, il n'y a pas de corbeille. Le serveur efface tout (voir
+   functions/api/compte/index.js). Ensuite, plutôt que de recharger la
+   page, on la remet dans l'état « personne n'est connecté » : le
+   message « Compte supprimé. » reste ainsi visible. Les groupes du
+   compte sont aussi oubliés par ce navigateur : tu n'y as plus de
+   profil, ils n'ont plus de raison d'être dans « Tes groupes ». */
+boutonSupprimer.addEventListener('click', async () => {
+  const nombre = groupesDuCompte.length;
+  const tesGroupes = nombre === 1 ? 'ton groupe' : `tes ${nombre} groupes`;
+  const question = nombre === 0
+    ? 'Supprimer ton compte ? C\'est définitif.'
+    : `Supprimer ton compte ? Ton profil disparaît de ${tesGroupes} (dispos, réponses, photo), `
+      + 'et un groupe dont tu es le seul membre disparaît avec. C\'est définitif.';
+  if (!confirm(question)) return;
+  try {
+    await api('/compte', { methode: 'DELETE' });
+  } catch (probleme) {
+    annoncer(probleme.message, 'erreur');
+    return;
+  }
+  for (const { code } of groupesDuCompte) oublierGroupe(code);
+  groupesDuCompte = [];
+  document.getElementById('compte').hidden = true;
+  boutonSupprimer.hidden = true;
+  document.getElementById('bouton-connexion').hidden = false;
+  afficherGroupes([]);
+  annoncer('Compte supprimé.');
+});

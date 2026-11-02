@@ -116,6 +116,13 @@ nom de domaine à part reste à choisir.
   nécessaire, pas de bandeau) ; la base ne garde que son empreinte
   SHA-256. Le code du groupe (8 caractères) reste le secret du lien
   d'invitation. Pied de page : « Pas de pub, pas de pistage. »
+- **Supprimer son compte** (2 nov. 2026) : lien « Supprimer mon
+  compte » dans le pied de page de l'accueil, connecté seulement, après
+  un `confirm()` qui dit ce qui disparaît. `DELETE /api/compte` efface
+  d'un bloc (`batch`) les groupes dont il est le seul membre, ses
+  profils (dispos, réponses, photo suivent par CASCADE ; ses soirées
+  restent, sans auteur), puis le compte et ses sessions. Jamais « tous
+  les groupes vides » : un groupe tout juste créé l'est aussi.
 - **Les profils d'avant les comptes** gardent leur ancien jeton (gardé
   dans le `localStorage`, clé `dispos`, envoyé en `Authorization:
   Bearer`), tant qu'ils ne sont pas reliés. Connecté avec ce jeton dans
@@ -439,8 +446,4 @@ au retour. La vraie connexion ne se teste qu'en ligne.
 
 ## Idées pour la suite (rien de décidé)
 
-- Quitter un groupe, retirer un membre, renommer le groupe.
-- Supprimer son compte (et ses profils) soi-même.
-- Une « semaine type » qui se recopie toute seule d'une semaine à l'autre.
 - Rappel ou notification avant une soirée (Discord, e-mail).
-- Nombre de places par soirée (ex. 4 pour un jeu en équipe).

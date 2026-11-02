@@ -678,12 +678,21 @@ input[type="range"] {
 .mes-groupes a:hover { border-color: var(--accent); }
 .mes-groupes .code { color: var(--texte-doux); font: 600 0.8rem var(--police-titre); letter-spacing: 0.08em; }
 
+/* Le pied de page de l'accueil : la petite phrase, puis (connecté)
+   « Supprimer mon compte » sur la même ligne, ou dessous si elle ne
+   tient pas (flex-wrap). */
 .pied {
-  padding-block: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  column-gap: 1.25rem;
+  padding-block: 1.5rem;
   color: var(--texte-doux);
   font-size: 0.9rem;
   text-align: center;
 }
+.pied .lien-discret { font-size: inherit; }
 
 
 /* 9. LA PAGE GROUPE : L'EN-TÊTE ET LES ONGLETS

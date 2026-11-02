@@ -106,7 +106,13 @@
   </main>
 
   <!-- Un seul cookie, celui qui te garde connecté : ni pub ni pistage. -->
-  <footer class="pied">Pas de pub, pas de pistage.</footer>
+  <!-- « Supprimer mon compte » : connecté seulement (js/accueil.js).
+       Rangé en bas de page, là où l'on cherche ce genre de lien, pour
+       ne pas encombrer l'en-tête avec une action qu'on fait une fois. -->
+  <footer class="pied">
+    <p>Pas de pub, pas de pistage.</p>
+    <button id="supprimer-compte" class="lien-discret" type="button" hidden>Supprimer mon compte</button>
+  </footer>
 
   <div id="annonce" class="annonce" role="status" aria-live="polite"></div>
 </body>
