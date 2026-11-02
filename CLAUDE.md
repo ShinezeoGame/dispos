@@ -124,6 +124,20 @@ nom de domaine à part reste à choisir.
   rangée aussi. Le serveur envoie `stats: { chauds }` avec le groupe ;
   le jeu se calcule dans la page. « Soirées proposées » retiré le même
   jour (demandé : seule, la tuile avait l'air d'un bouton bizarre).
+- **Le site installable, avec notifications** (2 nov. 2026) :
+  `manifest.webmanifest` (nom, couleurs, icônes `assets/icone-*.png`
+  tirées de `assets/icone.svg`) et `sw.js` (le service worker, qui ne
+  fait qu'afficher les notifications : aucun cache). « Sur cet
+  appareil », dans Le groupe : « Installer l'appli » quand le navigateur
+  le propose (aussi en bas de l'accueil), « Activer les notifications »
+  (compte Discord requis), puis « Couper ». Sur iPhone, une aide :
+  Partager → « Sur l'écran d'accueil » (pas de notifications avant).
+  On est prévenu d'une **nouvelle soirée** dans ses groupes et, si on a
+  dit « Chaud », **moins d'une heure avant** (par le même réveil que
+  Discord, étape 7). `js/appli.js` côté page, `functions/_push.js`
+  côté serveur (chiffrement RFC 8291 et signature VAPID faits à la
+  main avec crypto.subtle, vérifiés sur l'exemple de la RFC), route
+  `/api/push` (clé, abonner, désabonner).
 - **La fiche d'un jeu** au survol (au toucher sur téléphone, au focus
   au clavier) : jaquette, année, tags traduits en français (modes, mots-
   clés comme Roguelike, thèmes comme Horreur, genres) et résumé IGDB, en
@@ -321,6 +335,12 @@ nom de domaine à part reste à choisir.
     functions/api/groupes/[code]/calendrier.js   le flux .ics des soirées
     functions/api/groupes/[code]/joueurs.js   le nombre de joueurs max (IGDB)
     js/ce-soir.js              « À quoi jouer ce soir » (onglet Soirées)
+    js/appli.js                le site comme une appli : service worker, installer, notifications
+    sw.js                      le service worker (affiche les notifications), à la racine
+    manifest.webmanifest       nom, couleurs et icônes de l'appli installée
+    assets/icone.svg           l'icône de l'appli ; icone-192/512/180.png en sont tirées
+    functions/_push.js         code SERVEUR : clés VAPID, chiffrement, envoi des notifications
+    functions/api/push.js      /api/push : la clé du site, s'abonner, se désabonner
     js/reglages.js             la section « Le groupe » (onglet La team)
     assets/discord.svg         le logo Discord des boutons (en pochoir, voir style.css)
     _headers, robots.txt, assets/favicon.svg, fonts/
@@ -390,6 +410,19 @@ nom de domaine à part reste à choisir.
   (`allowed_mentions`) : sans ça, une soirée « @everyone » ferait
   sonner tout le serveur. Un webhook supprimé dans Discord (401/404)
   débranche le groupe tout seul.
+- **Les clés VAPID du site** (table `reglages`, clé `vapid`) sont
+  créées toutes seules au premier besoin. **Ne jamais les effacer** :
+  chaque abonnement est lié à elles, de nouvelles clés rendraient
+  muettes toutes les notifications jusqu'à ce que chacun réactive les
+  siennes. Une boîte aux lettres ne peut être que chez Google, Mozilla,
+  Apple ou Microsoft (`adressePushValable()`) : jamais une adresse
+  collée telle quelle. 404 ou 410 au dépôt = abonnement oublié.
+- **`sw.js` reste à la racine du site** : un service worker ne
+  s'occupe que des pages rangées sous son dossier. Il ne met rien en
+  cache exprès : un cache oublié servirait de vieilles pages.
+- **Les icônes PNG de l'appli sont tirées de `assets/icone.svg`** (le
+  logo dans le cercle central, la seule zone qu'un téléphone ne rogne
+  jamais) : changer le dessin = refaire les trois PNG.
 - **Les rappels comptent en heure de Paris** (`heureDeParis()`) : les
   soirées n'ont pas de fuseau. `soirees.rappel` passe à 1 AVANT l'envoi
   (jamais deux fois) et revient à 0 quand la soirée change de jour ou
@@ -565,7 +598,9 @@ redirection ne s'intercepte pas : intercepter `/api/compte/connexion`,
 garder sa vraie réponse (cookie `oauth`, `state`) et sauter directement
 au retour. La vraie connexion ne se teste qu'en ligne. Les webhooks
 Discord aussi sont imités (2 nov. 2026) : l'émulateur garde chaque
-message reçu et les montre à l'adresse `/__webhooks`.
+message reçu et les montre à l'adresse `/__webhooks`. Le service de
+notifications de Chrome aussi (`fcm.googleapis.com`, montré à
+`/__pushs`) : le test déchiffre chaque dépôt avec sa propre clé.
 
 ## Comment travailler avec moi
 

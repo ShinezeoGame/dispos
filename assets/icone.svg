@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- L'icône de l'appli installée (2 nov. 2026) : le logo d'AllReady
+       sur un carré anthracite plein, SANS coins arrondis. C'est le
+       téléphone qui découpe la forme (rond, carré arrondi, goutte…) :
+       on parle d'icône « maskable ». Le logo reste dans le cercle
+       central (60 % de la largeur), la seule zone jamais rognée.
+       Source des PNG du même nom (192, 512 et 180 pour l'iPhone),
+       fabriqués à partir de ce dessin. Couleurs en dur, comme
+       favicon.svg. -->
+  <rect width="512" height="512" fill="#110f0e"/>
+  <g transform="translate(256 256) scale(4.4) translate(-32 -32.5)">
+    <path d="M12.5 33.5 26 47 53 18" fill="none" stroke="#ff7a3d" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <g fill="#ff7a3d">
+      <circle cx="12.5" cy="33.5" r="6.5"/>
+      <circle cx="26" cy="47" r="6.5"/>
+      <circle cx="39.5" cy="32.5" r="6.5"/>
+      <circle cx="53" cy="18" r="6.5"/>
+    </g>
+  </g>
+</svg>

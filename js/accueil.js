@@ -4,6 +4,12 @@
 import { api, lireGroupes, retenirGroupe, oublierGroupe, creer, annoncer, LIEN_SOUTIEN } from './commun.js';
 import { messageConnexion, deconnecter } from './compte.js';
 import './apparence.js'; // le choix de la couleur du site
+import { quandAppliChange, peutInstaller, installer } from './appli.js'; // le site comme une appli
+
+// « Installer l'appli », en bas, dès que le navigateur le propose.
+const boutonInstaller = document.getElementById('installer-appli');
+quandAppliChange(() => { boutonInstaller.hidden = !peutInstaller(); });
+boutonInstaller.addEventListener('click', installer);
 
 // Revenu de Discord sur un échec : on le dit.
 if (messageConnexion) annoncer(messageConnexion, 'erreur');

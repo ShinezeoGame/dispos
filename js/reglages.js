@@ -12,6 +12,10 @@
 
 import { etat, quandCaChange, appeler, charger } from './etat.js';
 import { annoncer, copier, oublierGroupe } from './commun.js';
+import {
+  quandAppliChange, peutInstaller, installer, iphoneHorsAppli,
+  notificationsPossibles, abonnementActuel, activerNotifications, couperNotifications,
+} from './appli.js';
 
 const section = document.getElementById('reglages');
 const formRenommer = document.getElementById('form-renommer');
@@ -74,6 +78,53 @@ document.getElementById('debrancher-discord').addEventListener('click', async ()
     await appeler('/discord', { methode: 'DELETE' });
     annoncer('Discord débranché.');
     await charger();
+  } catch (probleme) {
+    annoncer(probleme.message, 'erreur');
+  }
+});
+
+/* SUR CET APPAREIL (2 nov. 2026) : ce qui s'affiche dépend de
+   l'appareil (voir js/appli.js). Les notifications demandent un compte
+   Discord (c'est le compte qui est prévenu, sur tous ses appareils). */
+const reglageAppareil = document.getElementById('reglage-appareil');
+const aideAppareil = document.getElementById('aide-appareil');
+const boutonInstaller = document.getElementById('installer-appli');
+const boutonActiver = document.getElementById('activer-notifs');
+const boutonCouper = document.getElementById('couper-notifs');
+
+async function dessinerAppareil() {
+  if (!etat.groupe) return;
+  const abonne = notificationsPossibles && Boolean(await abonnementActuel());
+  const possibles = notificationsPossibles && Boolean(etat.compte);
+  boutonInstaller.hidden = !peutInstaller();
+  boutonActiver.hidden = !possibles || abonne;
+  boutonCouper.hidden = !abonne;
+  aideAppareil.textContent = abonne
+    ? 'Notifications activées : les nouvelles soirées, et un rappel une heure avant celles où tu es chaud.'
+    : possibles ? 'Les nouvelles soirées, et un rappel une heure avant celles où tu es chaud.'
+    : iphoneHorsAppli ? "Sur iPhone : Partager → « Sur l'écran d'accueil », puis ouvre AllReady depuis son icône pour activer les notifications."
+    : '';
+  reglageAppareil.hidden = !aideAppareil.textContent && boutonInstaller.hidden;
+}
+quandCaChange(dessinerAppareil);
+quandAppliChange(dessinerAppareil);
+
+boutonInstaller.addEventListener('click', installer);
+boutonActiver.addEventListener('click', async () => {
+  boutonActiver.disabled = true;
+  try {
+    await activerNotifications();
+    annoncer('Notifications activées.');
+  } catch (probleme) {
+    annoncer(probleme.message, 'erreur');
+  } finally {
+    boutonActiver.disabled = false;
+  }
+});
+boutonCouper.addEventListener('click', async () => {
+  try {
+    await couperNotifications();
+    annoncer('Notifications coupées.');
   } catch (probleme) {
     annoncer(probleme.message, 'erreur');
   }

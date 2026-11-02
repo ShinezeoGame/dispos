@@ -1549,6 +1549,8 @@ input[type="range"] {
 .reglage-titre { font-weight: 600; font-size: 0.95rem; }
 .reglage .indice { margin: 0; }
 .ligne-champ { display: flex; gap: 0.6rem; }
+.ligne-boutons { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.reglage > .lien-discret { justify-self: start; }
 .ligne-champ input { flex: 1; }
 .lien-danger { color: var(--non); }
 .membre-retirer { justify-self: start; font-size: 0.85rem; }

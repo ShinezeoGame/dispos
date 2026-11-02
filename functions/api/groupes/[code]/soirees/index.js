@@ -12,7 +12,8 @@
    une soirée pour ne pas y venir. */
 
 import { json, erreur, lireCorps, identifier, lireSoiree } from '../../../../_outils.js';
-import { annoncerSoiree } from '../../../../_annonces.js';
+import { annoncerSoiree, texteMoment } from '../../../../_annonces.js';
+import { notifierGroupe } from '../../../../_push.js';
 
 export async function onRequestPost(context) {
   const { groupe, moi, refus } = await identifier(context);
@@ -38,6 +39,14 @@ export async function onRequestPost(context) {
 
   // Sur Discord, si le groupe y a branché un salon (_annonces.js).
   annoncerSoiree(context, groupe, 'nouvelle', { ...soiree, jeu: soiree.jeu.nom, jeu_cover: soiree.jeu.cover }, moi.pseudo);
+  // Et en notification, aux autres membres qui l'ont activée (_push.js).
+  // tag : une seconde notification de la même soirée remplace la première.
+  notifierGroupe(context, groupe, moi.id, {
+    titre: `Nouvelle soirée · ${groupe.nom}`,
+    corps: `${soiree.titre} · ${texteMoment(soiree)} · proposée par ${moi.pseudo}`,
+    url: `/groupe?g=${groupe.code}`,
+    tag: `soiree-${id}`,
+  });
 
   return json(201, { id });
 }

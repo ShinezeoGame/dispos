@@ -188,6 +188,24 @@ export const SCHEMA = [
     choix INTEGER NOT NULL,
     PRIMARY KEY (soiree_id, membre_id)
   )`,
+  // LES NOTIFICATIONS PUSH (2 nov. 2026, functions/_push.js).
+  // reglages : les réglages du site lui-même, une ligne par réglage ;
+  // pour l'instant la paire de clés VAPID (clé « vapid »), créée seule.
+  `CREATE TABLE IF NOT EXISTS reglages (
+    cle TEXT PRIMARY KEY,
+    valeur TEXT NOT NULL
+  )`,
+  // abonnements : une « boîte aux lettres » de notifications par
+  // appareil (endpoint, chez Google, Mozilla ou Apple) et ses deux
+  // clés, rattachée à un compte. Supprimer le compte les emporte.
+  `CREATE TABLE IF NOT EXISTS abonnements (
+    id INTEGER PRIMARY KEY,
+    compte_id INTEGER NOT NULL REFERENCES comptes(id) ON DELETE CASCADE,
+    endpoint TEXT NOT NULL UNIQUE,
+    p256dh TEXT NOT NULL,
+    auth TEXT NOT NULL,
+    cree_le TEXT NOT NULL DEFAULT (datetime('now'))
+  )`,
   // Les index sont des tables des matières : ils évitent de relire
   // toute la table pour trouver les membres ou les soirées d'un groupe.
   `CREATE INDEX IF NOT EXISTS membres_par_groupe ON membres (groupe_id)`,
