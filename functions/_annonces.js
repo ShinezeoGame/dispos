@@ -129,6 +129,7 @@ function encadreSoiree(request, groupe, soiree) {
     ? [`Au vote : ${soiree.choix.map((jeu) => jeu.nom).join(', ')}`]
     : [soiree.jeu];
   if (soiree.places) details.push(`${soiree.places} places`);
+  if (soiree.hebdo) details.push('chaque semaine');
   const lignes = [`**${texteMoment(soiree)}**`, sansMarkdown(details.join(' · '))];
   if (soiree.note) lignes.push('', '> ' + sansMarkdown(soiree.note).replace(/\n/g, '\n> '));
   const encadre = {

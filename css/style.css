@@ -1424,6 +1424,8 @@ input[type="range"] {
 }
 .soiree-jour { color: var(--texte-doux); font: 600 0.82rem/1.2 var(--police-titre); text-transform: uppercase; }
 .soiree-heure { font: 700 1.5rem var(--police-titre); }
+/* « chaque jeudi » : une soirée qui revient toutes les semaines. */
+.soiree-hebdo { color: var(--soiree); font-size: 0.75rem; font-weight: 600; }
 /* « jusqu'à 1h », sous l'heure de début. */
 .soiree-fin { color: var(--texte-doux); font-size: 0.78rem; white-space: nowrap; }
 .soiree.aujourdhui .soiree-jour { color: var(--soiree); }

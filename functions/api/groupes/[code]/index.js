@@ -15,8 +15,9 @@
 
 import {
   json, erreur, estLundi, identifier, jeuxStockes, persoStockee, adressePhoto,
-  lireCorps, ligne, adminDuGroupe,
+  lireCorps, ligne, adminDuGroupe, recalerHebdos,
 } from '../../../_outils.js';
+import { heureDeParis } from '../../../_annonces.js';
 
 /* RENOMMER LE GROUPE — PATCH /api/groupes/ABCD2345   { nom: "…" }
    Réservé au premier membre (adminDuGroupe, _outils.js). */
@@ -45,6 +46,9 @@ export async function onRequestGet(context) {
      que date('now') est l'heure de Londres (UTC), pas la tienne : le
      navigateur fait ensuite le tri exact, à son heure. */
   const db = context.env.DB;
+  // D'abord, les soirées de chaque semaine dont le jour est passé
+  // avancent à la semaine suivante (recalerHebdos, _outils.js).
+  await db.batch(recalerHebdos(db, heureDeParis().slice(0, 10), groupe.id));
   const [membres, dispos, soirees, reponses, chauds, votes] = await db.batch([
     // LEFT JOIN : chaque membre, avec la version de sa photo s'il en a
     // une (NULL sinon). Jamais l'image elle-même : la page la demande à
@@ -62,7 +66,7 @@ export async function onRequestGet(context) {
                 WHERE m.groupe_id = ? AND d.semaine = ?`)
       .bind(groupe.id, semaine),
 
-    db.prepare(`SELECT id, createur_id, titre, jeu, jeu_cover, jeu_id, jour, horaire, fin, places, note, choix FROM soirees
+    db.prepare(`SELECT id, createur_id, titre, jeu, jeu_cover, jeu_id, jour, horaire, fin, places, note, choix, hebdo FROM soirees
                 WHERE groupe_id = ? AND jour >= MIN(?, date('now', '-1 day'))
                 ORDER BY jour, horaire LIMIT 200`)
       .bind(groupe.id, semaine),
@@ -158,6 +162,7 @@ export async function onRequestGet(context) {
     soirees: soirees.results.map((soiree) => ({
       ...soiree,
       choix: soiree.choix ? JSON.parse(soiree.choix) : [],
+      hebdo: soiree.hebdo === 1,
       votes: votesParSoiree[soiree.id] || {},
       reponses: reponsesParSoiree[soiree.id] || {},
     })),

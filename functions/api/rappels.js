@@ -30,7 +30,7 @@
    Renvoie : { rappels: 2, notifications: 3 } (messages Discord envoyés,
    notifications déposées) */
 
-import { json } from '../_outils.js';
+import { json, recalerHebdos } from '../_outils.js';
 import { envoyerAuGroupe, heureDeParis, sansMarkdown, lienDuGroupe } from '../_annonces.js';
 import { abonnementsDe, envoyerA } from '../_push.js';
 
@@ -38,6 +38,9 @@ export async function onRequestPost({ request, env }) {
   const db = env.DB;
   const maintenant = heureDeParis();
   const dansUneHeure = heureDeParis(60);
+  // Les soirées de chaque semaine passées repartent pour la suivante,
+  // même dans un groupe que personne n'ouvre : leur rappel suivra.
+  await db.batch(recalerHebdos(db, maintenant.slice(0, 10)));
 
   /* jour || ' ' || horaire : « 2026-11-06 21:00 », comparable à
      l'heure de Paris (voir heureDeParis). Les deux conditions sur

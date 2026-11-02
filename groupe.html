@@ -323,6 +323,9 @@
           <input id="soiree-fin" name="fin" type="time" step="900">
         </div>
       </div>
+      <!-- Chaque semaine (2 nov. 2026) : passé son jour, la soirée revient
+           la semaine suivante, réponses remises à zéro (js/soirees.js). -->
+      <label class="repeter"><input type="checkbox" id="soiree-hebdo" name="hebdo"> Chaque semaine</label>
       <p id="soiree-dispos" class="indice"></p>
       <!-- En modification seulement, quand la date ou l'heure a changé
            (js/soirees.js) : prévient que les réponses repartent de zéro. -->

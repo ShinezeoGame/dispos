@@ -4,7 +4,7 @@
    boutons de réponse, et le formulaire pour en proposer une. */
 
 import { etat, quandCaChange, appeler, charger, trouverMembre, caseDe } from './etat.js';
-import { versTexte, depuisTexte, jourRelatif, avatar, annoncer, creer, LIEN_PRIX } from './commun.js';
+import { versTexte, depuisTexte, jourRelatif, avatar, annoncer, creer, formater, LIEN_PRIX } from './commun.js';
 import { ouvrirProfil } from './profil.js';
 import { selecteurJeux, couverture, memeJeu } from './jeux.js';
 import { brancherFiche } from './fiche-jeu.js';
@@ -71,6 +71,11 @@ function fabriquerCarte(soiree) {
   carte.classList.toggle('aujourdhui', versTexte(debut) === versTexte(new Date()));
   remplir('.soiree-jour', jourRelatif(debut));
   remplir('.soiree-heure', joliHoraire(soiree.horaire));
+  // Une soirée de chaque semaine : « chaque jeudi », sous l'heure.
+  if (soiree.hebdo) {
+    const jourDeLaSemaine = formater(depuisTexte(soiree.jour), { weekday: 'long' });
+    carte.querySelector('.soiree-date').append(creer('span', 'soiree-hebdo', `chaque ${jourDeLaSemaine}`));
+  }
   // « jusqu'à 1h », sous l'heure de début, si la soirée a une fin.
   const fin = carte.querySelector('.soiree-fin');
   fin.textContent = soiree.fin ? `jusqu'à ${joliHoraire(soiree.fin)}` : '';
@@ -233,7 +238,10 @@ async function voter(soiree, place) {
 
 async function annulerSoiree(soiree) {
   // confirm() : la petite fenêtre « OK / Annuler » du navigateur.
-  if (!confirm(`Annuler « ${soiree.titre} » ? Les réponses de chacun seront perdues.`)) return;
+  const question = soiree.hebdo
+    ? `Annuler « ${soiree.titre} » ? Elle revient chaque semaine : c'est toute la série qui s'arrête.`
+    : `Annuler « ${soiree.titre} » ? Les réponses de chacun seront perdues.`;
+  if (!confirm(question)) return;
   try {
     await appeler(`/soirees/${soiree.id}`, { methode: 'DELETE' });
     annoncer('Soirée annulée.');
@@ -286,6 +294,7 @@ export function proposerSoiree({ jour, horaire, fin, jeux } = {}) {
   champs.horaire.value = horaire || '21:00';
   // La fin : donnée par un meilleur créneau (« 22h → 0h »), sinon vide.
   champs.fin.value = fin || '';
+  champs.hebdo.checked = false;
   // Le jeu : donné par « À quoi jouer ce soir » (js/ce-soir.js), sinon aucun.
   selecteur.remplir(jeux || []);
   afficherFormulaire();
@@ -306,6 +315,7 @@ function modifierSoiree(soiree) {
   champs.fin.value = soiree.fin || '';
   champs.places.value = soiree.places || '';
   champs.note.value = soiree.note;
+  champs.hebdo.checked = soiree.hebdo;
   afficherFormulaire();
 }
 
@@ -449,6 +459,7 @@ formulaire.addEventListener('submit', async (evenement) => {
     horaire: champs.horaire.value,
     fin: champs.fin.value,          // '' = pas d'heure de fin
     places: champs.places.value,    // '' = illimité
+    hebdo: champs.hebdo.checked,    // chaque semaine
     note: champs.note.value,
   };
   try {

@@ -121,9 +121,9 @@ export async function onRequestPatch(context) {
   const choix = soiree.choix.length ? JSON.stringify(soiree.choix) : '';
   const instructions = [
     db.prepare(`UPDATE soirees SET titre = ?, jeu = ?, jeu_cover = ?, jeu_id = ?, jour = ?, horaire = ?,
-                fin = ?, places = ?, note = ?, choix = ? WHERE id = ?`)
+                fin = ?, places = ?, note = ?, choix = ?, hebdo = ? WHERE id = ?`)
       .bind(soiree.titre, soiree.jeu.nom, soiree.jeu.cover, soiree.jeu.id, soiree.jour, soiree.horaire,
-        soiree.fin, soiree.places, soiree.note, choix, ancienne.id),
+        soiree.fin, soiree.places, soiree.note, choix, soiree.hebdo ? 1 : 0, ancienne.id),
   ];
   // Les jeux du vote ont changé : les votes déjà donnés ne veulent plus
   // rien dire (la place 1 n'est peut-être plus le même jeu).

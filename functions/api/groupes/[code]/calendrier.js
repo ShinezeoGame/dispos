@@ -51,7 +51,7 @@ export async function onRequestGet(context) {
 
   // Les soirées des 30 derniers jours et toutes celles à venir.
   const { results } = await context.env.DB
-    .prepare(`SELECT id, titre, jeu, jour, horaire, fin, note FROM soirees
+    .prepare(`SELECT id, titre, jeu, jour, horaire, fin, note, hebdo FROM soirees
               WHERE groupe_id = ? AND jour >= date('now', '-30 days') ORDER BY jour, horaire`)
     .bind(groupe.id)
     .all();
@@ -68,6 +68,8 @@ export async function onRequestGet(context) {
       `DTSTAMP:${maintenant}`,
       `DTSTART:${dateIcs(s.jour, s.horaire)}`,
       `DTEND:${finIcs(s)}`,
+      // Une soirée de chaque semaine : l'agenda la répète tout seul.
+      ...(s.hebdo ? ['RRULE:FREQ=WEEKLY'] : []),
       `SUMMARY:${texteIcs(s.titre)}`,
       `DESCRIPTION:${texteIcs([s.jeu, s.note].filter(Boolean).join('\n'))}`,
       'END:VEVENT',

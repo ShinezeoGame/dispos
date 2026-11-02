@@ -153,6 +153,7 @@ export const SCHEMA = [
     note TEXT NOT NULL DEFAULT '',
     rappel INTEGER NOT NULL DEFAULT 0,
     choix TEXT NOT NULL DEFAULT '',
+    hebdo INTEGER NOT NULL DEFAULT 0,
     cree_le TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
 
@@ -272,6 +273,10 @@ export const MIGRATIONS = [
      vote, un seul jeu. Le jeu de la soirée (jeu, jeu_cover, jeu_id)
      suit alors celui qui est en tête (voir soirees/[id].js). */
   "ALTER TABLE soirees ADD COLUMN choix TEXT NOT NULL DEFAULT ''",
+  /* 2 nov. 2026 : soirees.hebdo, 1 pour une soirée de chaque semaine.
+     Une fois son jour passé, elle se recale sur la semaine suivante
+     (recalerHebdos, plus bas). */
+  'ALTER TABLE soirees ADD COLUMN hebdo INTEGER NOT NULL DEFAULT 0',
 ];
 
 
@@ -489,7 +494,42 @@ export function lireSoiree(corps) {
     }
   }
   if (note.length > 300) return { probleme: 'Le petit mot est trop long (300 caractères au plus).' };
-  return { soiree: { jeu, titre, jour: corps.jour, horaire: corps.horaire, fin, places, note, choix } };
+  // « Chaque semaine » : true ou rien.
+  const hebdo = corps.hebdo === true;
+  return { soiree: { jeu, titre, jour: corps.jour, horaire: corps.horaire, fin, places, note, choix, hebdo } };
+}
+
+/* LES SOIRÉES DE CHAQUE SEMAINE (2 nov. 2026)
+
+   Une soirée « chaque semaine » dont le jour est passé avance d'autant
+   de semaines qu'il faut pour retomber aujourd'hui ou après : jeudi
+   dernier → jeudi qui vient. Les réponses et les votes de la semaine
+   finie ne valent pas pour la suivante : effacés, sauf la réponse de
+   la personne qui l'a proposée. Le rappel est réarmé.
+
+   aujourdhui : la date du jour (« 2026-11-06 »). groupeId : un seul
+   groupe (au chargement d'un groupe), ou null pour tous (le réveil des
+   rappels). Renvoie trois instructions, à lancer dans un batch AVANT
+   de lire les soirées. L'ordre compte : on efface les réponses et les
+   votes tant que la soirée a encore son ancienne date, puis on la
+   déplace.
+
+   Le calcul de la date : julianday() compte les jours ; (écart + 6) / 7,
+   arrondi vers le bas, donne le nombre de semaines à ajouter (1 pour
+   un écart de 1 à 7 jours, 2 pour 8 à 14…). */
+export function recalerHebdos(db, aujourdhui, groupeId = null) {
+  const dansLeGroupe = groupeId === null ? '' : 'AND groupe_id = ?2';
+  const passees = `SELECT id FROM soirees WHERE hebdo = 1 AND jour < ?1 ${dansLeGroupe}`;
+  const lier = (instruction) => (groupeId === null ? instruction.bind(aujourdhui) : instruction.bind(aujourdhui, groupeId));
+  return [
+    lier(db.prepare(`DELETE FROM reponses WHERE soiree_id IN (${passees})
+                     AND membre_id IS NOT (SELECT createur_id FROM soirees WHERE id = reponses.soiree_id)`)),
+    lier(db.prepare(`DELETE FROM votes WHERE soiree_id IN (${passees})`)),
+    lier(db.prepare(`UPDATE soirees
+                     SET jour = date(jour, '+' || (7 * CAST((julianday(?1) - julianday(jour) + 6) / 7 AS INTEGER)) || ' days'),
+                         rappel = 0
+                     WHERE hebdo = 1 AND jour < ?1 ${dansLeGroupe}`)),
+  ];
 }
 
 // Le vote « À quoi on joue ? » : 4 jeux au plus. Même nombre dans

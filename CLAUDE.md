@@ -33,6 +33,15 @@ nom de domaine à part reste à choisir.
   bouton Chaud se bloque, le serveur refuse le « oui » de trop).
   Colonnes `soirees.fin` ('' = pas de fin) et `soirees.places` (NULL =
   illimité).
+- **Les soirées de chaque semaine** (2 nov. 2026) : case « Chaque
+  semaine » dans le formulaire (`soirees.hebdo`). La carte dit « chaque
+  jeudi ». Le lendemain de son jour, la soirée avance d'autant de
+  semaines qu'il faut (`recalerHebdos()`, _outils.js, lancé au
+  chargement du groupe ET par le réveil des rappels, pour les groupes
+  que personne n'ouvre) : réponses et votes remis à zéro, sauf la
+  réponse de l'auteur, rappel réarmé. Le flux .ics la répète
+  (`RRULE:FREQ=WEEKLY`), Discord dit « chaque semaine ». Annuler arrête
+  toute la série (la question le dit) ; décocher aussi.
 - **« À quoi on joue ? »** (2 nov. 2026) : dans le formulaire, choisir
   2 à 4 jeux au lieu d'un (aide : « Choisis-en plusieurs pour faire
   voter la team »). La carte montre alors un bouton par jeu avec son
@@ -423,6 +432,11 @@ nom de domaine à part reste à choisir.
 - **Les icônes PNG de l'appli sont tirées de `assets/icone.svg`** (le
   logo dans le cercle central, la seule zone qu'un téléphone ne rogne
   jamais) : changer le dessin = refaire les trois PNG.
+- **« Aujourd'hui », côté serveur, c'est Paris** (`heureDeParis()`),
+  pour les rappels comme pour le recalage des soirées de chaque
+  semaine. `recalerHebdos()` efface les réponses et les votes AVANT de
+  déplacer la date : dans l'autre ordre, il ne retrouverait plus les
+  soirées concernées.
 - **Les rappels comptent en heure de Paris** (`heureDeParis()`) : les
   soirées n'ont pas de fuseau. `soirees.rappel` passe à 1 AVANT l'envoi
   (jamais deux fois) et revient à 0 quand la soirée change de jour ou
