@@ -70,6 +70,7 @@ export const SCHEMA = [
     code TEXT NOT NULL UNIQUE,
     nom TEXT NOT NULL,
     webhook TEXT NOT NULL DEFAULT '',
+    fuseau TEXT NOT NULL DEFAULT 'Europe/Paris',
     cree_le TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
 
@@ -277,6 +278,10 @@ export const MIGRATIONS = [
      Une fois son jour passé, elle se recale sur la semaine suivante
      (recalerHebdos, plus bas). */
   'ALTER TABLE soirees ADD COLUMN hebdo INTEGER NOT NULL DEFAULT 0',
+  /* 2 nov. 2026 : groupes.fuseau, le fuseau horaire du groupe
+     (« Europe/Paris », « America/Montreal »…). Les heures des soirées
+     et de l'agenda sont des heures de ce fuseau. */
+  "ALTER TABLE groupes ADD COLUMN fuseau TEXT NOT NULL DEFAULT 'Europe/Paris'",
 ];
 
 
@@ -499,6 +504,19 @@ export function lireSoiree(corps) {
   return { soiree: { jeu, titre, jour: corps.jour, horaire: corps.horaire, fin, places, note, choix, hebdo } };
 }
 
+/* UN FUSEAU HORAIRE VALABLE (2 nov. 2026) : un nom que Intl connaît
+   (« Europe/Paris »). Intl refuse un nom inconnu en levant une erreur :
+   on s'en sert comme vérification. Renvoie le nom, ou null. */
+export function lireFuseau(texte) {
+  if (typeof texte !== 'string' || texte.length > 60) return null;
+  try {
+    new Intl.DateTimeFormat('fr-FR', { timeZone: texte });
+    return texte;
+  } catch {
+    return null;
+  }
+}
+
 /* LES SOIRÉES DE CHAQUE SEMAINE (2 nov. 2026)
 
    Une soirée « chaque semaine » dont le jour est passé avance d'autant
@@ -507,8 +525,9 @@ export function lireSoiree(corps) {
    finie ne valent pas pour la suivante : effacés, sauf la réponse de
    la personne qui l'a proposée. Le rappel est réarmé.
 
-   aujourdhui : la date du jour (« 2026-11-06 »). groupeId : un seul
-   groupe (au chargement d'un groupe), ou null pour tous (le réveil des
+   aujourdhui : la date du jour (« 2026-11-06 »), dans le fuseau du
+   groupe. groupeId : un seul groupe (au chargement d'un groupe) ; ou
+   null avec fuseau : tous les groupes de ce fuseau (le réveil des
    rappels). Renvoie trois instructions, à lancer dans un batch AVANT
    de lire les soirées. L'ordre compte : on efface les réponses et les
    votes tant que la soirée a encore son ancienne date, puis on la
@@ -517,10 +536,12 @@ export function lireSoiree(corps) {
    Le calcul de la date : julianday() compte les jours ; (écart + 6) / 7,
    arrondi vers le bas, donne le nombre de semaines à ajouter (1 pour
    un écart de 1 à 7 jours, 2 pour 8 à 14…). */
-export function recalerHebdos(db, aujourdhui, groupeId = null) {
-  const dansLeGroupe = groupeId === null ? '' : 'AND groupe_id = ?2';
+export function recalerHebdos(db, aujourdhui, groupeId = null, fuseau = null) {
+  const dansLeGroupe = groupeId !== null
+    ? 'AND groupe_id = ?2'
+    : 'AND groupe_id IN (SELECT id FROM groupes WHERE fuseau = ?2)';
   const passees = `SELECT id FROM soirees WHERE hebdo = 1 AND jour < ?1 ${dansLeGroupe}`;
-  const lier = (instruction) => (groupeId === null ? instruction.bind(aujourdhui) : instruction.bind(aujourdhui, groupeId));
+  const lier = (instruction) => instruction.bind(aujourdhui, groupeId !== null ? groupeId : fuseau);
   return [
     lier(db.prepare(`DELETE FROM reponses WHERE soiree_id IN (${passees})
                      AND membre_id IS NOT (SELECT createur_id FROM soirees WHERE id = reponses.soiree_id)`)),
@@ -750,7 +771,7 @@ export async function identifier({ request, env, params }, membreObligatoire = t
   const db = env.DB;
   const code = String(params.code || '').toUpperCase();
   const groupe = await db
-    .prepare('SELECT id, code, nom, webhook FROM groupes WHERE code = ?')
+    .prepare('SELECT id, code, nom, webhook, fuseau FROM groupes WHERE code = ?')
     .bind(code)
     .first();
   if (!groupe) {

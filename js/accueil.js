@@ -1,7 +1,7 @@
 /* LA PAGE D'ACCUEIL : créer un groupe, en rejoindre un, retrouver
    les siens, se connecter. */
 
-import { api, lireGroupes, retenirGroupe, oublierGroupe, creer, annoncer, LIEN_SOUTIEN } from './commun.js';
+import { api, lireGroupes, retenirGroupe, oublierGroupe, creer, annoncer, fuseauDeLAppareil, LIEN_SOUTIEN } from './commun.js';
 import { messageConnexion, deconnecter } from './compte.js';
 import './apparence.js'; // le choix de la couleur du site
 import { quandAppliChange, peutInstaller, installer } from './appli.js'; // le site comme une appli
@@ -43,7 +43,8 @@ formCreer.addEventListener('submit', async (evenement) => {
   try {
     const { code, nom } = await api('/groupes', {
       methode: 'POST',
-      corps: { nom: formCreer.elements.nom.value },
+      // Le fuseau de cet appareil devient celui du groupe (modifiable ensuite).
+      corps: { nom: formCreer.elements.nom.value, fuseau: fuseauDeLAppareil },
     });
     retenirGroupe(code, { nom });
     location.href = '/groupe?g=' + code;

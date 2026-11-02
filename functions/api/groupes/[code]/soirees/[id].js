@@ -9,7 +9,7 @@
    sont réservés à la personne qui a proposé la soirée. */
 
 import { json, erreur, lireCorps, identifier, lireSoiree, REPONSES } from '../../../../_outils.js';
-import { annoncerSoiree, heureDeParis } from '../../../../_annonces.js';
+import { annoncerSoiree, heureDuGroupe } from '../../../../_annonces.js';
 
 /* La soirée doit appartenir AU groupe du lien. Sans ce
    « AND groupe_id = ? », un membre d'un groupe pourrait répondre aux
@@ -166,7 +166,7 @@ export async function onRequestDelete(context) {
 
   // Annoncée sur Discord si elle n'a pas encore commencé : effacer une
   // vieille soirée de la liste n'intéresse personne.
-  if (`${soiree.jour} ${soiree.horaire}` > heureDeParis()) {
+  if (`${soiree.jour} ${soiree.horaire}` > heureDuGroupe(groupe.fuseau)) {
     annoncerSoiree(context, groupe, 'annulee', soiree, moi.pseudo);
   }
   return json(200, { ok: true });

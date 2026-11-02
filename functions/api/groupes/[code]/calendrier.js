@@ -60,6 +60,10 @@ export async function onRequestGet(context) {
   const lignes = [
     'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//AllReady//Soirees//FR', 'CALSCALE:GREGORIAN',
     `X-WR-CALNAME:${texteIcs(`${groupe.nom} · AllReady`)}`,
+    // Les heures sont « flottantes » (sans fuseau) : X-WR-TIMEZONE dit
+    // à Google Agenda et Apple Calendrier de les lire à l'heure du
+    // groupe, même chez un membre qui vit dans un autre fuseau.
+    `X-WR-TIMEZONE:${groupe.fuseau}`,
   ];
   for (const s of results) {
     lignes.push(

@@ -171,6 +171,40 @@ export function ajouterJours(date, nombre) {
   return resultat;
 }
 
+/* L'HEURE DU GROUPE (2 nov. 2026)
+
+   Les heures de l'agenda et des soirées sont celles du fuseau du groupe
+   (groupes.fuseau : « Europe/Paris », « America/Montreal »…), pas
+   forcément celles de l'appareil : un membre en vacances à Montréal
+   voit toujours les soirées à l'heure de Paris si le groupe y est.
+   maintenant() donne donc l'heure qu'il est DANS LE FUSEAU DU GROUPE,
+   sous la forme d'une date ordinaire dont l'heure affichée est la
+   bonne : partout où le site demandait new Date(), il demande
+   maintenant(). Tant qu'aucun groupe n'est chargé (l'accueil),
+   c'est l'heure de l'appareil. */
+let fuseauDuGroupe = null;
+export function reglerFuseau(fuseau) {
+  fuseauDuGroupe = fuseau;
+}
+export function maintenant() {
+  const ici = new Date();
+  if (!fuseauDuGroupe) return ici;
+  try {
+    const parties = new Intl.DateTimeFormat('en-US', {
+      timeZone: fuseauDuGroupe, hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric',
+      hour: 'numeric', minute: 'numeric', second: 'numeric',
+    }).formatToParts(ici);
+    const p = Object.fromEntries(parties.map(({ type, value }) => [type, Number(value)]));
+    return new Date(p.year, p.month - 1, p.day, p.hour, p.minute, p.second);
+  } catch {
+    return ici; // un fuseau inconnu de ce navigateur : l'heure de l'appareil
+  }
+}
+// Le fuseau de cet appareil, envoyé à la création d'un groupe.
+export const fuseauDeLAppareil = Intl.DateTimeFormat().resolvedOptions().timeZone;
+// « America/New_York » → « New York » : la ville, pour « heures de New York ».
+export const nomDuFuseau = (fuseau) => fuseau.split('/').pop().replace(/_/g, ' ');
+
 // Le lundi de la semaine d'une date. getDay() compte à partir du
 // dimanche (0) ; (getDay() + 6) % 7 compte à partir du lundi.
 export function lundiDe(date) {
@@ -197,9 +231,9 @@ export function majuscule(texte) {
 
 // "Ce soir" / "Demain" / "Sam. 8 nov." pour une date donnée.
 export function jourRelatif(date) {
-  const aujourdhui = versTexte(new Date());
+  const aujourdhui = versTexte(maintenant());
   if (versTexte(date) === aujourdhui) return date.getHours() >= 18 ? 'Ce soir' : "Aujourd'hui";
-  if (versTexte(date) === versTexte(ajouterJours(new Date(), 1))) return 'Demain';
+  if (versTexte(date) === versTexte(ajouterJours(maintenant(), 1))) return 'Demain';
   return majuscule(formater(date, { weekday: 'short', day: 'numeric', month: 'short' }));
 }
 

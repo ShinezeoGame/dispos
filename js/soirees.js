@@ -4,7 +4,7 @@
    boutons de réponse, et le formulaire pour en proposer une. */
 
 import { etat, quandCaChange, appeler, charger, trouverMembre, caseDe } from './etat.js';
-import { versTexte, depuisTexte, jourRelatif, avatar, annoncer, creer, formater, LIEN_PRIX } from './commun.js';
+import { versTexte, depuisTexte, jourRelatif, avatar, annoncer, creer, formater, maintenant, LIEN_PRIX } from './commun.js';
 import { ouvrirProfil } from './profil.js';
 import { selecteurJeux, couverture, memeJeu } from './jeux.js';
 import { brancherFiche } from './fiche-jeu.js';
@@ -33,7 +33,7 @@ function debutSoiree(soiree) {
 // Une soirée reste affichée trois heures après son début : elle est
 // peut-être encore en cours.
 function soireesAVenir() {
-  const limite = Date.now() - 3 * 60 * 60 * 1000;
+  const limite = maintenant().getTime() - 3 * 60 * 60 * 1000; // l'heure du groupe
   return etat.soirees.filter((soiree) => debutSoiree(soiree) > limite);
 }
 
@@ -68,7 +68,7 @@ function fabriquerCarte(soiree) {
   const debut = debutSoiree(soiree);
   const moi = etat.moi;
 
-  carte.classList.toggle('aujourdhui', versTexte(debut) === versTexte(new Date()));
+  carte.classList.toggle('aujourdhui', versTexte(debut) === versTexte(maintenant()));
   remplir('.soiree-jour', jourRelatif(debut));
   remplir('.soiree-heure', joliHoraire(soiree.horaire));
   // Une soirée de chaque semaine : « chaque jeudi », sous l'heure.
@@ -268,7 +268,7 @@ function ouvrirFormulaire(soiree) {
   /* Pas de soirée dans le passé. Une soirée encore affichée mais
      commencée hier soir (elle reste visible trois heures) doit pouvoir
      garder sa date : la limite descend alors jusqu'à elle. */
-  const aujourdhui = versTexte(new Date());
+  const aujourdhui = versTexte(maintenant());
   champs.jour.min = soiree && soiree.jour < aujourdhui ? soiree.jour : aujourdhui;
 }
 
@@ -290,7 +290,7 @@ export function proposerSoiree({ jour, horaire, fin, jeux } = {}) {
     return;
   }
   ouvrirFormulaire(null);
-  champs.jour.value = jour || versTexte(new Date());
+  champs.jour.value = jour || versTexte(maintenant());
   champs.horaire.value = horaire || '21:00';
   // La fin : donnée par un meilleur créneau (« 22h → 0h »), sinon vide.
   champs.fin.value = fin || '';

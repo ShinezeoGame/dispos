@@ -76,7 +76,9 @@
       <div class="agenda-outils">
         <div class="semaine">
           <button id="semaine-avant" class="bouton-icone" type="button" aria-label="Semaine précédente">‹</button>
-          <p class="semaine-libelle"><strong id="semaine-titre"></strong> <span id="semaine-dates"></span></p>
+          <p class="semaine-libelle"><strong id="semaine-titre"></strong> <span id="semaine-dates"></span>
+            <!-- « heures de Paris » : seulement si cet appareil n'est pas dans le fuseau du groupe. -->
+            <span id="semaine-fuseau" class="semaine-fuseau" hidden></span></p>
           <button id="semaine-apres" class="bouton-icone" type="button" aria-label="Semaine suivante">›</button>
           <button id="semaine-retour" class="lien-discret" type="button" hidden>Revenir à cette semaine</button>
         </div>
@@ -167,6 +169,12 @@
                retrouvent jamais seuls en bout de ligne. -->
           <p class="indice">Les soirées dans Google Agenda («&nbsp;À partir de l'URL&nbsp;») ou Apple Calendrier («&nbsp;Nouvel abonnement&nbsp;»).</p>
           <button id="copier-calendrier" class="bouton bouton-second bouton-petit" type="button">Copier le lien d'agenda</button>
+        </div>
+        <!-- LE FUSEAU HORAIRE (premier membre seulement, js/reglages.js) :
+             les heures de l'agenda, des soirées et des rappels. -->
+        <div id="reglage-fuseau" class="reglage" hidden>
+          <label for="fuseau">Fuseau horaire</label>
+          <select id="fuseau"></select>
         </div>
         <!-- SUR CET APPAREIL (js/reglages.js, js/appli.js) : installer le
              site comme une appli, activer ou couper les notifications.

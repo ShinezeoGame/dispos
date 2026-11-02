@@ -11,7 +11,7 @@
    — quitter le groupe. */
 
 import { etat, quandCaChange, appeler, charger } from './etat.js';
-import { annoncer, copier, oublierGroupe } from './commun.js';
+import { annoncer, copier, oublierGroupe, nomDuFuseau } from './commun.js';
 import {
   quandAppliChange, peutInstaller, installer, iphoneHorsAppli,
   notificationsPossibles, abonnementActuel, activerNotifications, couperNotifications,
@@ -21,6 +21,8 @@ const section = document.getElementById('reglages');
 const formRenommer = document.getElementById('form-renommer');
 const champNom = document.getElementById('nouveau-nom');
 
+const reglageFuseau = document.getElementById('reglage-fuseau');
+const choixFuseau = document.getElementById('fuseau');
 const formDiscord = document.getElementById('form-discord');
 const champWebhook = document.getElementById('webhook');
 const discordBranche = document.getElementById('discord-branche');
@@ -33,6 +35,8 @@ quandCaChange(() => {
   if (document.activeElement !== champNom) champNom.value = etat.groupe.nom;
   // Discord : le formulaire OU « Branché », jamais les deux.
   formDiscord.hidden = !admin || etat.groupe.discord;
+  reglageFuseau.hidden = !admin;
+  if (admin) remplirFuseaux();
   discordBranche.hidden = !admin || !etat.groupe.discord;
 });
 
@@ -51,6 +55,36 @@ formRenommer.addEventListener('submit', async (evenement) => {
 
 document.getElementById('copier-calendrier').addEventListener('click', () => {
   copier(`${location.origin}/api/groupes/${etat.code}/calendrier`, "Lien d'agenda copié !");
+});
+
+/* LE FUSEAU HORAIRE (2 nov. 2026) : la liste des fuseaux que connaît
+   le navigateur (Intl.supportedValuesOf, environ 400), classés par
+   région, « Europe / Paris ». Remplie une seule fois ; seule la valeur
+   choisie suit le groupe. Un vieux navigateur sans cette liste ne
+   montre que le fuseau actuel. Changer = PATCH, puis tout se recharge
+   à la nouvelle heure. */
+function remplirFuseaux() {
+  if (!choixFuseau.options.length) {
+    const liste = Intl.supportedValuesOf ? Intl.supportedValuesOf('timeZone') : [];
+    if (!liste.includes(etat.groupe.fuseau)) liste.unshift(etat.groupe.fuseau);
+    choixFuseau.replaceChildren(...liste.map((fuseau) => {
+      const option = document.createElement('option');
+      option.value = fuseau;
+      option.textContent = fuseau.replace(/_/g, ' ').split('/').join(' / ');
+      return option;
+    }));
+  }
+  if (document.activeElement !== choixFuseau) choixFuseau.value = etat.groupe.fuseau;
+}
+
+choixFuseau.addEventListener('change', async () => {
+  try {
+    await appeler('', { methode: 'PATCH', corps: { fuseau: choixFuseau.value } });
+    annoncer(`Le groupe vit maintenant à l'heure de ${nomDuFuseau(choixFuseau.value)}.`);
+    await charger();
+  } catch (probleme) {
+    annoncer(probleme.message, 'erreur');
+  }
 });
 
 /* Brancher Discord : le serveur essaie d'abord d'écrire dans le salon

@@ -6,7 +6,7 @@
    bouton pour la modifier. */
 
 import { etat, quandCaChange, appeler, charger } from './etat.js';
-import { avatar, creer, formater, lundiDe, copier, annoncer, PLATEFORMES, STYLES } from './commun.js';
+import { avatar, creer, formater, lundiDe, copier, annoncer, maintenant, PLATEFORMES, STYLES } from './commun.js';
 import { ouvrirProfil } from './profil.js';
 import { couverture } from './jeux.js';
 import { brancherFiche } from './fiche-jeu.js';
@@ -62,7 +62,7 @@ function fabriquerCarte(membre, estMoi) {
 
   // « 12 h cochées cette semaine » ou « … semaine du 9 nov. »
   const heures = etat.dispos.get(membre.id)?.size || 0;
-  const quelleSemaine = etat.semaine.getTime() === lundiDe(new Date()).getTime()
+  const quelleSemaine = etat.semaine.getTime() === lundiDe(maintenant()).getTime()
     ? 'cette semaine'
     : `semaine du ${formater(etat.semaine, { day: 'numeric', month: 'short' })}`;
   // Rien n'est écrit quand rien n'est coché : pas de texte pour rien.

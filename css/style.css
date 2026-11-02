@@ -980,6 +980,10 @@ input[type="range"] {
 }
 .semaine-libelle strong { display: block; font: 700 1.1rem var(--police-titre); }
 .semaine-libelle span { color: var(--texte-doux); font-size: 0.9rem; }
+/* « heures de Paris », sous les dates, quand l'appareil est ailleurs. */
+.semaine-libelle .semaine-fuseau { display: block; color: var(--accent); font-size: 0.78rem; }
+.semaine-libelle .semaine-fuseau[hidden] { display: none; }
+.reglage select { justify-self: start; max-width: 100%; }
 
 /* La bascule « Le groupe / Mes dispos » : deux boutons collés, celui
    qui est enfoncé (aria-pressed="true") est rempli d'orange. */

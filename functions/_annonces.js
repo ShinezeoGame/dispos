@@ -18,10 +18,9 @@
    jamais renvoyée aux navigateurs.
 
    L'HEURE : les soirées sont en heure « flottante » (21:00, sans
-   fuseau), comme l'agenda. Pour savoir si une soirée commence dans
-   moins d'une heure, il faut bien choisir un fuseau : celui de Paris
-   (heureDeParis). Un groupe à Montréal recevrait ses rappels 6 heures
-   trop tôt ; à revoir le jour où ça arrive.
+   fuseau), comme l'agenda : c'est l'heure du GROUPE, dont le fuseau est
+   rangé dans groupes.fuseau (2 nov. 2026 ; Europe/Paris par défaut).
+   heureDuGroupe() dit quelle heure il est là-bas.
 
    Ce fichier n'exporte aucune fonction onRequest… : Cloudflare n'en
    fait pas une adresse. */
@@ -170,15 +169,17 @@ export function annoncerSoiree(context, groupe, genre, soiree, auteur) {
 }
 
 
-/* 5. L'HEURE DE PARIS
+/* 5. L'HEURE DU GROUPE
 
-   « 2026-11-06 21:00 », dans dansMinutes minutes. Même forme que
-   jour + ' ' + horaire dans la base : deux textes de cette forme se
-   comparent comme des dates (« 2026-11-06 21:00 » < « 2026-11-06
-   22:00 »). Intl connaît les changements d'heure été / hiver. */
-export function heureDeParis(dansMinutes = 0) {
+   « 2026-11-06 21:00 » : l'heure qu'il est (ou qu'il sera dans
+   dansMinutes minutes) dans le fuseau du groupe (« Europe/Paris »,
+   « America/Montreal »…). Même forme que jour + ' ' + horaire dans la
+   base : deux textes de cette forme se comparent comme des dates
+   (« 2026-11-06 21:00 » < « 2026-11-06 22:00 »). Intl connaît les
+   fuseaux du monde entier et les changements d'heure été / hiver. */
+export function heureDuGroupe(fuseau = 'Europe/Paris', dansMinutes = 0) {
   const parties = new Intl.DateTimeFormat('fr-FR', {
-    timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit',
+    timeZone: fuseau, year: 'numeric', month: '2-digit', day: '2-digit',
     hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
   }).formatToParts(Date.now() + dansMinutes * 60000);
   const p = Object.fromEntries(parties.map(({ type, value }) => [type, value]));

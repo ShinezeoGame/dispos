@@ -11,7 +11,7 @@
    groupe te demande ensuite ton pseudo, comme à tous ceux qui
    arrivent par le lien. */
 
-import { json, erreur, lireCorps, ligne, genererCode } from '../../_outils.js';
+import { json, erreur, lireCorps, ligne, genererCode, lireFuseau } from '../../_outils.js';
 
 export async function onRequestPost({ request, env }) {
   const corps = await lireCorps(request);
@@ -25,7 +25,9 @@ export async function onRequestPost({ request, env }) {
      refuserait le doublon (code est UNIQUE) et _middleware.js
      afficherait « réessaie » : le second essai tirerait un autre code. */
   const code = genererCode();
-  await env.DB.prepare('INSERT INTO groupes (code, nom) VALUES (?, ?)').bind(code, nom).run();
+  // Le fuseau du navigateur qui crée le groupe (Paris s'il n'en dit rien).
+  const fuseau = lireFuseau(corps.fuseau) || 'Europe/Paris';
+  await env.DB.prepare('INSERT INTO groupes (code, nom, fuseau) VALUES (?, ?, ?)').bind(code, nom, fuseau).run();
 
   // 201 = « créé ». Le navigateur s'en sert comme d'un 200.
   return json(201, { code, nom });

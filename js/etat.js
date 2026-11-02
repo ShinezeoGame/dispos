@@ -10,7 +10,7 @@
    à partir de etat. Plus simple à suivre, et impossible d'oublier un
    endroit. */
 
-import { api, lundiDe, versTexte, depuisTexte, ajouterJours, retenirGroupe, HEURE_DEBUT, HEURE_FIN } from './commun.js';
+import { api, lundiDe, versTexte, depuisTexte, ajouterJours, retenirGroupe, HEURE_DEBUT, HEURE_FIN, maintenant, reglerFuseau } from './commun.js';
 
 export const etat = {
   // Le code du groupe, lu dans l'adresse : /groupe?g=ABCD2345
@@ -65,6 +65,16 @@ export async function charger() {
   const miennes = garderLesMiennes ? etat.dispos.get(etat.moi.id) : null;
 
   etat.groupe = donnees.groupe;
+  /* Le fuseau du groupe : maintenant() (commun.js) donne désormais
+     l'heure de là-bas. Au tout premier chargement, la semaine affichée
+     avait été choisie à l'heure de l'appareil : on la recale si, à
+     l'heure du groupe, on est déjà (ou encore) dans une autre semaine. */
+  const premierChargement = !etat.semaineChargee;
+  reglerFuseau(donnees.groupe.fuseau);
+  if (premierChargement && etat.semaine.getTime() !== lundiDe(maintenant()).getTime()) {
+    etat.semaine = lundiDe(maintenant());
+    return charger();
+  }
   etat.compte = donnees.compte;
   etat.semaineType = donnees.semaineType; // ta case « Répéter chaque semaine »
   etat.admin = donnees.admin;             // l'id du premier membre, qui décide
@@ -116,12 +126,12 @@ const DEBUT_DU_SOIR = 19;
    de la veille : à 1 h dans la nuit de mardi à mercredi, ce soir =
    mardi, heures 25 et 26 (voir « Les heures dépassent 23 »). */
 export function ceSoir() {
-  const maintenant = new Date();
-  let jour = new Date(maintenant.getFullYear(), maintenant.getMonth(), maintenant.getDate());
-  let depart = Math.max(maintenant.getHours(), DEBUT_DU_SOIR);
-  if (maintenant.getHours() < HEURE_FIN - 24) {
+  const ceMoment = maintenant(); // l'heure du groupe (commun.js)
+  let jour = new Date(ceMoment.getFullYear(), ceMoment.getMonth(), ceMoment.getDate());
+  let depart = Math.max(ceMoment.getHours(), DEBUT_DU_SOIR);
+  if (ceMoment.getHours() < HEURE_FIN - 24) {
     jour = ajouterJours(jour, -1);
-    depart = maintenant.getHours() + 24;
+    depart = ceMoment.getHours() + 24;
   }
   const semaine = lundiDe(jour);
   const numero = Math.round((jour - semaine) / 86400000);

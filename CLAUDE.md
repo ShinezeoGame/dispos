@@ -33,6 +33,16 @@ nom de domaine à part reste à choisir.
   bouton Chaud se bloque, le serveur refuse le « oui » de trop).
   Colonnes `soirees.fin` ('' = pas de fin) et `soirees.places` (NULL =
   illimité).
+- **Le fuseau horaire du groupe** (2 nov. 2026, `groupes.fuseau`,
+  Europe/Paris par défaut) : pris dans le navigateur de celui qui crée
+  le groupe, modifiable par le premier membre (« Fuseau horaire » dans
+  Le groupe, la liste de `Intl.supportedValuesOf`). Toutes les heures
+  (agenda, soirées, rappels, « Chaud ce soir », soirées de chaque
+  semaine) sont celles du groupe : côté page, `maintenant()`
+  (commun.js) remplace `new Date()` ; côté serveur, `heureDuGroupe()`
+  (_annonces.js). Un appareil dans un autre fuseau lit « heures de
+  Montreal » sous les dates de la semaine. Le flux .ics le dit
+  (`X-WR-TIMEZONE`).
 - **Les soirées de chaque semaine** (2 nov. 2026) : case « Chaque
   semaine » dans le formulaire (`soirees.hebdo`). La carte dit « chaque
   jeudi ». Le lendemain de son jour, la soirée avance d'autant de
@@ -432,13 +442,17 @@ nom de domaine à part reste à choisir.
 - **Les icônes PNG de l'appli sont tirées de `assets/icone.svg`** (le
   logo dans le cercle central, la seule zone qu'un téléphone ne rogne
   jamais) : changer le dessin = refaire les trois PNG.
-- **« Aujourd'hui », côté serveur, c'est Paris** (`heureDeParis()`),
-  pour les rappels comme pour le recalage des soirées de chaque
-  semaine. `recalerHebdos()` efface les réponses et les votes AVANT de
+- **L'heure, c'est celle du groupe** : jamais `new Date()` ni
+  `Date.now()` dans les scripts de la page pour dire « maintenant »,
+  toujours `maintenant()` (commun.js) ; côté serveur, toujours
+  `heureDuGroupe(groupe.fuseau)`. Le réveil des rappels trie ses
+  candidates groupe par groupe, à l'heure de chacun, et recale les
+  soirées de chaque semaine fuseau par fuseau (8 fuseaux au plus par
+  réveil ; les autres groupes se recalent quand on les ouvre). `recalerHebdos()` efface les réponses et les votes AVANT de
   déplacer la date : dans l'autre ordre, il ne retrouverait plus les
   soirées concernées.
-- **Les rappels comptent en heure de Paris** (`heureDeParis()`) : les
-  soirées n'ont pas de fuseau. `soirees.rappel` passe à 1 AVANT l'envoi
+- **Les rappels comptent à l'heure du groupe** (`heureDuGroupe()`) :
+  les soirées sont en heure « flottante ». `soirees.rappel` passe à 1 AVANT l'envoi
   (jamais deux fois) et revient à 0 quand la soirée change de jour ou
   d'heure.
 

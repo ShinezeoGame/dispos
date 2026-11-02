@@ -19,7 +19,7 @@ import {
 } from './etat.js';
 import {
   HEURE_DEBUT, HEURE_FIN, ajouterJours, lundiDe, versTexte, formater,
-  libelleHeure, avatar, annoncer, creer, majuscule, animerEntree,
+  libelleHeure, avatar, annoncer, creer, majuscule, animerEntree, maintenant, fuseauDeLAppareil, nomDuFuseau,
 } from './commun.js';
 import { proposerSoiree } from './soirees.js';
 import { ouvrirProfil } from './profil.js';
@@ -50,7 +50,7 @@ const tactile = matchMedia('(pointer: coarse)').matches;
 // Une case est passée quand son heure est finie : 21 h – 22 h est
 // passée à 22 h.
 function estPassee(jour, heure) {
-  return debutCase(jour, heure + 1) <= new Date();
+  return debutCase(jour, heure + 1) <= maintenant();
 }
 
 // "vendredi 6 novembre, 21h", ou "nuit de vendredi 6 novembre, 1h".
@@ -335,7 +335,7 @@ document.fonts.ready.then(ajusterHauteur);
 new ResizeObserver(ajusterHauteur).observe(document.getElementById('vue-agenda'));
 
 function dessinerSemaine() {
-  const ecart = Math.round((etat.semaine - lundiDe(new Date())) / (7 * 86400000));
+  const ecart = Math.round((etat.semaine - lundiDe(maintenant())) / (7 * 86400000));
   const noms = { '-1': 'Semaine dernière', 0: 'Cette semaine', 1: 'Semaine prochaine' };
   document.getElementById('semaine-titre').textContent = noms[ecart]
     || `Semaine du ${formater(etat.semaine, { day: 'numeric', month: 'long' })}`;
@@ -343,6 +343,11 @@ function dessinerSemaine() {
   document.getElementById('semaine-dates').textContent =
     `${formater(etat.semaine, court)} – ${formater(ajouterJours(etat.semaine, 6), court)}`;
   document.getElementById('semaine-retour').hidden = ecart === 0;
+  /* Un appareil dans un autre fuseau que le groupe : on précise que les
+     heures sont celles du groupe (« heures de Paris »). */
+  const fuseau = document.getElementById('semaine-fuseau');
+  fuseau.textContent = `heures de ${nomDuFuseau(etat.groupe.fuseau)}`;
+  fuseau.hidden = etat.groupe.fuseau === fuseauDeLAppareil;
 }
 
 function dessinerGrille() {
@@ -350,13 +355,13 @@ function dessinerGrille() {
   const soirees = soireesParCase();
   const total = etat.membres.length;
   const miennes = etat.moi ? mesCases() : new Set();
-  const maintenant = new Date();
-  const aujourdhui = versTexte(maintenant);
+  const ceMoment = maintenant();
+  const aujourdhui = versTexte(ceMoment);
   /* MAINTENANT : la case de l'heure en cours ("4-21"), ou null si elle
      n'est pas dans la semaine affichée (ou entre 3 h et 9 h, où l'agenda
      n'a pas de case). caseDe fait la conversion, nuit comprise. */
-  const cleMaintenant = caseDe(aujourdhui, `${String(maintenant.getHours()).padStart(2, '0')}:00`);
-  heureDessinee = maintenant.getHours();
+  const cleMaintenant = caseDe(aujourdhui, `${String(ceMoment.getHours()).padStart(2, '0')}:00`);
+  heureDessinee = ceMoment.getHours();
 
   /* LE CLAVIER : une seule case de la grille est atteignable avec Tab
      (tabIndex 0), les flèches promènent ensuite d'une case à l'autre
@@ -679,7 +684,7 @@ grille.addEventListener('focusin', (evenement) => {
    s'estompent, le repère descend d'une ligne). Pas pendant qu'on coche
    en glissant, pour ne pas couper le geste. */
 setInterval(() => {
-  if (etat.groupe && peinture === null && new Date().getHours() !== heureDessinee) dessiner();
+  if (etat.groupe && peinture === null && maintenant().getHours() !== heureDessinee) dessiner();
 }, 60000);
 
 // Échap ferme aussi le détail (sauf si une fenêtre est ouverte : c'est
@@ -763,7 +768,7 @@ async function changerSemaine(nouvelle) {
 
 document.getElementById('semaine-avant').addEventListener('click', () => changerSemaine(ajouterJours(etat.semaine, -7)));
 document.getElementById('semaine-apres').addEventListener('click', () => changerSemaine(ajouterJours(etat.semaine, 7)));
-document.getElementById('semaine-retour').addEventListener('click', () => changerSemaine(lundiDe(new Date())));
+document.getElementById('semaine-retour').addEventListener('click', () => changerSemaine(lundiDe(maintenant())));
 
 for (const bouton of boutonsMode) {
   bouton.addEventListener('click', () => {

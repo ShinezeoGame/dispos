@@ -19,43 +19,50 @@
    ne change rien, chaque rappel ne part qu'une fois (soirees.rappel).
    POST et pas GET : un robot qui visite les liens ne la déclenche pas.
 
-   Quatre requêtes en tout, quel que soit le nombre de soirées (D1 en
-   permet 50 par appel ; 20 soirées au plus par réveil) :
-   1. les soirées à rappeler ;
-   2. les marquer « rappel parti » AVANT d'envoyer : deux appels
+   Peu de requêtes, quel que soit le nombre de soirées (D1 en permet
+   50 par appel ; 20 soirées au plus par réveil) :
+   1. recaler les soirées de chaque semaine, fuseau par fuseau ;
+   2. les candidates des jours proches, triées ensuite à l'heure de
+      leur groupe (heureDuGroupe) ;
+   3. les marquer « rappel parti » AVANT d'envoyer : deux appels
       rapprochés ne peuvent pas envoyer deux fois le même rappel ;
-   3. ceux qui ont dit « Chaud », pour toutes ces soirées d'un coup ;
-   4. leurs appareils abonnés aux notifications.
+   4. ceux qui ont dit « Chaud », pour toutes ces soirées d'un coup ;
+   5. leurs appareils abonnés aux notifications.
 
    Renvoie : { rappels: 2, notifications: 3 } (messages Discord envoyés,
    notifications déposées) */
 
 import { json, recalerHebdos } from '../_outils.js';
-import { envoyerAuGroupe, heureDeParis, sansMarkdown, lienDuGroupe } from '../_annonces.js';
+import { envoyerAuGroupe, heureDuGroupe, sansMarkdown, lienDuGroupe } from '../_annonces.js';
 import { abonnementsDe, envoyerA } from '../_push.js';
 
 export async function onRequestPost({ request, env }) {
   const db = env.DB;
-  const maintenant = heureDeParis();
-  const dansUneHeure = heureDeParis(60);
-  // Les soirées de chaque semaine passées repartent pour la suivante,
-  // même dans un groupe que personne n'ouvre : leur rappel suivra.
-  await db.batch(recalerHebdos(db, maintenant.slice(0, 10)));
 
-  /* jour || ' ' || horaire : « 2026-11-06 21:00 », comparable à
-     l'heure de Paris (voir heureDeParis). Les deux conditions sur
-     « jour » seul écartent d'abord, à peu de frais, toutes les soirées
-     qui ne tombent ni aujourd'hui ni demain. */
-  const { results: soirees } = await db
-    .prepare(`SELECT s.id, s.titre, s.horaire, g.id AS groupe_id, g.code, g.webhook
+  /* Les soirées de chaque semaine passées repartent pour la suivante,
+     même dans un groupe que personne n'ouvre : leur rappel suivra.
+     « Aujourd'hui » dépend du fuseau : un recalage par fuseau utilisé
+     (8 au plus par réveil, D1 limitant les requêtes ; les autres
+     groupes se recalent quand on les ouvre). */
+  const { results: fuseaux } = await db.prepare('SELECT DISTINCT fuseau FROM groupes LIMIT 8').all();
+  const recalages = fuseaux.flatMap(({ fuseau }) => recalerHebdos(db, heureDuGroupe(fuseau).slice(0, 10), null, fuseau));
+  if (recalages.length) await db.batch(recalages);
+
+  /* Les candidates : pas encore rappelées, entre hier et après-demain
+     (en dates de Londres : de quoi couvrir tous les fuseaux du monde).
+     Puis le tri exact, groupe par groupe, à son heure : celles qui
+     commencent dans l'heure (« 2026-11-06 21:00 » entre maintenant et
+     dans 60 minutes, voir heureDuGroupe). 20 au plus par réveil. */
+  const { results: candidates } = await db
+    .prepare(`SELECT s.id, s.titre, s.jour, s.horaire, g.id AS groupe_id, g.code, g.webhook, g.fuseau
               FROM soirees s JOIN groupes g ON g.id = s.groupe_id
-              WHERE s.rappel = 0
-                AND s.jour >= ? AND s.jour <= ?
-                AND s.jour || ' ' || s.horaire >= ?
-                AND s.jour || ' ' || s.horaire <= ?
-              LIMIT 20`)
-    .bind(maintenant.slice(0, 10), dansUneHeure.slice(0, 10), maintenant, dansUneHeure)
+              WHERE s.rappel = 0 AND s.jour >= date('now', '-1 day') AND s.jour <= date('now', '+2 days')
+              ORDER BY s.jour, s.horaire LIMIT 300`)
     .all();
+  const soirees = candidates.filter((soiree) => {
+    const debut = `${soiree.jour} ${soiree.horaire}`;
+    return debut >= heureDuGroupe(soiree.fuseau) && debut <= heureDuGroupe(soiree.fuseau, 60);
+  }).slice(0, 20);
   if (!soirees.length) return json(200, { rappels: 0, notifications: 0 });
 
   // json_each : la liste des numéros, passée en un seul paramètre (D1

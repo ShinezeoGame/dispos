@@ -15,20 +15,29 @@
 
 import {
   json, erreur, estLundi, identifier, jeuxStockes, persoStockee, adressePhoto,
-  lireCorps, ligne, adminDuGroupe, recalerHebdos,
+  lireCorps, ligne, adminDuGroupe, recalerHebdos, lireFuseau,
 } from '../../../_outils.js';
-import { heureDeParis } from '../../../_annonces.js';
+import { heureDuGroupe } from '../../../_annonces.js';
 
-/* RENOMMER LE GROUPE — PATCH /api/groupes/ABCD2345   { nom: "…" }
-   Réservé au premier membre (adminDuGroupe, _outils.js). */
+/* MODIFIER LE GROUPE — PATCH /api/groupes/ABCD2345
+   { nom: "…" } pour le renommer, ou { fuseau: "America/Montreal" } pour
+   changer son fuseau horaire (2 nov. 2026). Réservé au premier membre
+   (adminDuGroupe, _outils.js). */
 export async function onRequestPatch(context) {
   const { groupe, moi, refus } = await identifier(context);
   if (refus) return refus;
   const db = context.env.DB;
   if (moi.id !== await adminDuGroupe(db, groupe.id)) {
-    return erreur(403, 'Seul le premier membre du groupe peut le renommer.');
+    return erreur(403, 'Seul le premier membre du groupe peut le modifier.');
   }
-  const nom = ligne((await lireCorps(context.request)).nom);
+  const corps = await lireCorps(context.request);
+  if ('fuseau' in corps) {
+    const fuseau = lireFuseau(corps.fuseau);
+    if (!fuseau) return erreur(400, 'Fuseau horaire inconnu.');
+    await db.prepare('UPDATE groupes SET fuseau = ? WHERE id = ?').bind(fuseau, groupe.id).run();
+    return json(200, { fuseau });
+  }
+  const nom = ligne(corps.nom);
   if (nom.length < 1 || nom.length > 40) return erreur(400, 'Donne un nom au groupe (40 caractères au plus).');
   await db.prepare('UPDATE groupes SET nom = ? WHERE id = ?').bind(nom, groupe.id).run();
   return json(200, { nom });
@@ -48,7 +57,7 @@ export async function onRequestGet(context) {
   const db = context.env.DB;
   // D'abord, les soirées de chaque semaine dont le jour est passé
   // avancent à la semaine suivante (recalerHebdos, _outils.js).
-  await db.batch(recalerHebdos(db, heureDeParis().slice(0, 10), groupe.id));
+  await db.batch(recalerHebdos(db, heureDuGroupe(groupe.fuseau).slice(0, 10), groupe.id));
   const [membres, dispos, soirees, reponses, chauds, votes] = await db.batch([
     // LEFT JOIN : chaque membre, avec la version de sa photo s'il en a
     // une (NULL sinon). Jamais l'image elle-même : la page la demande à
@@ -129,7 +138,7 @@ export async function onRequestGet(context) {
   return json(200, {
     // discord : un salon est-il branché ? Oui ou non, jamais l'adresse
     // du webhook (qui l'a peut écrire dans le salon).
-    groupe: { code: groupe.code, nom: groupe.nom, discord: groupe.webhook !== '' },
+    groupe: { code: groupe.code, nom: groupe.nom, discord: groupe.webhook !== '', fuseau: groupe.fuseau },
     moi: moi ? moi.id : null,
     // Le nom et le pseudo Discord, sans le numéro du compte : la page
     // n'en a pas besoin.
