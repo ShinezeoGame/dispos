@@ -392,12 +392,16 @@ nom de domaine à part reste à choisir.
   en `#ff7a3d` exactement (`ORANGE_DU_DESSIN`), sinon le recoloriage ne
   trouve plus rien. Les trois pages chargent apparence.js (404.html
   aussi, rien que pour ça).
-- **« Tes groupes » est en tête de l'accueil** (2 nov. 2026, demandé :
-  « la première chose qu'on veut faire, c'est y accéder »), avant le
-  titre et les cartes Créer / Rejoindre. Caché sans groupe : un nouveau
-  venu arrive directement sur le titre. Garder cette section en premier
-  dans le HTML (pas un `order` en CSS : le clavier suivrait l'ancien
-  ordre).
+- **« Tes groupes » passe avant le reste de l'accueil** (2 nov. 2026,
+  demandé : « la première chose qu'on veut faire, c'est y accéder »),
+  et **en colonne à droite sur ordinateur** (même jour, demandé : « la
+  lecture du site en colonnes », comme les meilleurs créneaux à côté
+  de l'agenda). Sur téléphone, en tête de page. Caché sans groupe : un
+  nouveau venu garde l'accueil d'avant, pleine largeur. Le titre et les
+  cartes Créer / Rejoindre sont dans `.accueil-principal` ; la mise en
+  colonnes passe par `.accueil:has(> .mes-groupes:not([hidden]))`.
+  Garder la section des groupes en premier dans le HTML : c'est elle
+  que le clavier atteint d'abord.
 - **« Tes groupes » (accueil) a deux sources** : ceux du compte
   (`GET /api/compte`, depuis la base) puis ceux retenus par le navigateur
   (localStorage), sans doublon. Un groupe supprimé dans D1 disparaît

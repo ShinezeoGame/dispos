@@ -53,60 +53,67 @@
   </header>
 
   <main class="accueil">
-    <!-- TES GROUPES, en tête de page (2 nov. 2026, demandé) : quand on
-         a déjà un groupe, c'est lui qu'on vient ouvrir, pas en créer un
-         autre. Rempli par js/accueil.js : les groupes de ton compte, puis
-         ceux déjà ouverts sur cet appareil. Reste caché s'il n'y en a
-         aucun : un nouveau venu arrive alors directement sur le titre. -->
+    <!-- TES GROUPES (2 nov. 2026, demandé) : quand on a déjà un groupe,
+         c'est lui qu'on vient ouvrir, pas en créer un autre. En tête de
+         page sur téléphone, dans une colonne à droite sur ordinateur ;
+         premier dans le HTML dans les deux cas, donc premier au clavier.
+         Rempli par js/accueil.js : les groupes de ton compte, puis ceux
+         déjà ouverts sur cet appareil. Reste caché s'il n'y en a aucun :
+         un nouveau venu arrive alors directement sur le titre. -->
     <section id="mes-groupes" class="mes-groupes" hidden>
       <h2>Tes groupes</h2>
       <ul id="liste-groupes"></ul>
     </section>
 
-    <section class="hero">
-      <div class="hero-texte">
-        <h1>Qui est chaud <span class="accent insecable">ce soir</span>&nbsp;?</h1>
-        <p class="chapo">Chacun coche ses dispos, le site trouve le créneau où tout le monde est là.</p>
-      </div>
+    <!-- LA COLONNE PRINCIPALE : le titre, puis Créer / Rejoindre. Sur
+         ordinateur, quand on a des groupes, « Tes groupes » se range à
+         sa droite, comme les meilleurs créneaux à côté de l'agenda
+         (style.css, « L'accueil en colonnes »). -->
+    <div class="accueil-principal">
+      <section class="hero">
+        <div class="hero-texte">
+          <h1>Qui est chaud <span class="accent insecable">ce soir</span>&nbsp;?</h1>
+          <p class="chapo">Chacun coche ses dispos, le site trouve le créneau où tout le monde est là.</p>
+        </div>
 
-      <!-- Un faux morceau d'agenda, purement décoratif (aria-hidden) :
-           il montre en un coup d'œil ce que fait le site. Les classes
-           n0 à n4 règlent l'intensité de chaque case. -->
-      <div class="apercu" aria-hidden="true">
-        <span></span><span class="apercu-jour">L</span><span class="apercu-jour">M</span><span class="apercu-jour">M</span><span class="apercu-jour">J</span><span class="apercu-jour">V</span><span class="apercu-jour">S</span><span class="apercu-jour">D</span>
-        <span class="apercu-heure">19h</span><span class="n1"></span><span class="n1"></span><span class="n0"></span><span class="n2"></span><span class="n2"></span><span class="n3"></span><span class="n2"></span>
-        <span class="apercu-heure">20h</span><span class="n1"></span><span class="n2"></span><span class="n1"></span><span class="n2"></span><span class="n3"></span><span class="n4"></span><span class="n2"></span>
-        <span class="apercu-heure">21h</span><span class="n2"></span><span class="n3"></span><span class="n1"></span><span class="n3"></span><span class="n4 apercu-top"></span><span class="n3"></span><span class="n1"></span>
-        <span class="apercu-heure">22h</span><span class="n1"></span><span class="n2"></span><span class="n0"></span><span class="n2"></span><span class="n4"></span><span class="n3"></span><span class="n1"></span>
-        <span class="apercu-heure">23h</span><span class="n0"></span><span class="n1"></span><span class="n0"></span><span class="n1"></span><span class="n3"></span><span class="n2"></span><span class="n0"></span>
-        <p class="apercu-bulle"><strong>Ven. 21h</strong> 5 sur 5 dispos</p>
-      </div>
-    </section>
+        <!-- Un faux morceau d'agenda, purement décoratif (aria-hidden) :
+             il montre en un coup d'œil ce que fait le site. Les classes
+             n0 à n4 règlent l'intensité de chaque case. -->
+        <div class="apercu" aria-hidden="true">
+          <span></span><span class="apercu-jour">L</span><span class="apercu-jour">M</span><span class="apercu-jour">M</span><span class="apercu-jour">J</span><span class="apercu-jour">V</span><span class="apercu-jour">S</span><span class="apercu-jour">D</span>
+          <span class="apercu-heure">19h</span><span class="n1"></span><span class="n1"></span><span class="n0"></span><span class="n2"></span><span class="n2"></span><span class="n3"></span><span class="n2"></span>
+          <span class="apercu-heure">20h</span><span class="n1"></span><span class="n2"></span><span class="n1"></span><span class="n2"></span><span class="n3"></span><span class="n4"></span><span class="n2"></span>
+          <span class="apercu-heure">21h</span><span class="n2"></span><span class="n3"></span><span class="n1"></span><span class="n3"></span><span class="n4 apercu-top"></span><span class="n3"></span><span class="n1"></span>
+          <span class="apercu-heure">22h</span><span class="n1"></span><span class="n2"></span><span class="n0"></span><span class="n2"></span><span class="n4"></span><span class="n3"></span><span class="n1"></span>
+          <span class="apercu-heure">23h</span><span class="n0"></span><span class="n1"></span><span class="n0"></span><span class="n1"></span><span class="n3"></span><span class="n2"></span><span class="n0"></span>
+          <p class="apercu-bulle"><strong>Ven. 21h</strong> 5 sur 5 dispos</p>
+        </div>
+      </section>
 
-    <noscript>
-      <p class="carte">Ce site a besoin de JavaScript pour fonctionner. Active-le dans ton navigateur.</p>
-    </noscript>
+      <noscript>
+        <p class="carte">Ce site a besoin de JavaScript pour fonctionner. Active-le dans ton navigateur.</p>
+      </noscript>
 
-    <section class="cartes-accueil">
-      <form id="form-creer" class="carte">
-        <h2>Créer un groupe</h2>
-        <!-- L'étiquette reste pour les lecteurs d'écran, cachée à l'œil :
-             le titre de la carte et l'exemple dans le champ suffisent. -->
-        <label for="nom-groupe" class="visuellement-cache">Nom du groupe</label>
-        <input id="nom-groupe" name="nom" maxlength="40" required placeholder="Les potes du jeudi" autocomplete="off">
-        <p class="erreur" role="alert"></p>
-        <button class="bouton">Créer le groupe</button>
-      </form>
+      <section class="cartes-accueil">
+        <form id="form-creer" class="carte">
+          <h2>Créer un groupe</h2>
+          <!-- L'étiquette reste pour les lecteurs d'écran, cachée à l'œil :
+               le titre de la carte et l'exemple dans le champ suffisent. -->
+          <label for="nom-groupe" class="visuellement-cache">Nom du groupe</label>
+          <input id="nom-groupe" name="nom" maxlength="40" required placeholder="Les potes du jeudi" autocomplete="off">
+          <p class="erreur" role="alert"></p>
+          <button class="bouton">Créer le groupe</button>
+        </form>
 
-      <form id="form-rejoindre" class="carte">
-        <h2>Rejoindre un groupe</h2>
-        <label for="lien" class="visuellement-cache">Lien ou code du groupe</label>
-        <input id="lien" name="lien" required placeholder="Lien ou code" autocomplete="off" autocapitalize="characters" spellcheck="false">
-        <p class="erreur" role="alert"></p>
-        <button class="bouton bouton-second">Rejoindre</button>
-      </form>
-    </section>
-
+        <form id="form-rejoindre" class="carte">
+          <h2>Rejoindre un groupe</h2>
+          <label for="lien" class="visuellement-cache">Lien ou code du groupe</label>
+          <input id="lien" name="lien" required placeholder="Lien ou code" autocomplete="off" autocapitalize="characters" spellcheck="false">
+          <p class="erreur" role="alert"></p>
+          <button class="bouton bouton-second">Rejoindre</button>
+        </form>
+      </section>
+    </div>
   </main>
 
   <!-- Un seul cookie, celui qui te garde connecté : ni pub ni pistage. -->

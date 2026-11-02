@@ -91,9 +91,10 @@ function afficherGroupes(duCompte) {
   const liste = document.getElementById('liste-groupes');
   liste.replaceChildren();
   for (const [code, nom] of groupes) {
-    const lien = creer('a', '', nom);
+    // Le nom puis, dessous, le code (la flèche est dessinée par le CSS).
+    const lien = creer('a');
     lien.href = '/groupe?g=' + code;
-    lien.append(creer('span', 'code', code));
+    lien.append(creer('span', 'groupe-nom', nom), creer('span', 'code', code));
     const element = creer('li');
     element.append(lien);
     liste.append(element);

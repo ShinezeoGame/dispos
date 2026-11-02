@@ -667,9 +667,11 @@ input[type="range"] {
    puis une flèche dans l'accent du thème, qui avance un peu au survol.
    Des cartes franches : en tête de l'accueil, c'est l'action principale. */
 .mes-groupes a {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 0.9rem;
+  column-gap: 0.9rem;
+  row-gap: 0.1rem;
   min-height: 64px;
   padding: 0.8rem 1.1rem;
   border: 1px solid var(--bordure);
@@ -682,12 +684,46 @@ input[type="range"] {
 }
 .mes-groupes a::after {
   content: '→';
+  grid-column: 2;
+  grid-row: 1 / span 2;
   color: var(--accent);
   transition: transform 0.2s var(--arrivee);
 }
 .mes-groupes a:hover { border-color: var(--accent); transform: translateY(-2px); }
 .mes-groupes a:hover::after { transform: translateX(3px); }
-.mes-groupes .code { margin-left: auto; color: var(--texte-doux); font: 600 0.8rem var(--police-titre); letter-spacing: 0.08em; }
+/* Un nom trop long finit par « … » plutôt que de pousser la flèche. */
+.groupe-nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mes-groupes .code { color: var(--texte-doux); font: 600 0.75rem var(--police-titre); letter-spacing: 0.08em; }
+
+/* L'ACCUEIL EN COLONNES (2 nov. 2026, demandé : « la lecture du site
+   en colonnes »). La colonne principale empile le titre et les cartes
+   Créer / Rejoindre. Sur ordinateur, dès qu'on a un groupe, « Tes
+   groupes » passe dans une colonne de 20rem à droite, comme les
+   meilleurs créneaux à côté de l'agenda, et y reste accroché pendant
+   le défilement (sticky). :has() : la mise en colonnes ne s'active que
+   si la section des groupes est affichée ; un nouveau venu garde toute
+   la largeur. */
+.accueil-principal { display: grid; align-content: start; gap: 2.5rem; min-width: 0; }
+
+@media (min-width: 64rem) {
+  .accueil:has(> .mes-groupes:not([hidden])) {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    column-gap: 3rem;
+  }
+  .accueil:has(> .mes-groupes:not([hidden])) > .accueil-principal { grid-column: 1; grid-row: 1; }
+  .accueil > .mes-groupes {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
+    position: sticky;
+    top: 1.5rem;
+    padding-top: 2rem; /* aligné sur le haut du titre (padding du .hero) */
+  }
+  .accueil > .mes-groupes ul { grid-template-columns: 1fr; }
+  /* La colonne principale est moins large : le titre se fait un peu
+     plus petit pour garder « Qui est chaud » sur une seule ligne. */
+  .accueil:has(> .mes-groupes:not([hidden])) .hero h1 { font-size: clamp(2.4rem, 3.4vw, 3.1rem); }
+}
 
 /* Le pied de page de l'accueil : la petite phrase, puis (connecté)
    « Supprimer mon compte » sur la même ligne, ou dessous si elle ne
