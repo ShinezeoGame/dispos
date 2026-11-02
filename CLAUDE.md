@@ -113,15 +113,21 @@ nom de domaine à part reste à choisir.
   Contrastes notés en tête de `:root`.
 - **Chaque visiteur peut choisir la couleur du site** (demandé le
   31 oct. 2026) : le rond coloré de l'en-tête ouvre une palette de six
-  thèmes, Braise (l'orange, par défaut pour tout le monde), Néon,
-  Plasma, Glace, Sakura, Or. Un thème = `--accent`, `--accent-vif`,
+  thèmes, du plus chaud au plus froid : Braise (l'orange, par défaut
+  pour tout le monde), Lave (rouge), Sakura (rose), Néon (magenta,
+  soirées cyan), Plasma (violet), Glace (cyan). Revus le 2 nov. 2026
+  (« le jaune est moche sur l'agenda ») : **jamais de jaune ni de vert
+  citron en accent**, l'agenda les assombrit en moutarde et en olive.
+  Or a disparu (qui l'avait choisi retombe sur Braise), Néon est passé
+  du vert citron au magenta. Le rond du thème n'a qu'une couleur,
+  l'accent. Un thème = `--accent`, `--accent-vif`,
   `--soiree` dans un bloc `[data-theme="…"]` de style.css. Le choix est
   propre à l'appareil : localStorage, clé `allready-theme`.
   `js/theme.js` l'applique dans `<head>` avant l'affichage (pas de
   flash orange) ; `js/apparence.js` fabrique la palette (attribut
   `popover` : ouverture, fermeture et Échap gérés par le navigateur).
   Ajouter un thème : un bloc CSS + une ligne dans `THEMES`, puis
-  mesurer ses contrastes.
+  mesurer ses contrastes et regarder l'agenda (cases à 1 ou 2 personnes).
 - **Le logo** (« exceptionnel », à garder tel quel) : une coche dessinée par quatre ronds (les joueurs de la
   team : la validation, c'est le groupe au complet), reliés par un trait
   plein, puis « All » en

@@ -98,21 +98,31 @@
    Braise est le thème de base, pour tout le monde, choix de la maison
    (« que des couleurs chaudes »). Les autres sont là pour qui préfère.
 
+   PAS DE JAUNE NI DE VERT CITRON EN ACCENT (2 nov. 2026, demandé : « le
+   jaune est moche sur l'agenda »). L'agenda assombrit l'accent pour les
+   cases peu remplies (« Une case », plus bas) : un jaune assombri vire
+   au moutarde, un vert citron à l'olive. Les thèmes Or et l'ancien Néon
+   (vert citron) ont été remplacés par Lave (rouge) et un Néon magenta.
+   Rouge, rose, magenta, violet et cyan restent beaux à tous les niveaux.
+   Un jaune reste possible en couleur des soirées (cadres, pastille) :
+   elle n'est jamais assombrie.
+
    Contrastes mesurés (accent sur les cartes / texte sombre sur
    l'accent / soirée sur les cartes), minimum recommandé 4,5:1 :
-   Braise 6,8 / 7,4 / 5,7 — Néon 13,2 / 14,3 / 6,6 — Plasma 6,6 / 7,1 /
-   8,4 — Glace 9,8 / 10,6 / 7,2 — Sakura 7,5 / 8,1 / 11,4 — Or 11,4 /
-   12,4 / 6,1.
+   Braise 6,8 / 7,4 / 5,7 — Lave 5,7 / 6,2 / 9,8 — Sakura 7,9 / 8,6 /
+   12,2 — Néon 5,8 / 6,3 / 11,2 — Plasma 5,6 / 6,1 / 7,6 — Glace 9,8 /
+   10,6 / 7,2.
 
    Ajouter un thème : un bloc ici, et une ligne dans THEMES
-   (js/apparence.js). Puis mesurer ses contrastes. */
+   (js/apparence.js). Puis mesurer ses contrastes, et regarder l'agenda
+   avec des cases à une ou deux personnes. */
 :root,
 [data-theme="braise"] { --accent: #ff7a3d; --accent-vif: #ff9a66; --soiree: #ff4f8b; }
-[data-theme="neon"]   { --accent: #b5f23d; --accent-vif: #c8ff5a; --soiree: #ff5fd2; }
-[data-theme="plasma"] { --accent: #a98bff; --accent-vif: #c3adff; --soiree: #ff9a52; }
+[data-theme="lave"]   { --accent: #ff5a4f; --accent-vif: #ff8178; --soiree: #ffb15c; }
+[data-theme="sakura"] { --accent: #ff86c2; --accent-vif: #ffa8d4; --soiree: #ffcf8a; }
+[data-theme="neon"]   { --accent: #e84dff; --accent-vif: #f080ff; --soiree: #40e0ff; }
+[data-theme="plasma"] { --accent: #9b7bff; --accent-vif: #b9a3ff; --soiree: #ff8a4c; }
 [data-theme="glace"]  { --accent: #4fd1e8; --accent-vif: #85e3f2; --soiree: #ff7a9e; }
-[data-theme="sakura"] { --accent: #ff7eb6; --accent-vif: #ffa3cb; --soiree: #ffc845; }
-[data-theme="or"]     { --accent: #ffc845; --accent-vif: #ffd97a; --soiree: #ff5f8f; }
 
 
 /* 3. LES BASES */
@@ -1837,7 +1847,9 @@ button.tag-jeu:hover { border-color: var(--accent); }
   width: 1.4rem;
   height: 1.4rem;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent) 55%, var(--soiree) 55%);
+  /* Une seule couleur, l'accent (2 nov. 2026) : la moitié aux couleurs
+     des soirées, en coin, se voyait à peine. */
+  background: var(--accent);
 }
 
 .bouton-theme {

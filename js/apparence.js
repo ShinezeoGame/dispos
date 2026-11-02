@@ -13,15 +13,18 @@ import { creer } from './commun.js';
 
 const CLE = 'allready-theme';
 
-// Les thèmes proposés, dans l'ordre d'affichage. Leurs couleurs sont
-// dans style.css (« Les thèmes ») : un id ici = un bloc là-bas.
+/* Les thèmes proposés, du plus chaud au plus froid. Leurs couleurs sont
+   dans style.css (« Les thèmes ») : un id ici = un bloc là-bas.
+   Le thème « or » a disparu le 2 nov. 2026 (le jaune virait au moutarde
+   sur l'agenda) : qui l'avait choisi retombe sur Braise, puisqu'aucun
+   bloc du CSS ne correspond plus à « or ». */
 const THEMES = [
   { id: 'braise', nom: 'Braise' },
+  { id: 'lave', nom: 'Lave' },
+  { id: 'sakura', nom: 'Sakura' },
   { id: 'neon', nom: 'Néon' },
   { id: 'plasma', nom: 'Plasma' },
   { id: 'glace', nom: 'Glace' },
-  { id: 'sakura', nom: 'Sakura' },
-  { id: 'or', nom: 'Or' },
 ];
 
 const palette = document.getElementById('choix-theme');
