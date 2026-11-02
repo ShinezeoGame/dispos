@@ -79,25 +79,33 @@
           <button type="button" data-mode="groupe" aria-pressed="true">Le groupe</button>
           <button type="button" data-mode="moi" aria-pressed="false">Mes dispos</button>
         </div>
-      </div>
-
-      <section id="meilleurs" class="meilleurs" aria-labelledby="titre-meilleurs">
-        <h2 id="titre-meilleurs" class="titre-section">Meilleurs créneaux</h2>
-        <div id="meilleurs-contenu" class="meilleurs-contenu"></div>
-      </section>
-
-      <p id="aide-agenda" class="aide"></p>
-
-      <!-- La grille est entièrement fabriquée par js/agenda.js :
-           7 jours × 18 heures, chaque case est un bouton. -->
-      <div id="grille" class="grille"></div>
-
-      <!-- « Enregistré » après avoir coché ses dispos (js/agenda.js). -->
-      <div class="sous-grille">
+        <!-- « Enregistré ✓ » après avoir coché ses dispos (js/agenda.js) :
+             en haut, toujours en vue, plutôt que sous la grille. -->
         <p id="statut-sauvegarde" class="statut" aria-live="polite"></p>
       </div>
 
-      <div id="detail-case" class="detail-case" hidden></div>
+      <!-- LE CORPS DE L'AGENDA. Sur ordinateur : la grille à gauche, une
+           colonne à droite (le détail de la case touchée, puis les
+           meilleurs créneaux), pour que tout tienne dans l'écran. Sur
+           téléphone, la colonne s'efface (display: contents) : les
+           meilleurs créneaux passent au-dessus de la grille, le détail
+           en dessous (voir « L'agenda sur grand écran », style.css). -->
+      <div class="agenda-corps">
+        <div class="agenda-principal">
+          <p id="aide-agenda" class="aide"></p>
+          <!-- La grille est entièrement fabriquée par js/agenda.js :
+               7 jours × 18 heures, chaque case est un bouton. -->
+          <div id="grille" class="grille"></div>
+        </div>
+
+        <aside class="agenda-cote">
+          <div id="detail-case" class="detail-case" hidden></div>
+          <section id="meilleurs" class="meilleurs" aria-labelledby="titre-meilleurs">
+            <h2 id="titre-meilleurs" class="titre-section">Meilleurs créneaux</h2>
+            <div id="meilleurs-contenu" class="meilleurs-contenu"></div>
+          </section>
+        </aside>
+      </div>
     </section>
 
 

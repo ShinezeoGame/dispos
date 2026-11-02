@@ -955,6 +955,54 @@ input[type="range"] {
   .creneau { scroll-snap-align: start; }
 }
 
+/* L'AGENDA SUR GRAND ÉCRAN (2 nov. 2026, demandé : « voir tout
+   l'agenda sans scroller »)
+
+   Sur téléphone, une seule colonne : les meilleurs créneaux, la grille,
+   puis le détail de la case touchée. La colonne de droite (.agenda-cote)
+   s'efface avec display: contents, ses deux enfants deviennent des
+   éléments de .agenda-corps, rangés par order (-1 en haut, 1 en bas).
+
+   Sur ordinateur (64rem, 1024 px et plus), deux colonnes : la grille à
+   gauche, qui prend la hauteur de l'écran (voir agenda.js), et à droite
+   le détail de la case touchée (en haut, bien en vue) puis les meilleurs
+   créneaux. :has() : la colonne n'existe que si elle a quelque chose à
+   montrer ; seul dans le groupe ou en mode « Mes dispos », la grille
+   prend toute la largeur. */
+.agenda-corps { display: flex; flex-direction: column; }
+.agenda-cote { display: contents; }
+.meilleurs { order: -1; }
+.detail-case { order: 1; }
+
+@media (min-width: 64rem) {
+  .groupe { padding-top: 1rem; }
+  .agenda-outils { margin-bottom: 1rem; }
+  /* La barre de la semaine : la semaine à gauche, puis « Enregistré ✓ »
+     et la bascule à droite. */
+  .agenda-outils .statut { order: 1; }
+  .agenda-outils .bascule { order: 2; }
+
+  .agenda-corps:has(.agenda-cote > :not([hidden])) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 17rem;
+    align-items: start;
+    gap: 1.75rem;
+  }
+  .agenda-cote { display: grid; gap: 1.25rem; }
+  /* .agenda-cote > … : plus précis que les règles de base de
+     .meilleurs et .detail-case, écrites plus loin dans ce fichier, qui
+     sinon l'emporteraient et remettraient leurs marges. */
+  .agenda-cote > :is(.meilleurs, .detail-case) { order: 0; margin: 0; }
+  /* Une seule carte par ligne, plus serrées : la colonne est étroite. */
+  .meilleurs-contenu { grid-template-columns: 1fr; gap: 0.7rem; }
+  .creneau { gap: 0.55rem; padding: 0.85rem 1rem; }
+  /* Le détail d'une case, plus compact : deux membres par ligne. */
+  .agenda-cote .detail-case { gap: 0.6rem; padding: 0.9rem 1rem; }
+  .agenda-cote .detail-membres { gap: 0.35rem; }
+  .agenda-cote .detail-membres li { padding: 0.15rem 0.6rem 0.15rem 0.15rem; font-size: 0.85rem; }
+  .agenda-cote .detail-membres .avatar { width: 1.4rem; height: 1.4rem; font-size: 0.7rem; }
+}
+
 .aide {
   margin-bottom: 0.9rem;
   color: var(--texte-doux);
@@ -1013,7 +1061,10 @@ input[type="range"] {
    l'aperçu de l'accueil (.apercu .n1…). */
 .case {
   position: relative;
-  height: 1.9rem;
+  /* --hauteur-case : posée par agenda.js sur ordinateur, calculée pour
+     que toute la grille tienne dans l'écran (voir « Tout l'agenda d'un
+     coup d'œil » dans agenda.js). Sans elle (téléphone), 1,9rem. */
+  height: var(--hauteur-case, 1.9rem);
   padding: 0;
   border: 0;
   border-radius: 6px;
@@ -1024,14 +1075,16 @@ input[type="range"] {
   transition: background-color 0.12s;
 
   /* LA LUEUR : plus la soirée a de chances de se monter, plus la case
-     rayonne. --eclat (de 0 à 1, posé par agenda.js : la part de la team
-     dispo, 0 si on est seul) règle à la fois la taille de la lueur et
-     son intensité. À 0, la lueur est nulle et transparente.
+     rayonne. --eclat (de 0 à 1, posé par agenda.js : 0 seul, 0,5 dès
+     deux personnes, 1 toute la team) règle à la fois la taille de la
+     lueur et son intensité. À 0, la lueur est nulle et transparente.
+     Avant le 2 nov. 2026, la lueur suivait la seule part de la team :
+     à 2 sur 6, elle était trop faible pour se voir.
      Rangée dans --lueur pour que le survol et la case choisie puissent
      ajouter leur propre cadre sans l'effacer. */
   --eclat: 0;
-  --lueur: 0 0 calc(var(--eclat) * 18px) calc(var(--eclat) * 3px - 2px)
-           color-mix(in srgb, var(--accent) calc(var(--eclat) * 85%), transparent);
+  --lueur: 0 0 calc(var(--eclat) * 22px) calc(var(--eclat) * 3px - 1px)
+           color-mix(in srgb, var(--accent) calc(var(--eclat) * 100%), transparent);
   box-shadow: var(--lueur);
 }
 
@@ -1043,6 +1096,9 @@ input[type="range"] {
   .grille.edition .case:not(:disabled):hover { box-shadow: inset 0 0 0 2px var(--accent); }
 }
 .case.forte { color: var(--sur-accent); }
+/* Une case qui luit passe au-dessus de ses voisines : sans ça, chaque
+   case dessinée après elle recouvrait sa lueur, visible d'un seul côté. */
+.case.lumineuse { z-index: 1; }
 /* Un créneau déjà passé : estompé, mais lisible. 0,35 (avant le
    1er nov. 2026) le fondait dans le fond, chiffre compris : le
    dimanche, presque toute la semaine affichée était illisible. */
@@ -1062,7 +1118,7 @@ input[type="range"] {
    z-index: 1 : la lueur d'une case qui brille passe au-dessus des
    cases voisines au lieu d'être coupée par elles. */
 .case.brille {
-  z-index: 1;
+  z-index: 2; /* au-dessus même des autres cases lumineuses */
   background-image: linear-gradient(115deg, transparent 30%, rgb(255 255 255 / 0.5) 50%, transparent 70%);
   background-size: 250% 100%;
   background-repeat: no-repeat;
@@ -1126,17 +1182,11 @@ input[type="range"] {
   .grille-heure { padding-right: 0.3rem; font-size: 0.66rem; }
 }
 
-/* Sous la grille : « Enregistré » après avoir coché ses dispos. La
-   hauteur est réservée d'avance, pour que la page ne saute pas quand le
-   message apparaît. (La légende qui était là a été retirée le
-   2 nov. 2026 : les couleurs se comprennent seules, et toucher une case
-   affiche le détail en clair.) */
-.sous-grille {
-  margin-top: 1rem;
-  min-height: 1.5rem;
-}
-
-.statut { color: var(--accent); font-size: 0.88rem; font-weight: 600; }
+/* « Enregistré ✓ », dans la barre de la semaine, poussé à droite
+   (margin-left: auto). Il était sous la grille, hors de l'écran. La
+   légende de l'agenda a été retirée le 2 nov. 2026 : les couleurs se
+   comprennent seules, et toucher une case affiche le détail en clair. */
+.statut { margin-left: auto; color: var(--accent); font-size: 0.88rem; font-weight: 600; }
 
 /* Le détail d'une case touchée en mode groupe. */
 .detail-case {

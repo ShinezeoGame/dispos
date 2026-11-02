@@ -32,8 +32,16 @@ nom de domaine à part reste à choisir.
   proposés en un clic, les plus partagés en premier.
 - **La brillance de l'agenda** (31 oct. 2026) : plus une case réunit de
   monde, plus elle rayonne (« probabilité de monter une soirée »). Seul,
-  pas de lueur. À partir de 75 % de la team, un reflet balaie la case
-  (« soirée très probable »). Toucher une case affiche la chance en clair.
+  pas de lueur : une braise discrète. Dès deux, la case saute d'un cran
+  et s'entoure d'une lueur visible (2 nov. 2026 : « la différence entre
+  1 et 2 est presque invisible »). À partir de 75 % de la team, un reflet
+  balaie la case (« soirée très probable »). Toucher une case affiche la
+  chance en clair ; la survoler à la souris montre qui est dispo.
+- **Tout l'agenda tient dans l'écran sur ordinateur** (2 nov. 2026,
+  demandé) : la hauteur des cases s'adapte à la fenêtre (17 à 34 px),
+  les meilleurs créneaux et le détail d'une case passent dans une
+  colonne à droite de la grille, « Enregistré ✓ » dans la barre de la
+  semaine. Échap ferme le détail. Le téléphone garde une seule colonne.
 - **La fiche d'un jeu** au survol (au toucher sur téléphone, au focus
   au clavier) : jaquette, année, tags traduits en français (modes, mots-
   clés comme Roguelike, thèmes comme Horreur, genres) et résumé IGDB, en
@@ -297,12 +305,29 @@ nom de domaine à part reste à choisir.
   0,5 (agenda.js), lisible sur ces couleurs plus claires. Un créneau
   passé est à 0,55 d'opacité (0,35 rendait la semaine illisible le
   dimanche).
-- **La brillance** passe par deux variables posées par agenda.js sur
-  chaque case : `--eclat` (0 à 1, part de la team dispo, 0 si seul) et
-  `--decalage` (le départ du reflet, en vague par jour). Le seuil du
-  reflet est `TRES_PROBABLE` (0,75) dans agenda.js. La lueur est rangée
-  dans `--lueur` : tout autre `box-shadow` sur `.case` doit la reprendre
-  (`…, var(--lueur)`), sinon il l'efface.
+- **La couleur et la lueur d'une case viennent de `intensite()`**
+  (agenda.js) : `--niveau` 0,25 et pas de lueur pour une personne,
+  puis de 0,45 / `--eclat` 0,5 (deux personnes) à 1 / 1 (toute la team).
+  `--decalage` règle le départ du reflet, en vague par jour. Le seuil du
+  reflet est `TRES_PROBABLE` (0,75, sur la part de la team, `chance.part`)
+  dans agenda.js. La lueur est rangée dans `--lueur` : tout autre
+  `box-shadow` sur `.case` doit la reprendre (`…, var(--lueur)`), sinon
+  il l'efface. Une case qui luit a la classe `lumineuse` (z-index 1, le
+  reflet `brille` 2) : sans ça, les cases suivantes recouvraient sa
+  lueur, visible d'un seul côté.
+- **La hauteur des cases sur ordinateur est calculée par
+  `ajusterHauteur()`** (agenda.js) et posée dans `--hauteur-case` : la
+  fenêtre, moins la position de la grille, moins ce qu'elle a de fixe
+  (ligne des jours, espaces, coupure de minuit), partagé en 18 lignes.
+  Recalculée au redessin, au redimensionnement, à l'arrivée de la police
+  et quand l'onglet réapparaît (ResizeObserver). Ne pas fixer de hauteur
+  en dur sur `.case` : seulement le repli `var(--hauteur-case, 1,9rem)`.
+- **L'onglet Agenda a deux colonnes sur ordinateur** (`.agenda-corps` :
+  `.agenda-principal` avec la grille, `.agenda-cote` avec le détail puis
+  les meilleurs créneaux). Sur téléphone, `.agenda-cote` est en
+  `display: contents` et `order` replace les créneaux au-dessus de la
+  grille et le détail en dessous. La colonne n'existe que si elle a
+  quelque chose à montrer (`:has()`).
 - **Les animations d'arrivée passent par la classe `entree`**, posée par
   `animerEntree()` (commun.js) puis retirée après 1,2 s. Ne jamais mettre
   une animation d'arrivée directement sur une carte ou une case : la page

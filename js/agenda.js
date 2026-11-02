@@ -108,6 +108,27 @@ function chanceDeSoiree(nombre, total) {
 }
 
 
+/* LA COULEUR ET LA LUEUR D'UNE CASE (2 nov. 2026, demandé : « la
+   différence entre 1 et 2 est presque invisible »)
+
+   — niveau (de 0 à 1) : la vivacité de l'orange (--niveau dans le CSS) ;
+   — eclat (de 0 à 1) : la lueur autour de la case (--eclat).
+
+   Seul, on ne monte pas de soirée : une case à une personne reste une
+   braise discrète (0,25), sans lueur. Dès deux, la soirée devient
+   possible : la case saute à 0,45 et s'entoure d'une lueur (0,5), puis
+   les deux montent ensemble jusqu'à la team complète (1).
+   Avant, tout suivait la seule part de la team : dans un groupe de six,
+   une et deux personnes ne différaient que d'un sixième d'orange. */
+function intensite(nombre, total) {
+  if (nombre <= 0) return { niveau: 0, eclat: 0 };
+  if (nombre === 1 || total < 2) return { niveau: 0.25, eclat: 0 };
+  // « montee » va de 0 (deux personnes) à 1 (toute la team).
+  const montee = total > 2 ? (nombre - 2) / (total - 2) : 1;
+  return { niveau: 0.45 + 0.55 * montee, eclat: 0.5 + 0.5 * montee };
+}
+
+
 /* LES MEILLEURS CRÉNEAUX
 
    On parcourt chaque jour heure par heure, et on regroupe les heures
@@ -172,8 +193,60 @@ function dessiner() {
   dessinerGrille();
   dessinerMeilleurs();
   dessinerDetail();
+  ajusterHauteur();
 }
 quandCaChange(dessiner);
+
+
+/* TOUT L'AGENDA D'UN COUP D'ŒIL (ordinateur, 2 nov. 2026, demandé :
+   « voir tout l'agenda sans avoir à scroller »)
+
+   Sur un écran d'au moins 64rem (1024 px) de large, la hauteur des
+   cases est calculée pour que toute la grille, de 9 h à 3 h, tienne
+   dans la fenêtre :
+   1. où commence la grille dans la page (hautDansLaPage) ;
+   2. ce qu'elle a de fixe : la ligne des jours, les espaces entre les
+      lignes, la coupure de minuit (sa hauteur totale moins ses cases) ;
+   3. le reste de la fenêtre, partagé entre les 18 lignes.
+   Entre 17 px (encore lisible) et 34 px (au-delà, les cases
+   deviendraient des pavés). Sur un écran vraiment bas, la page défile
+   un peu, voilà tout. Sur téléphone, la hauteur reste celle du CSS. */
+const ordinateur = matchMedia('(min-width: 64rem)');
+const LIGNES = HEURE_FIN - HEURE_DEBUT; // 18 heures
+
+/* La distance entre le haut de la page et l'élément. offsetTop plutôt
+   que getBoundingClientRect : il ignore les animations d'arrivée
+   (translate), qui fausseraient la mesure pendant une fraction de
+   seconde. */
+function hautDansLaPage(element) {
+  let haut = 0;
+  for (let e = element; e; e = e.offsetParent) haut += e.offsetTop;
+  return haut;
+}
+
+function ajusterHauteur() {
+  const premiere = grille.querySelector('.case');
+  if (!ordinateur.matches) {
+    grille.style.removeProperty('--hauteur-case');
+    return;
+  }
+  // Onglet Agenda caché (offsetParent vaut null) : rien à mesurer.
+  if (!premiere || !grille.offsetParent) return;
+  const actuelle = premiere.offsetHeight;
+  const fixe = grille.offsetHeight - LIGNES * actuelle;
+  const place = window.innerHeight - hautDansLaPage(grille) - fixe - 16; // 16 px d'air en bas
+  const hauteur = Math.max(17, Math.min(34, Math.floor(place / LIGNES)));
+  if (hauteur !== actuelle) grille.style.setProperty('--hauteur-case', `${hauteur}px`);
+}
+
+/* On recalcule quand la fenêtre change de taille, quand la police des
+   titres finit d'arriver (elle change la hauteur de l'en-tête), et quand
+   l'onglet Agenda réapparaît (ResizeObserver : prévenu dès que la taille
+   de la section change, y compris de « caché » à « visible »). */
+window.addEventListener('resize', ajusterHauteur);
+ordinateur.addEventListener('change', ajusterHauteur);
+document.fonts.ready.then(ajusterHauteur);
+new ResizeObserver(ajusterHauteur).observe(document.getElementById('vue-agenda'));
 
 function dessinerSemaine() {
   const ecart = Math.round((etat.semaine - lundiDe(new Date())) / (7 * 86400000));
@@ -244,11 +317,9 @@ function dessinerGrille() {
       } else {
         const ids = parCase.get(cle) || [];
         const lesSoirees = soirees.get(cle) || [];
+        // La vivacité et la lueur de la case : voir intensite() plus haut.
+        const { niveau, eclat } = intensite(ids.length, total);
         if (ids.length > 0) {
-          /* --niveau va de 0 à 1 et règle la vivacité de la case dans
-             le CSS. On part de 0,2 : une seule personne sur dix doit
-             déjà se voir. */
-          const niveau = 0.2 + 0.8 * (ids.length / total);
           bouton.style.setProperty('--niveau', niveau);
           bouton.textContent = ids.length;
           /* Sur une case vive, le chiffre passe en sombre. Le seuil de
@@ -256,15 +327,20 @@ function dessinerGrille() {
              srgb-linear ») : au-delà, le chiffre sombre se lit mieux
              que le blanc (contraste mesuré à 4,4 contre 4,1). */
           bouton.classList.toggle('forte', niveau > 0.5);
+          // Au survol de la souris, une bulle dit qui : « Toi, Léa, Sam ».
+          bouton.title = ids.map((id) => (id === etat.moi?.id ? 'Toi' : trouverMembre(id)?.pseudo)).join(', ');
         }
         /* LA BRILLANCE : --eclat (de 0 à 1) règle la lueur autour de la
-           case dans le CSS, d'autant plus forte que la soirée a de
-           chances de se monter. « brille » ajoute un reflet qui la
-           balaie, à partir de « très probable ». --decalage fait partir
-           le reflet un peu plus tard à chaque jour : une vague de
-           gauche à droite plutôt que des éclairs simultanés. */
+           case dans le CSS. « brille » ajoute un reflet qui la balaie, à
+           partir de « très probable » (la part de la team, chance.part).
+           --decalage fait partir le reflet un peu plus tard à chaque
+           jour : une vague de gauche à droite plutôt que des éclairs
+           simultanés. */
         const chance = chanceDeSoiree(ids.length, total);
-        bouton.style.setProperty('--eclat', chance.part);
+        bouton.style.setProperty('--eclat', eclat);
+        // « lumineuse » : la case passe au-dessus de ses voisines, pour que
+        // sa lueur se voie tout autour (voir style.css).
+        bouton.classList.toggle('lumineuse', eclat > 0);
         bouton.style.setProperty('--decalage', `${jour * 0.18}s`);
         bouton.classList.toggle('brille', chance.part >= TRES_PROBABLE);
         bouton.classList.toggle('moi', miennes.has(cle));
@@ -334,8 +410,12 @@ function dessinerDetail() {
   const ids = compterDispos().get(caseChoisie) || [];
   const soirees = soireesParCase().get(caseChoisie) || [];
 
-  // « Vendredi 6 novembre, 21h → 22h », « Nuit de vendredi… ».
-  detail.replaceChildren(creer('h3', 'detail-titre', majuscule(`${nomDeCase(jour, heure)} → ${libelleHeure(heure + 1)}`)));
+  /* « Ven. 6 nov. · 21h → 22h », « Nuit de ven. 6 nov. · 1h → 2h ».
+     La date courte tient sur une ligne, même dans la colonne étroite de
+     l'ordinateur. */
+  const date = formater(ajouterJours(etat.semaine, jour), { weekday: 'short', day: 'numeric', month: 'short' });
+  detail.replaceChildren(creer('h3', 'detail-titre',
+    majuscule(`${heure >= 24 ? 'nuit de ' : ''}${date} · ${libelleHeure(heure)} → ${libelleHeure(heure + 1)}`)));
 
   // La chance de monter une soirée, en clair : « 80 % de la team · soirée très probable ».
   const chance = chanceDeSoiree(ids.length, etat.membres.length);
@@ -440,6 +520,15 @@ grille.addEventListener('click', (evenement) => {
   caseChoisie = caseChoisie === bouton.dataset.cle ? null : bouton.dataset.cle;
   for (const autre of grille.querySelectorAll('.choisie')) autre.classList.remove('choisie');
   if (caseChoisie) bouton.classList.add('choisie');
+  dessinerDetail();
+});
+
+// Échap ferme aussi le détail (sauf si une fenêtre est ouverte : c'est
+// alors elle qu'Échap ferme).
+document.addEventListener('keydown', (evenement) => {
+  if (evenement.key !== 'Escape' || !caseChoisie || document.querySelector('dialog[open]')) return;
+  caseChoisie = null;
+  for (const autre of grille.querySelectorAll('.choisie')) autre.classList.remove('choisie');
   dessinerDetail();
 });
 
