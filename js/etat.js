@@ -83,6 +83,7 @@ export async function charger() {
   if (miennes) etat.dispos.set(etat.moi.id, miennes);
 
   etat.soirees = donnees.soirees;
+  etat.stats = donnees.stats;             // la team en chiffres (stats.js)
   retenirGroupe(etat.code, { nom: donnees.groupe.nom });
   redessiner();
 }

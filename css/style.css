@@ -1415,6 +1415,70 @@ input[type="range"] {
 .membre-retirer { justify-self: start; font-size: 0.85rem; }
 
 /* 12. LA TEAM */
+
+/* LA TEAM EN CHIFFRES (js/stats.js) : des tuiles côte à côte, qui
+   passent à la ligne quand la place manque (deux par ligne sur un
+   téléphone). Discrètes : même fond que les cartes, texte court. */
+.stats-team {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+.stat {
+  flex: 1 1 9.5rem;
+  display: grid;
+  align-content: start;
+  gap: 0.2rem;
+  min-width: 0;
+  padding: 0.7rem 0.95rem;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--surface);
+}
+.stat-etiquette {
+  color: var(--texte-doux);
+  font: 600 0.7rem var(--police-titre);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.stat-valeur {
+  overflow: hidden;
+  font: 600 1.25rem/1.3 var(--police-titre);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stat-detail { color: var(--texte-doux); font-size: 0.82rem; }
+/* Sur ordinateur, une tuile ne s'étire pas sur toute la largeur ; sur
+   téléphone, la dernière d'une ligne prend toute la place restante,
+   plutôt que de laisser un trou à sa droite. */
+@media (min-width: 40rem) {
+  .stat { max-width: 17rem; }
+}
+/* Le nombre de soirées en rose (la couleur des soirées), le champion
+   dans l'accent du thème. */
+.stat-soirees { color: var(--soiree); }
+.stat-chaud { color: var(--accent); }
+/* Le jeu : sa petite jaquette puis son nom. En bouton (fiche au
+   survol), il est remis à plat comme les étiquettes de jeu. */
+.stat-jeu {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: left;
+}
+.stat-jeu .jeu-nom { overflow: hidden; text-overflow: ellipsis; }
+/* Une jaquette plus petite qu'ailleurs : la tuile du jeu garde la
+   hauteur des autres. */
+.stat-jeu .couverture.mini { width: 1.2rem; }
+button.stat-jeu { cursor: help; }
+
 .liste-membres {
   display: grid;
   gap: 1rem;

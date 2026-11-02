@@ -84,6 +84,14 @@ nom de domaine à part reste à choisir.
   pas les adresses). Le rappel a besoin d'un réveil : voir « Mise en
   ligne », étape 7. Routes : PUT/DELETE `[code]/discord` (brancher,
   débrancher), POST `/api/rappels` (le réveil).
+- **La team en chiffres** (2 nov. 2026, `js/stats.js`) : au-dessus
+  des cartes de La team, trois tuiles au plus : « Soirées proposées »
+  (toutes, « dont N à venir »), « Le plus chaud » (le plus de « Chaud »,
+  à partir de 2 ; deux ex æquo au plus, sinon cachée) et « Le jeu de la
+  team » (dans le plus de profils, à partir de 2, fiche au survol).
+  Chaque tuile se cache si elle ne veut rien dire, la rangée aussi. Le
+  serveur envoie `stats: { soirees, chauds }` avec le groupe ; le jeu
+  se calcule dans la page.
 - **La fiche d'un jeu** au survol (au toucher sur téléphone, au focus
   au clavier) : jaquette, année, tags traduits en français (modes, mots-
   clés comme Roguelike, thèmes comme Horreur, genres) et résumé IGDB, en
@@ -235,6 +243,7 @@ nom de domaine à part reste à choisir.
     js/agenda.js               la grille, le coloriage, les meilleurs créneaux
     js/soirees.js              la liste des soirées et le formulaire
     js/team.js                 les cartes des membres
+    js/stats.js                la team en chiffres (au-dessus des cartes)
     js/profil.js               rejoindre / modifier son profil
     js/jeux.js                 le sélecteur de jeux et les couvertures
     js/theme.js                applique la couleur choisie (dans <head>)
