@@ -655,28 +655,39 @@ input[type="range"] {
 .mes-groupes ul {
   display: grid;
   gap: 0.6rem;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  /* 18rem : assez pour « Les potes du jeudi » sur une ligne, à côté
+     du code et de la flèche. */
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+/* Un groupe : son nom, son code poussé à droite (margin-left: auto),
+   puis une flèche dans l'accent du thème, qui avance un peu au survol.
+   Des cartes franches : en tête de l'accueil, c'est l'action principale. */
 .mes-groupes a {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 1rem;
-  min-height: 52px;
-  padding: 0.6rem 1rem;
+  gap: 0.9rem;
+  min-height: 64px;
+  padding: 0.8rem 1.1rem;
   border: 1px solid var(--bordure);
-  border-radius: var(--rayon-petit);
+  border-radius: var(--rayon);
   background: var(--surface);
   color: var(--texte);
-  font-weight: 600;
+  font: 600 1.15rem var(--police-titre);
   text-decoration: none;
+  transition: border-color 0.2s, transform 0.2s var(--arrivee);
 }
-.mes-groupes a:hover { border-color: var(--accent); }
-.mes-groupes .code { color: var(--texte-doux); font: 600 0.8rem var(--police-titre); letter-spacing: 0.08em; }
+.mes-groupes a::after {
+  content: '→';
+  color: var(--accent);
+  transition: transform 0.2s var(--arrivee);
+}
+.mes-groupes a:hover { border-color: var(--accent); transform: translateY(-2px); }
+.mes-groupes a:hover::after { transform: translateX(3px); }
+.mes-groupes .code { margin-left: auto; color: var(--texte-doux); font: 600 0.8rem var(--police-titre); letter-spacing: 0.08em; }
 
 /* Le pied de page de l'accueil : la petite phrase, puis (connecté)
    « Supprimer mon compte » sur la même ligne, ou dessous si elle ne
@@ -2162,7 +2173,7 @@ button.tag-jeu:hover { border-color: var(--accent); }
 
 .cartes-accueil > * { animation: monter 0.6s var(--arrivee) 0.25s backwards; }
 .cartes-accueil > :nth-child(2) { animation-delay: 0.33s; }
-.mes-groupes { animation: monter 0.6s var(--arrivee) 0.4s backwards; }
+.mes-groupes { animation: monter 0.6s var(--arrivee) backwards; } /* en tête : tout de suite */
 
 /* Les messages centrés (page 404, groupe introuvable). */
 .message-centre > * { animation: monter 0.5s var(--arrivee) backwards; }
@@ -2265,7 +2276,8 @@ button.tag-jeu:hover { border-color: var(--accent); }
 @media (prefers-reduced-motion: reduce) {
   .logo-icone circle, .logo-trait { animation: none; }
   .case.brille { animation: none; background-image: none; }
-  .annonce, .case, .bouton { transition: none; }
+  .annonce, .case, .bouton, .mes-groupes a, .mes-groupes a::after { transition: none; }
+  .mes-groupes a:hover, .mes-groupes a:hover::after { transform: none; }
   .apercu { transform: none; }
 
   /* Et toutes les animations de la section 14 bis d'un coup : durée

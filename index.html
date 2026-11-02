@@ -53,6 +53,16 @@
   </header>
 
   <main class="accueil">
+    <!-- TES GROUPES, en tête de page (2 nov. 2026, demandé) : quand on
+         a déjà un groupe, c'est lui qu'on vient ouvrir, pas en créer un
+         autre. Rempli par js/accueil.js : les groupes de ton compte, puis
+         ceux déjà ouverts sur cet appareil. Reste caché s'il n'y en a
+         aucun : un nouveau venu arrive alors directement sur le titre. -->
+    <section id="mes-groupes" class="mes-groupes" hidden>
+      <h2>Tes groupes</h2>
+      <ul id="liste-groupes"></ul>
+    </section>
+
     <section class="hero">
       <div class="hero-texte">
         <h1>Qui est chaud <span class="accent insecable">ce soir</span>&nbsp;?</h1>
@@ -97,12 +107,6 @@
       </form>
     </section>
 
-    <!-- Rempli par js/accueil.js : les groupes de ton compte, puis ceux
-         déjà ouverts sur cet appareil. Reste caché s'il n'y en a aucun. -->
-    <section id="mes-groupes" class="mes-groupes" hidden>
-      <h2>Tes groupes</h2>
-      <ul id="liste-groupes"></ul>
-    </section>
   </main>
 
   <!-- Un seul cookie, celui qui te garde connecté : ni pub ni pistage. -->
