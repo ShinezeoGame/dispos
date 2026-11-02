@@ -62,12 +62,49 @@ if (palette) {
 }
 
 // Applique le thème tout de suite (tout le site change de couleur
-// sous les yeux) et le retient pour les prochaines visites.
+// sous les yeux, l'icône de l'onglet aussi) et le retient pour les
+// prochaines visites.
 function choisir(id) {
   document.documentElement.dataset.theme = id;
+  colorerIcone();
   try {
     localStorage.setItem(CLE, id);
   } catch {
     // Stockage bloqué : le choix vaut pour cette page seulement.
   }
 }
+
+
+/* L'ICÔNE DE L'ONGLET AUX COULEURS DU THÈME (2 nov. 2026, demandé)
+
+   assets/favicon.svg est dessinée en orange Braise (#ff7a3d). Pour un
+   autre thème :
+   1. on relit ce fichier (le navigateur l'a déjà en mémoire) ;
+   2. on remplace l'orange par l'accent du thème (--accent, lu dans le
+      CSS : getComputedStyle donne la valeur en vigueur) ;
+   3. on donne le résultat à l'onglet en adresse « data: », qui contient
+      toute l'image dans son texte. encodeURIComponent protège les
+      caractères qui casseraient une adresse (#, <, espaces…).
+   Pas un fichier par thème : le dessin n'existe qu'une fois. En Braise,
+   on remet simplement le fichier d'origine. */
+const lienIcone = document.querySelector('link[rel="icon"]');
+const ORANGE_DU_DESSIN = '#ff7a3d';
+let dessinIcone = null; // le texte de favicon.svg, lu une seule fois
+
+async function colorerIcone() {
+  if (!lienIcone) return;
+  const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim().toLowerCase();
+  if (!accent || accent === ORANGE_DU_DESSIN) {
+    lienIcone.href = '/assets/favicon.svg';
+    return;
+  }
+  try {
+    if (!dessinIcone) dessinIcone = await (await fetch('/assets/favicon.svg')).text();
+    lienIcone.href = 'data:image/svg+xml,' + encodeURIComponent(dessinIcone.replaceAll(ORANGE_DU_DESSIN, accent));
+  } catch {
+    // Hors ligne : l'icône orange reste, rien de grave.
+  }
+}
+
+// Dès l'ouverture de la page, pour le thème retenu par theme.js.
+colorerIcone();

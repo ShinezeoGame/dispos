@@ -261,6 +261,13 @@ nom de domaine à part reste à choisir.
   ferait perdre à tout le monde son jeton, donc l'accès à son profil.
 - **Le logo est écrit trois fois** (index.html, groupe.html, 404.html) :
   le modifier aux trois endroits, et dans `assets/favicon.svg`.
+- **L'icône de l'onglet suit le thème** (2 nov. 2026, demandé) :
+  `colorerIcone()` (js/apparence.js) relit `assets/favicon.svg`, y
+  remplace l'orange `#ff7a3d` par l'accent du thème et la donne à
+  l'onglet en adresse `data:`. Le dessin de favicon.svg doit donc rester
+  en `#ff7a3d` exactement (`ORANGE_DU_DESSIN`), sinon le recoloriage ne
+  trouve plus rien. Les trois pages chargent apparence.js (404.html
+  aussi, rien que pour ça).
 - **« Tes groupes » (accueil) a deux sources** : ceux du compte
   (`GET /api/compte`, depuis la base) puis ceux retenus par le navigateur
   (localStorage), sans doublon. Un groupe supprimé dans D1 disparaît
