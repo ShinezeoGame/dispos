@@ -1170,6 +1170,13 @@ input[type="range"] {
 
 .case.choisie { box-shadow: inset 0 0 0 2px var(--texte), var(--lueur); }
 
+/* MAINTENANT (2 nov. 2026) : la case de l'heure en cours, aujourd'hui,
+   cerclée d'un liseré clair, et son heure en couleur dans la marge. Le
+   croisement avec la colonne du jour (déjà marquée) dit « tu es ici ».
+   outline et non box-shadow : il ne touche pas à la lueur. */
+.case.maintenant { outline: 2px solid color-mix(in srgb, var(--texte) 60%, transparent); outline-offset: 1px; }
+.grille-heure.maintenant { color: var(--accent); }
+
 /* Minuit ouvre la nuit : un petit espace la sépare de la soirée. */
 .case.minuit, .grille-heure.minuit { margin-top: 0.5rem; }
 

@@ -42,6 +42,11 @@ nom de domaine à part reste à choisir.
   les meilleurs créneaux et le détail d'une case passent dans une
   colonne à droite de la grille, « Enregistré ✓ » dans la barre de la
   semaine. Échap ferme le détail. Le téléphone garde une seule colonne.
+- **Le repère « maintenant » et le clavier** (2 nov. 2026) : la case de
+  l'heure en cours est cerclée d'un liseré clair et son heure s'allume
+  dans la marge ; tout se met à jour chaque heure. Une seule case de la
+  grille est dans l'ordre du Tab, les flèches vont de case en case (les
+  cases grisées sont sautées), Entrée ou Espace font comme un clic.
 - **La fiche d'un jeu** au survol (au toucher sur téléphone, au focus
   au clavier) : jaquette, année, tags traduits en français (modes, mots-
   clés comme Roguelike, thèmes comme Horreur, genres) et résumé IGDB, en

@@ -34,6 +34,8 @@ const sectionMeilleurs = document.getElementById('meilleurs');
 
 let mode = 'groupe';     // 'groupe' ou 'moi'
 let caseChoisie = null;  // la case touchée en mode groupe, ex. "4-21"
+let caseClavier = null;  // la dernière case visitée au clavier
+let heureDessinee = null; // l'heure (0 à 23) du dernier dessin, pour « maintenant »
 
 // Un écran tactile n'a pas de survol et se fait défiler au doigt :
 // l'aide n'est pas formulée pareil.
@@ -264,7 +266,20 @@ function dessinerGrille() {
   const soirees = soireesParCase();
   const total = etat.membres.length;
   const miennes = etat.moi ? mesCases() : new Set();
-  const aujourdhui = versTexte(new Date());
+  const maintenant = new Date();
+  const aujourdhui = versTexte(maintenant);
+  /* MAINTENANT : la case de l'heure en cours ("4-21"), ou null si elle
+     n'est pas dans la semaine affichée (ou entre 3 h et 9 h, où l'agenda
+     n'a pas de case). caseDe fait la conversion, nuit comprise. */
+  const cleMaintenant = caseDe(aujourdhui, `${String(maintenant.getHours()).padStart(2, '0')}:00`);
+  heureDessinee = maintenant.getHours();
+
+  /* LE CLAVIER : une seule case de la grille est atteignable avec Tab
+     (tabIndex 0), les flèches promènent ensuite d'une case à l'autre
+     (voir « Les flèches du clavier » plus bas). Au lieu de 126 arrêts
+     de Tab, un seul. Laquelle : la dernière visitée au clavier, sinon
+     celle de maintenant, sinon la toute première. */
+  const cleClavier = caseClavier || cleMaintenant || `0-${HEURE_DEBUT}`;
 
   grille.classList.toggle('edition', mode === 'moi');
 
@@ -291,6 +306,8 @@ function dessinerGrille() {
     // Minuit ouvre la partie « nuit » de l'agenda : un petit espace la
     // sépare du reste de la soirée.
     etiquette.classList.toggle('minuit', heure === 24);
+    // L'heure en cours s'allume dans la marge (voir « Maintenant », style.css).
+    etiquette.classList.toggle('maintenant', Boolean(cleMaintenant) && cleMaintenant.endsWith(`-${heure}`));
     brouillon.append(etiquette);
 
     for (let jour = 0; jour < 7; jour++) {
@@ -305,6 +322,8 @@ function dessinerGrille() {
       bouton.classList.toggle('minuit', heure === 24);
       const passee = estPassee(jour, heure);
       bouton.classList.toggle('passee', passee);
+      bouton.classList.toggle('maintenant', cle === cleMaintenant);
+      bouton.tabIndex = cle === cleClavier ? 0 : -1;
 
       if (mode === 'moi') {
         const cochee = miennes.has(cle);
@@ -350,11 +369,23 @@ function dessinerGrille() {
           + (chance.part ? `, ${chance.libelle}` : '')
           + (lesSoirees.length ? `, soirée ${lesSoirees.map((s) => s.titre).join(', ')}` : ''));
       }
+      if (cle === cleMaintenant) bouton.setAttribute('aria-label', `${bouton.getAttribute('aria-label')}, maintenant`);
       brouillon.append(bouton);
     }
   }
 
   grille.replaceChildren(brouillon);
+
+  /* La case atteignable au clavier ne peut pas être une case grisée (un
+     créneau passé, en « Mes dispos ») : un bouton désactivé ne reçoit
+     pas le focus, et la grille deviendrait injoignable. On prend alors
+     la première case qui ne l'est pas. */
+  const atteignable = grille.querySelector('.case[tabindex="0"]');
+  if (atteignable && atteignable.disabled) {
+    atteignable.tabIndex = -1;
+    const autre = grille.querySelector('.case:not(:disabled)');
+    if (autre) autre.tabIndex = 0;
+  }
 }
 
 /* La section entière (titre compris) n'apparaît que s'il y a au moins
@@ -522,6 +553,46 @@ grille.addEventListener('click', (evenement) => {
   if (caseChoisie) bouton.classList.add('choisie');
   dessinerDetail();
 });
+
+/* LES FLÈCHES DU CLAVIER (2 nov. 2026)
+
+   Dans la grille, les flèches vont à la case voisine : gauche/droite
+   change de jour, haut/bas d'heure. Les cases grisées (passées, en
+   « Mes dispos ») sont sautées. Entrée ou Espace font ensuite comme un
+   clic : détail de la case, ou cocher/décocher. */
+grille.addEventListener('keydown', (evenement) => {
+  const sens = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[evenement.key];
+  const depart = evenement.target.closest('.case');
+  if (!sens || !depart) return;
+  evenement.preventDefault(); // sinon la flèche ferait aussi défiler la page
+  let [jour, heure] = depart.dataset.cle.split('-').map(Number);
+  for (;;) {
+    jour += sens[0];
+    heure += sens[1];
+    const cible = grille.querySelector(`.case[data-cle="${jour}-${heure}"]`);
+    if (!cible) return; // bord de la grille : on reste où on est
+    if (cible.disabled) continue;
+    depart.tabIndex = -1;
+    cible.tabIndex = 0;
+    cible.focus();
+    return;
+  }
+});
+
+// On retient la case visitée : après un redessin, c'est elle qui garde
+// la place dans l'ordre du Tab.
+grille.addEventListener('focusin', (evenement) => {
+  const bouton = evenement.target.closest('.case');
+  if (bouton) caseClavier = bouton.dataset.cle;
+});
+
+/* « Maintenant » avance avec l'heure : chaque minute, si l'heure a
+   changé depuis le dernier dessin, on redessine (les cases passées
+   s'estompent, le repère descend d'une ligne). Pas pendant qu'on coche
+   en glissant, pour ne pas couper le geste. */
+setInterval(() => {
+  if (etat.groupe && peinture === null && new Date().getHours() !== heureDessinee) dessiner();
+}, 60000);
 
 // Échap ferme aussi le détail (sauf si une fenêtre est ouverte : c'est
 // alors elle qu'Échap ferme).
