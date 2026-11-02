@@ -544,6 +544,37 @@ message reçu et les montre à l'adresse `/__webhooks`.
   commit et push. **`main` est la branche de référence** (choisi le
   31 octobre 2026) : c'est elle que Cloudflare mettra en ligne.
 
+## Le modèle payant : AllReady+ (décidé le 2 nov. 2026)
+
+L'usage entre amis reste **gratuit et généreux** : une bande de potes
+paie rarement pour s'organiser. Le payant vise les groupes plus gros et
+plus organisés : guildes de MMO, équipes e-sport, communautés Discord,
+streamers qui jouent avec leurs viewers.
+
+- **Un abonnement par groupe**, « AllReady+ », payé par l'organisateur
+  pour toute la bande : environ 3 € par mois ou 25 € par an. Un groupe
+  se convertit bien mieux qu'un abonnement par personne.
+- **Pas de système de paiement au départ** : un abonnement Ko-fi, puis
+  l'activation à la main dans la base (`groupes.premium`, comme
+  `comptes.soutien`). Stripe seulement si ça prend.
+- **Avant de vendre** : un statut (micro-entreprise), des mentions
+  légales et des CGV. Ko-fi encaisse, mais les revenus se déclarent.
+
+**Payant (AllReady+)** :
+1. Inscriptions avec rôles (tank / heal / DPS…), liste d'attente et
+   composition affichée.
+2. Un vrai bot Discord : `/dispo`, `/soirees`, réponses par boutons,
+   mention d'un rôle dans les annonces.
+3. Synchronisation d'agenda : les créneaux occupés se grisent tout seuls.
+4. Grands groupes (gratuit jusqu'à 15 membres) et plusieurs organisateurs.
+5. Présence et assiduité : qui vient vraiment, taux de présence.
+6. Cosmétique : thèmes exclusifs, bannière de groupe.
+
+**Gratuit, décidé le même jour** : « Chaud ce soir » en un clic, vote
+« À quoi on joue ? », jeux possibles ce soir (jeux en commun et nombre
+de joueurs), site installable avec notifications, soirées récurrentes,
+fuseau horaire par groupe.
+
 ## Idées pour la suite (rien de décidé)
 
 - Rappels par e-mail : il faudrait demander l'adresse (permission
