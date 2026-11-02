@@ -229,6 +229,25 @@ nom de domaine à part reste à choisir.
   orange tant qu'on est seul dans le groupe (groupe.js). Pas d'autre
   bouton « copier le lien » ailleurs dans la page.
 - Pas de README avant que le site soit terminé (demandé le 31 oct. 2026).
+- **La monétisation, préparée mais éteinte** (2 nov. 2026). Rien ne se
+  voit tant que rien n'est réglé :
+  - **Soutenir** : `LIEN_SOUTIEN` dans `js/commun.js` (page Ko-fi ou
+    Tipeee). Rempli, « ♥ Soutenir AllReady » apparaît en bas de
+    l'accueil.
+  - **Les soutiens** : `comptes.soutien` = 1 donne un cœur rose après
+    le pseudo et un anneau rose autour de l'avatar, dans tous ses
+    groupes. Posé à la main : Cloudflare → D1 → `dispos` → Console,
+    `UPDATE comptes SET soutien = 1 WHERE discord = 'son_pseudo';`.
+  - **Voir le prix** : `LIEN_PRIX` dans `js/commun.js`, l'adresse de
+    recherche du programme d'affiliation avec `{jeu}` à la place du nom
+    (ex. Instant Gaming, `…/rechercher/?q={jeu}&igr=CODE`). Rempli, une
+    soirée dont le jeu n'est pas dans ton profil montre « Voir le prix ·
+    lien affilié » (mention obligatoire, `rel="sponsored"`). Pas dans la
+    fiche du jeu : c'est une bulle de survol, on ne peut pas y cliquer.
+  - **Cloudflare Web Analytics** (visites comptées sans cookie, donc
+    sans bandeau) : la CSP l'autorise déjà. L'activer dans le projet
+    Pages (onglet Metrics → Web Analytics → Enable) ; Cloudflare ajoute
+    son script tout seul au déploiement suivant.
 
 ## Les fichiers
 
@@ -319,6 +338,12 @@ nom de domaine à part reste à choisir.
    jour du vrai nom de domaine.
 
 ## Ce qui casse si on n'y fait pas attention
+
+- **La CSP n'a que deux exceptions**, pour Web Analytics :
+  `static.cloudflareinsights.com` (script) et `cloudflareinsights.com`
+  (envoi des mesures). N'en ajouter aucune autre sans raison : chaque
+  domaine autorisé est un domaine qui peut faire tourner du code sur le
+  site.
 
 - **L'adresse du webhook Discord est un secret** (qui l'a écrit dans
   le salon) : `groupes.webhook` n'est jamais renvoyé, le chargement du

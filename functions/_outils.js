@@ -84,6 +84,7 @@ export const SCHEMA = [
     discord_id TEXT NOT NULL UNIQUE,
     nom TEXT NOT NULL,
     discord TEXT NOT NULL DEFAULT '',
+    soutien INTEGER NOT NULL DEFAULT 0,
     cree_le TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
 
@@ -233,6 +234,10 @@ export const MIGRATIONS = [
      envoyé, pour ne jamais l'envoyer deux fois. */
   "ALTER TABLE groupes ADD COLUMN webhook TEXT NOT NULL DEFAULT ''",
   'ALTER TABLE soirees ADD COLUMN rappel INTEGER NOT NULL DEFAULT 0',
+  /* 2 nov. 2026 : comptes.soutien, 1 pour quelqu'un qui soutient
+     AllReady (Ko-fi, Tipeee). Posé à la main dans la console D1 (voir
+     CLAUDE.md) ; donne un petit cœur sur ses cartes de membre. */
+  'ALTER TABLE comptes ADD COLUMN soutien INTEGER NOT NULL DEFAULT 0',
 ];
 
 

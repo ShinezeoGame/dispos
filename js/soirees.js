@@ -4,7 +4,7 @@
    boutons de réponse, et le formulaire pour en proposer une. */
 
 import { etat, quandCaChange, appeler, charger, trouverMembre, caseDe } from './etat.js';
-import { versTexte, depuisTexte, jourRelatif, avatar, annoncer, creer } from './commun.js';
+import { versTexte, depuisTexte, jourRelatif, avatar, annoncer, creer, LIEN_PRIX } from './commun.js';
 import { ouvrirProfil } from './profil.js';
 import { selecteurJeux, couverture, memeJeu } from './jeux.js';
 import { brancherFiche } from './fiche-jeu.js';
@@ -101,6 +101,24 @@ function fabriquerCarte(soiree) {
   if (auteur) infos.push(`proposée par ${auteur.id === moi?.id ? 'toi' : auteur.pseudo}`);
   remplir('.soiree-infos', infos.join(' · '));
   carte.querySelector('.soiree-infos').hidden = infos.length === 0;
+
+  /* « Voir le prix » : seulement si LIEN_PRIX est réglé (commun.js), et
+     pour un membre dont le profil n'a pas ce jeu (même id IGDB, ou même
+     nom). « lien affilié » est écrit en clair : la loi demande de dire
+     quand un lien rapporte quelque chose. rel="sponsored" le dit aussi
+     aux moteurs de recherche ; noopener empêche le site ouvert d'agir
+     sur cet onglet. */
+  const aLeJeu = moi?.jeux.some((sien) => (jeu.id && sien.id === jeu.id)
+    || sien.nom.toLowerCase() === soiree.jeu.toLowerCase());
+  if (LIEN_PRIX && moi && !aLeJeu) {
+    const ligne = creer('p', 'soiree-prix');
+    const lien = creer('a', '', 'Voir le prix');
+    lien.href = LIEN_PRIX.replace('{jeu}', encodeURIComponent(soiree.jeu));
+    lien.target = '_blank';
+    lien.rel = 'sponsored noopener';
+    ligne.append(lien, ' · lien affilié');
+    carte.querySelector('.soiree-infos').after(ligne);
+  }
 
   const note = carte.querySelector('.soiree-note');
   note.textContent = soiree.note;

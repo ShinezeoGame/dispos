@@ -1,12 +1,19 @@
 /* LA PAGE D'ACCUEIL : créer un groupe, en rejoindre un, retrouver
    les siens, se connecter. */
 
-import { api, lireGroupes, retenirGroupe, oublierGroupe, creer, annoncer } from './commun.js';
+import { api, lireGroupes, retenirGroupe, oublierGroupe, creer, annoncer, LIEN_SOUTIEN } from './commun.js';
 import { messageConnexion, deconnecter } from './compte.js';
 import './apparence.js'; // le choix de la couleur du site
 
 // Revenu de Discord sur un échec : on le dit.
 if (messageConnexion) annoncer(messageConnexion, 'erreur');
+
+// « Soutenir AllReady », en bas, dès qu'une adresse est réglée.
+if (LIEN_SOUTIEN) {
+  const lienSoutien = document.getElementById('lien-soutien');
+  lienSoutien.href = LIEN_SOUTIEN;
+  lienSoutien.hidden = false;
+}
 
 const formCreer = document.getElementById('form-creer');
 const formRejoindre = document.getElementById('form-rejoindre');

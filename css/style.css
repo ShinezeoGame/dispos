@@ -693,6 +693,12 @@ input[type="range"] {
   text-align: center;
 }
 .pied .lien-discret { font-size: inherit; }
+/* « Soutenir AllReady », précédé d'un petit cœur rose. Un lien ne
+   centre pas son texte dans sa hauteur de 44 px comme le fait un
+   bouton : inline-flex s'en charge, sinon il flotte plus haut que ses
+   voisins. */
+.lien-soutien { display: inline-flex; align-items: center; }
+.lien-soutien::before { content: '♥\00a0'; color: var(--soiree); }
 
 
 /* 9. LA PAGE GROUPE : L'EN-TÊTE ET LES ONGLETS
@@ -1333,6 +1339,10 @@ input[type="range"] {
 .soiree-tete > div { min-width: 0; }
 .soiree-titre { font-size: 1.3rem; overflow-wrap: anywhere; }
 .soiree-infos { color: var(--texte-doux); font-size: 0.9rem; }
+/* « Voir le prix · lien affilié » (LIEN_PRIX, js/commun.js) : petit et
+   discret, sous les infos ; seul le lien prend la couleur du thème. */
+.soiree-prix { color: var(--texte-doux); font-size: 0.8rem; }
+.soiree-prix a { color: var(--accent); text-underline-offset: 3px; }
 /* white-space: pre-line : les retours à la ligne du petit mot sont gardés. */
 .soiree-note { white-space: pre-line; overflow-wrap: anywhere; }
 
@@ -1508,6 +1518,16 @@ button.stat-jeu { cursor: help; }
 .membre-tete .avatar { width: 2.75rem; height: 2.75rem; font-size: 1.2rem; }
 .membre-tete > div { flex: 1; min-width: 0; }
 .membre-pseudo { font-size: 1.2rem; overflow-wrap: anywhere; }
+/* LES SOUTIENS (comptes.soutien) : un cœur rose après le pseudo, et un
+   anneau rose qui luit autour de l'avatar. Le rose des soirées : la
+   couleur de ce qui se fête. */
+.membre-coeur { margin-left: 0.35rem; color: var(--soiree); font-size: 0.9em; }
+.membre.soutien .membre-tete .avatar {
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 0 4px var(--soiree),
+    0 0 16px 2px color-mix(in srgb, var(--soiree) 45%, transparent);
+}
 .membre-semaine { color: var(--texte-doux); font-size: 0.85rem; }
 
 .membre-toi {

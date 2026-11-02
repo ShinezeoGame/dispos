@@ -31,6 +31,16 @@ function fabriquerCarte(membre, estMoi) {
   carte.style.setProperty('--couleur', membre.couleur);
   carte.querySelector('.membre-tete').prepend(avatar(membre));
   carte.querySelector('.membre-pseudo').textContent = membre.pseudo;
+  /* Un soutien d'AllReady : un petit cœur après le pseudo et une lueur
+     autour de l'avatar (style.css, .membre.soutien). Le cœur est caché
+     aux lecteurs d'écran, qui lisent « soutient AllReady » à la place. */
+  if (membre.soutien) {
+    carte.classList.add('soutien');
+    const coeur = creer('span', 'membre-coeur', '♥');
+    coeur.title = 'Soutient AllReady';
+    coeur.setAttribute('aria-hidden', 'true');
+    carte.querySelector('.membre-pseudo').append(coeur, creer('span', 'visuellement-cache', ', soutient AllReady'));
+  }
   carte.querySelector('.membre-toi').hidden = !estMoi;
   const perso = membre.perso;
 

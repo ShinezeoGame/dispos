@@ -49,8 +49,11 @@ export async function onRequestGet(context) {
     // LEFT JOIN : chaque membre, avec la version de sa photo s'il en a
     // une (NULL sinon). Jamais l'image elle-même : la page la demande à
     // part, par son adresse (voir photos/[id].js).
-    db.prepare(`SELECT m.id, m.pseudo, m.couleur, m.jeux, m.bio, m.perso, m.semaine_type, p.version AS photo
+    // Et, par son compte, s'il soutient AllReady (0 sans compte).
+    db.prepare(`SELECT m.id, m.pseudo, m.couleur, m.jeux, m.bio, m.perso, m.semaine_type, p.version AS photo,
+                       COALESCE(c.soutien, 0) AS soutien
                 FROM membres m LEFT JOIN photos p ON p.membre_id = m.id
+                LEFT JOIN comptes c ON c.id = m.compte_id
                 WHERE m.groupe_id = ? ORDER BY m.id`)
       .bind(groupe.id),
 
@@ -131,6 +134,7 @@ export async function onRequestGet(context) {
       jeux: jeuxStockes(membre.jeux),
       perso: persoStockee(membre.perso),
       photo: membre.photo ? adressePhoto(groupe.code, membre.id, membre.photo) : null,
+      soutien: membre.soutien === 1,
     })),
     dispos: disposParMembre,
     // { soirees: 12, chauds: { 3: 8, 5: 2 } } : chauds = nombre de

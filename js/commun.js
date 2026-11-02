@@ -33,6 +33,21 @@ export const STYLES = [
   { id: 'chill', nom: 'Chill' }, { id: 'tryhard', nom: 'Tryhard' }, { id: 'les-deux', nom: 'Un peu des deux' },
 ];
 
+/* LA MONÉTISATION (2 nov. 2026). Vides tant que rien n'est choisi : ce
+   qu'elles affichent reste alors caché. Une adresse à coller entre les
+   apostrophes, puis commit et push.
+
+   LIEN_SOUTIEN : ta page Ko-fi ou Tipeee, par exemple
+     'https://ko-fi.com/allready'. Fait apparaître « Soutenir AllReady »
+     en bas de l'accueil.
+   LIEN_PRIX : l'adresse de recherche que donne ton programme
+     d'affiliation, avec {jeu} à la place du nom du jeu, par exemple
+     'https://www.instant-gaming.com/fr/rechercher/?q={jeu}&igr=TONCODE'.
+     Fait apparaître « Voir le prix » sur une soirée dont le jeu n'est
+     pas dans ton profil. */
+export const LIEN_SOUTIEN = '';
+export const LIEN_PRIX = '';
+
 
 /* PARLER AU SERVEUR
 

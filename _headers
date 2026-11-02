@@ -23,7 +23,13 @@
   #
   # frame-ancestors 'none' : personne ne peut afficher le site dans un
   # cadre chez lui (pour superposer de faux boutons, par exemple).
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  #
+  # Deux exceptions, pour Cloudflare Web Analytics (2 nov. 2026), le
+  # compteur de visites sans cookie que Cloudflare ajoute lui-même aux
+  # pages quand on l'active dans le tableau de bord : son script vient
+  # de static.cloudflareinsights.com (script-src) et il envoie ses
+  # mesures à cloudflareinsights.com (connect-src). Rien d'autre.
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://cloudflareinsights.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
 
   # Le navigateur croit le type annoncé d'un fichier, sans le deviner.
   X-Content-Type-Options: nosniff
