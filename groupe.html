@@ -125,6 +125,13 @@
       <div class="vue-entete">
         <button id="bouton-proposer" class="bouton" type="button">Proposer une soirée</button>
       </div>
+      <!-- À QUOI JOUER CE SOIR (js/ce-soir.js) : qui est dispo ce soir et
+           les jeux qu'ils ont en commun, en un clic vers une soirée.
+           Caché à moins de deux dispos ou sans jeu partagé. -->
+      <section id="ce-soir" class="ce-soir" aria-labelledby="titre-ce-soir" hidden>
+        <h2 id="titre-ce-soir" class="ce-soir-titre"></h2>
+        <div id="ce-soir-jeux" class="ce-soir-jeux"></div>
+      </section>
       <div id="liste-soirees" class="liste-soirees"></div>
       <p id="aucune-soiree" class="vide" hidden>Aucune soirée prévue.</p>
     </section>

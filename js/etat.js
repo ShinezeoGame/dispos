@@ -106,6 +106,30 @@ export function mesCases() {
   return etat.dispos.get(etat.moi.id);
 }
 
+/* « CE SOIR » (2 nov. 2026), pour le bouton « Chaud ce soir » de
+   l'agenda et « À quoi jouer ce soir » (js/ce-soir.js) : de 19 h (ou
+   de l'heure en cours) jusqu'à 3 h du matin. */
+const DEBUT_DU_SOIR = 19;
+
+/* Les cases de « ce soir » : leur semaine (un lundi) et leurs clés
+   ("2-19", "2-20"…). Avant 3 h du matin, on est encore dans la soirée
+   de la veille : à 1 h dans la nuit de mardi à mercredi, ce soir =
+   mardi, heures 25 et 26 (voir « Les heures dépassent 23 »). */
+export function ceSoir() {
+  const maintenant = new Date();
+  let jour = new Date(maintenant.getFullYear(), maintenant.getMonth(), maintenant.getDate());
+  let depart = Math.max(maintenant.getHours(), DEBUT_DU_SOIR);
+  if (maintenant.getHours() < HEURE_FIN - 24) {
+    jour = ajouterJours(jour, -1);
+    depart = maintenant.getHours() + 24;
+  }
+  const semaine = lundiDe(jour);
+  const numero = Math.round((jour - semaine) / 86400000);
+  const cles = [];
+  for (let heure = depart; heure < HEURE_FIN; heure++) cles.push(`${numero}-${heure}`);
+  return { semaine, cles };
+}
+
 // Le lien d'invitation, à coller sur Discord ou ailleurs.
 export function lienGroupe() {
   return `${location.origin}/groupe?g=${etat.code}`;

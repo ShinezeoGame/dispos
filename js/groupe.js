@@ -13,6 +13,7 @@ import './agenda.js';
 import './soirees.js';
 import './team.js';
 import './stats.js'; // la team en chiffres, au-dessus des cartes
+import './ce-soir.js'; // « À quoi jouer ce soir », onglet Soirées
 import './reglages.js'; // la section « Le groupe » de l'onglet La team
 import './apparence.js'; // le choix de la couleur du site
 import { jeuDeMots } from './jeu-de-mots.js';

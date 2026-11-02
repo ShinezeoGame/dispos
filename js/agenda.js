@@ -15,7 +15,7 @@
 
 import {
   etat, quandCaChange, charger, appeler, trouverMembre, mesCases,
-  debutCase, caseDe, redessiner,
+  debutCase, caseDe, redessiner, ceSoir,
 } from './etat.js';
 import {
   HEURE_DEBUT, HEURE_FIN, ajouterJours, lundiDe, versTexte, formater,
@@ -234,26 +234,8 @@ quandCaChange(dessiner);
 const zoneChaud = document.getElementById('chaud-soir');
 const boutonChaud = document.getElementById('chaud-ce-soir');
 const autresChauds = document.getElementById('chaud-autres');
-const DEBUT_DU_SOIR = 19;
 
-/* Les cases de « ce soir » : leur semaine (un lundi) et leurs clés
-   ("2-19", "2-20"…). Avant 3 h du matin, on est encore dans la soirée
-   de la veille : à 1 h dans la nuit de mardi à mercredi, ce soir =
-   mardi, heures 25 et 26 (voir « Les heures dépassent 23 »). */
-function ceSoir() {
-  const maintenant = new Date();
-  let jour = new Date(maintenant.getFullYear(), maintenant.getMonth(), maintenant.getDate());
-  let depart = Math.max(maintenant.getHours(), DEBUT_DU_SOIR);
-  if (maintenant.getHours() < HEURE_FIN - 24) {
-    jour = ajouterJours(jour, -1);
-    depart = maintenant.getHours() + 24;
-  }
-  const semaine = lundiDe(jour);
-  const numero = Math.round((jour - semaine) / 86400000);
-  const cles = [];
-  for (let heure = depart; heure < HEURE_FIN; heure++) cles.push(`${numero}-${heure}`);
-  return { semaine, cles };
-}
+/* ceSoir() : les cases de « ce soir », voir etat.js. */
 
 /* Le bouton est « enfoncé » (aria-pressed) quand toutes tes heures
    restantes de ce soir sont cochées. À côté, combien d'autres ont au

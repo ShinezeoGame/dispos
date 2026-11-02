@@ -44,6 +44,18 @@ nom de domaine à part reste à choisir.
   sur `soirees/[id]` (null = retirer). Changer les jeux du vote efface
   les votes. 4 jeux au plus : `MAX_CHOIX` dans `_outils.js` ET
   `js/soirees.js`.
+- **« À quoi jouer ce soir »** (2 nov. 2026, `js/ce-soir.js`) : en haut
+  de l'onglet Soirées, « Ce soir, 5 dispos · à quoi on joue ? » puis
+  les jeux que ces dispos ont en commun (au moins deux d'entre eux),
+  avec « 4/5 l'ont » et le nombre de joueurs maximum d'après IGDB
+  (« 15 max », en rose quand on est plus nombreux). Un clic ouvre
+  « Proposer une soirée » rempli : ce jeu, ce soir, la meilleure heure.
+  Dispo ce soir = une heure cochée dans `ceSoir()` (etat.js, partagé
+  avec « Chaud ce soir »). Caché à moins de deux dispos, sans jeu
+  partagé, ou si l'agenda montre une autre semaine. Pas dans la colonne
+  de l'agenda : elle aurait fait dépasser la page de l'écran. Les
+  nombres viennent de `[code]/joueurs?ids=…` (une question IGDB pour
+  tous les jeux, `multiplayer_modes`).
 - **Les jeux se cherchent dans IGDB** (la base de Twitch), avec leurs
   couvertures, au lieu d'être tapés à la main (demandé le 31 oct. 2026).
   Dans le formulaire de soirée, les jeux des profils de la team sont
@@ -307,6 +319,8 @@ nom de domaine à part reste à choisir.
     functions/api/rappels.js   les rappels « dans moins d'une heure » (appelé par le réveil)
     functions/api/groupes/[code]/discord.js   brancher / débrancher le salon Discord
     functions/api/groupes/[code]/calendrier.js   le flux .ics des soirées
+    functions/api/groupes/[code]/joueurs.js   le nombre de joueurs max (IGDB)
+    js/ce-soir.js              « À quoi jouer ce soir » (onglet Soirées)
     js/reglages.js             la section « Le groupe » (onglet La team)
     assets/discord.svg         le logo Discord des boutons (en pochoir, voir style.css)
     _headers, robots.txt, assets/favicon.svg, fonts/

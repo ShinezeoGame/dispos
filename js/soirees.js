@@ -276,7 +276,7 @@ function afficherFormulaire() {
 /* PROPOSER : ouvert par le bouton « Proposer une soirée », ou depuis
    l'agenda (meilleur créneau, case touchée) avec la date et l'heure
    déjà remplies. export : agenda.js s'en sert. */
-export function proposerSoiree({ jour, horaire, fin } = {}) {
+export function proposerSoiree({ jour, horaire, fin, jeux } = {}) {
   if (!etat.moi) {
     ouvrirProfil();
     return;
@@ -286,7 +286,8 @@ export function proposerSoiree({ jour, horaire, fin } = {}) {
   champs.horaire.value = horaire || '21:00';
   // La fin : donnée par un meilleur créneau (« 22h → 0h »), sinon vide.
   champs.fin.value = fin || '';
-  selecteur.remplir([]);
+  // Le jeu : donné par « À quoi jouer ce soir » (js/ce-soir.js), sinon aucun.
+  selecteur.remplir(jeux || []);
   afficherFormulaire();
 }
 
