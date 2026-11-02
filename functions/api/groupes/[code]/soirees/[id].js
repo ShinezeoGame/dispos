@@ -9,13 +9,14 @@
    sont réservés à la personne qui a proposé la soirée. */
 
 import { json, erreur, lireCorps, identifier, lireSoiree, REPONSES } from '../../../../_outils.js';
+import { annoncerSoiree, heureDeParis } from '../../../../_annonces.js';
 
 /* La soirée doit appartenir AU groupe du lien. Sans ce
    « AND groupe_id = ? », un membre d'un groupe pourrait répondre aux
    soirées d'un autre groupe en changeant le numéro dans l'adresse. */
 async function trouverSoiree(db, groupeId, id) {
   return db
-    .prepare('SELECT id, createur_id, jour, horaire, places FROM soirees WHERE id = ? AND groupe_id = ?')
+    .prepare('SELECT id, createur_id, titre, jour, horaire, places FROM soirees WHERE id = ? AND groupe_id = ?')
     .bind(Number(id), groupeId)
     .first();
 }
@@ -87,9 +88,18 @@ export async function onRequestPatch(context) {
   ];
   if (autreMoment) {
     instructions.push(db.prepare('DELETE FROM reponses WHERE soiree_id = ? AND membre_id != ?').bind(ancienne.id, moi.id));
+    // Le rappel Discord « dans moins d'une heure » vaudra pour la
+    // nouvelle heure, même s'il était déjà parti pour l'ancienne.
+    instructions.push(db.prepare('UPDATE soirees SET rappel = 0 WHERE id = ?').bind(ancienne.id));
   }
-  // batch : les deux ensemble ou aucune (une transaction).
+  // batch : tout ensemble ou rien (une transaction).
   await db.batch(instructions);
+
+  // Seul un changement de moment est annoncé sur Discord : un titre
+  // corrigé ne mérite pas un message de plus dans le salon.
+  if (autreMoment) {
+    annoncerSoiree(context, groupe, 'deplacee', { ...soiree, jeu: soiree.jeu.nom, jeu_cover: soiree.jeu.cover }, moi.pseudo);
+  }
 
   return json(200, { ok: true, reponsesEffacees: autreMoment });
 }
@@ -109,5 +119,11 @@ export async function onRequestDelete(context) {
 
   // Les réponses partent avec elle (ON DELETE CASCADE).
   await db.prepare('DELETE FROM soirees WHERE id = ?').bind(soiree.id).run();
+
+  // Annoncée sur Discord si elle n'a pas encore commencé : effacer une
+  // vieille soirée de la liste n'intéresse personne.
+  if (`${soiree.jour} ${soiree.horaire}` > heureDeParis()) {
+    annoncerSoiree(context, groupe, 'annulee', soiree, moi.pseudo);
+  }
   return json(200, { ok: true });
 }

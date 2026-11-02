@@ -147,6 +147,23 @@
           <p class="indice">Les soirées dans Google Agenda («&nbsp;À partir de l'URL&nbsp;») ou Apple Calendrier («&nbsp;Nouvel abonnement&nbsp;»).</p>
           <button id="copier-calendrier" class="bouton bouton-second bouton-petit" type="button">Copier le lien d'agenda</button>
         </div>
+        <!-- DISCORD (premier membre seulement, js/reglages.js) : un salon
+             où annoncer les soirées, avec un rappel une heure avant
+             (functions/_annonces.js). Le formulaire tant que rien n'est
+             branché, puis « Branché » et de quoi débrancher. -->
+        <form id="form-discord" class="reglage" hidden>
+          <label for="webhook">Salon Discord</label>
+          <p class="indice">Les soirées y sont annoncées, avec un rappel une heure avant. Dans Discord&nbsp;: paramètres du salon → Intégrations → Webhooks → Nouveau webhook → Copier l'URL.</p>
+          <div class="ligne-champ">
+            <input id="webhook" name="webhook" type="url" required autocomplete="off" placeholder="https://discord.com/api/webhooks/…">
+            <button class="bouton bouton-second bouton-petit">Brancher</button>
+          </div>
+        </form>
+        <div id="discord-branche" class="reglage" hidden>
+          <p class="reglage-titre">Salon Discord</p>
+          <p class="indice">Branché&nbsp;: les soirées y sont annoncées, avec un rappel une heure avant.</p>
+          <button id="debrancher-discord" class="lien-discret" type="button">Débrancher</button>
+        </div>
         <button id="quitter-groupe" class="lien-discret lien-danger" type="button">Quitter le groupe</button>
       </section>
     </section>

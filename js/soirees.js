@@ -380,7 +380,8 @@ formulaire.addEventListener('submit', async (evenement) => {
     } else {
       await appeler('/soirees', { methode: 'POST', corps });
       dialogue.close();
-      annoncer('Soirée proposée !');
+      // Groupe branché sur Discord : on dit que le salon est prévenu.
+      annoncer(etat.groupe.discord ? 'Soirée proposée et annoncée sur Discord !' : 'Soirée proposée !');
       // On bascule sur l'onglet Soirées pour voir la nouvelle venue.
       document.getElementById('onglet-soirees').click();
     }

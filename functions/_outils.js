@@ -62,10 +62,14 @@ export const STYLES = ['chill', 'tryhard', 'les-deux'];
    orphelin. */
 export const SCHEMA = [
   // Un groupe d'amis. Le code est la partie secrète du lien d'invitation.
+  // webhook : l'adresse du salon Discord où annoncer les soirées
+  // ('' = pas branché, voir functions/_annonces.js). Jamais renvoyée
+  // aux navigateurs : qui l'a peut écrire dans le salon.
   `CREATE TABLE IF NOT EXISTS groupes (
     id INTEGER PRIMARY KEY,
     code TEXT NOT NULL UNIQUE,
     nom TEXT NOT NULL,
+    webhook TEXT NOT NULL DEFAULT '',
     cree_le TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
 
@@ -146,6 +150,7 @@ export const SCHEMA = [
     fin TEXT NOT NULL DEFAULT '',
     places INTEGER,
     note TEXT NOT NULL DEFAULT '',
+    rappel INTEGER NOT NULL DEFAULT 0,
     cree_le TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
 
@@ -222,6 +227,12 @@ export const MIGRATIONS = [
      n'a rien enregistré reprennent ces créneaux (voir dispos.js et le
      chargement du groupe). */
   'ALTER TABLE membres ADD COLUMN semaine_type TEXT',
+  /* 2 nov. 2026 : les annonces Discord (functions/_annonces.js).
+     groupes.webhook : l'adresse du salon ('' = pas branché) ;
+     soirees.rappel : 1 une fois le rappel « dans moins d'une heure »
+     envoyé, pour ne jamais l'envoyer deux fois. */
+  "ALTER TABLE groupes ADD COLUMN webhook TEXT NOT NULL DEFAULT ''",
+  'ALTER TABLE soirees ADD COLUMN rappel INTEGER NOT NULL DEFAULT 0',
 ];
 
 
@@ -641,7 +652,7 @@ export async function identifier({ request, env, params }, membreObligatoire = t
   const db = env.DB;
   const code = String(params.code || '').toUpperCase();
   const groupe = await db
-    .prepare('SELECT id, code, nom FROM groupes WHERE code = ?')
+    .prepare('SELECT id, code, nom, webhook FROM groupes WHERE code = ?')
     .bind(code)
     .first();
   if (!groupe) {

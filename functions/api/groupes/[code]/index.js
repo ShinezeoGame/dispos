@@ -99,7 +99,9 @@ export async function onRequestGet(context) {
   }
 
   return json(200, {
-    groupe: { code: groupe.code, nom: groupe.nom },
+    // discord : un salon est-il branché ? Oui ou non, jamais l'adresse
+    // du webhook (qui l'a peut écrire dans le salon).
+    groupe: { code: groupe.code, nom: groupe.nom, discord: groupe.webhook !== '' },
     moi: moi ? moi.id : null,
     // Le nom et le pseudo Discord, sans le numéro du compte : la page
     // n'en a pas besoin.

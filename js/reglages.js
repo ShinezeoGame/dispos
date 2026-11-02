@@ -6,6 +6,8 @@
      adminDuGroupe dans functions/_outils.js) ;
    — copier le lien d'agenda, pour voir les soirées dans Google Agenda
      ou Apple Calendrier (functions/api/groupes/[code]/calendrier.js) ;
+   — brancher un salon Discord : le premier membre seulement (voir
+     functions/_annonces.js) ;
    — quitter le groupe. */
 
 import { etat, quandCaChange, appeler, charger } from './etat.js';
@@ -15,11 +17,19 @@ const section = document.getElementById('reglages');
 const formRenommer = document.getElementById('form-renommer');
 const champNom = document.getElementById('nouveau-nom');
 
+const formDiscord = document.getElementById('form-discord');
+const champWebhook = document.getElementById('webhook');
+const discordBranche = document.getElementById('discord-branche');
+
 quandCaChange(() => {
+  const admin = Boolean(etat.moi) && etat.moi.id === etat.admin;
   section.hidden = !etat.moi;
-  formRenommer.hidden = !etat.moi || etat.moi.id !== etat.admin;
+  formRenommer.hidden = !admin;
   // Le nom actuel dans le champ, sauf si on est en train de le taper.
   if (document.activeElement !== champNom) champNom.value = etat.groupe.nom;
+  // Discord : le formulaire OU « Branché », jamais les deux.
+  formDiscord.hidden = !admin || etat.groupe.discord;
+  discordBranche.hidden = !admin || !etat.groupe.discord;
 });
 
 // appeler('') = l'adresse du groupe lui-même ; PATCH = « modifie ceci ».
@@ -37,6 +47,36 @@ formRenommer.addEventListener('submit', async (evenement) => {
 
 document.getElementById('copier-calendrier').addEventListener('click', () => {
   copier(`${location.origin}/api/groupes/${etat.code}/calendrier`, "Lien d'agenda copié !");
+});
+
+/* Brancher Discord : le serveur essaie d'abord d'écrire dans le salon
+   (voir discord.js). Si ça marche, le message est déjà là-bas : on
+   invite à aller voir. Pendant l'essai, le bouton est désactivé, pour
+   qu'un double clic n'envoie pas deux messages. */
+formDiscord.addEventListener('submit', async (evenement) => {
+  evenement.preventDefault();
+  const bouton = formDiscord.querySelector('button');
+  bouton.disabled = true;
+  try {
+    await appeler('/discord', { methode: 'PUT', corps: { webhook: champWebhook.value } });
+    champWebhook.value = '';
+    annoncer('Discord branché : un message vient d\'arriver dans le salon.');
+    await charger();
+  } catch (probleme) {
+    annoncer(probleme.message, 'erreur');
+  } finally {
+    bouton.disabled = false;
+  }
+});
+
+document.getElementById('debrancher-discord').addEventListener('click', async () => {
+  try {
+    await appeler('/discord', { methode: 'DELETE' });
+    annoncer('Discord débranché.');
+    await charger();
+  } catch (probleme) {
+    annoncer(probleme.message, 'erreur');
+  }
 });
 
 /* Quitter : confirm() demande d'abord. Le dernier membre emporte le

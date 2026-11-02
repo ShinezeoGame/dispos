@@ -12,6 +12,7 @@
    une soirée pour ne pas y venir. */
 
 import { json, erreur, lireCorps, identifier, lireSoiree } from '../../../../_outils.js';
+import { annoncerSoiree } from '../../../../_annonces.js';
 
 export async function onRequestPost(context) {
   const { groupe, moi, refus } = await identifier(context);
@@ -32,6 +33,9 @@ export async function onRequestPost(context) {
     .prepare("INSERT INTO reponses (soiree_id, membre_id, reponse) VALUES (?, ?, 'oui')")
     .bind(id, moi.id)
     .run();
+
+  // Sur Discord, si le groupe y a branché un salon (_annonces.js).
+  annoncerSoiree(context, groupe, 'nouvelle', { ...soiree, jeu: soiree.jeu.nom, jeu_cover: soiree.jeu.cover }, moi.pseudo);
 
   return json(201, { id });
 }

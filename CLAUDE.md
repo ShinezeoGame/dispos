@@ -74,6 +74,16 @@ nom de domaine à part reste à choisir.
   iCalendar (.ics), lu par Google Agenda (« À partir de l'URL ») et
   Apple Calendrier (« Nouvel abonnement »), qui le relisent tout seuls.
   Heures « flottantes » (sans fuseau) ; sans heure de fin, deux heures.
+- **Les soirées sur Discord** (2 nov. 2026, `functions/_annonces.js`) :
+  le premier membre colle l'adresse d'un webhook de salon (« Salon
+  Discord », dans Le groupe). Le site y annonce chaque nouvelle soirée
+  (encadré rose avec jaquette), une soirée déplacée (jour ou heure
+  changés, pas un simple titre), une soirée à venir annulée, et un
+  **rappel moins d'une heure avant** qui mentionne les « Chaud » ayant
+  un compte (notification Discord). Pas de bot, pas d'e-mail (on n'a
+  pas les adresses). Le rappel a besoin d'un réveil : voir « Mise en
+  ligne », étape 7. Routes : PUT/DELETE `[code]/discord` (brancher,
+  débrancher), POST `/api/rappels` (le réveil).
 - **La fiche d'un jeu** au survol (au toucher sur téléphone, au focus
   au clavier) : jaquette, année, tags traduits en français (modes, mots-
   clés comme Roguelike, thèmes comme Horreur, genres) et résumé IGDB, en
@@ -245,6 +255,11 @@ nom de domaine à part reste à choisir.
     functions/api/couverture/[id].js       les couvertures, relayées
     functions/api/groupes/[code]/photos/[id].js   la photo de profil (voir, changer, retirer)
     functions/_igdb.js         code SERVEUR : jeton Twitch, requêtes IGDB
+    functions/_annonces.js     code SERVEUR : les messages envoyés au salon Discord
+    functions/api/rappels.js   les rappels « dans moins d'une heure » (appelé par le réveil)
+    functions/api/groupes/[code]/discord.js   brancher / débrancher le salon Discord
+    functions/api/groupes/[code]/calendrier.js   le flux .ics des soirées
+    js/reglages.js             la section « Le groupe » (onglet La team)
     assets/discord.svg         le logo Discord des boutons (en pochoir, voir style.css)
     _headers, robots.txt, assets/favicon.svg, fonts/
 
@@ -274,8 +289,41 @@ nom de domaine à part reste à choisir.
    `DISCORD_CLIENT_ID` et `DISCORD_CLIENT_SECRET` (type *Secret*), puis
    redéployer. Sans elles, « Se connecter » revient avec « pas encore
    configurée », et personne ne peut rejoindre de groupe.
+7. **Le réveil des rappels Discord** : un site Pages ne fait que
+   répondre, il ne se réveille jamais seul. Un petit Worker le fait à
+   sa place (offre gratuite). Workers & Pages → Créer → Worker →
+   « Hello World », nom `allready-reveil`, Déployer. Puis « Modifier le
+   code », tout remplacer par ce qui suit, Déployer :
+
+       // Le réveil d'AllReady : tous les quarts d'heure, demande au
+       // site d'envoyer les rappels de soirée (functions/api/rappels.js).
+       export default {
+         async scheduled(evenement, env, ctx) {
+           ctx.waitUntil(fetch('https://dispos.pages.dev/api/rappels', { method: 'POST' }));
+         },
+       };
+
+   Enfin, dans ce Worker : Settings → Triggers → Cron Triggers → Add,
+   `*/15 * * * *` (tous les quarts d'heure). Pas de secret : appeler
+   `/api/rappels` en trop n'envoie rien deux fois. Sans ce réveil, les
+   annonces marchent, seuls les rappels manquent. Adresse à changer le
+   jour du vrai nom de domaine.
 
 ## Ce qui casse si on n'y fait pas attention
+
+- **L'adresse du webhook Discord est un secret** (qui l'a écrit dans
+  le salon) : `groupes.webhook` n'est jamais renvoyé, le chargement du
+  groupe ne dit que `groupe.discord` (vrai / faux). `adresseWebhook()`
+  reconstruit toujours l'adresse sur `discord.com` : le serveur ne doit
+  jamais envoyer de requête vers une adresse collée telle quelle. Tout
+  message passe par `envoyer()`, qui interdit les mentions
+  (`allowed_mentions`) : sans ça, une soirée « @everyone » ferait
+  sonner tout le serveur. Un webhook supprimé dans Discord (401/404)
+  débranche le groupe tout seul.
+- **Les rappels comptent en heure de Paris** (`heureDeParis()`) : les
+  soirées n'ont pas de fuseau. `soirees.rappel` passe à 1 AVANT l'envoi
+  (jamais deux fois) et revient à 0 quand la soirée change de jour ou
+  d'heure.
 
 - **Les réglages existent en double** : `HEURE_DEBUT`, `HEURE_FIN` et
   `COULEURS` sont dans `js/commun.js` ET `functions/_outils.js`. Changer
@@ -432,7 +480,9 @@ Discord aussi (1er nov. 2026) : faux échange de code, faux
 utilisateurs. Dans Playwright, la page discord.com atteinte par
 redirection ne s'intercepte pas : intercepter `/api/compte/connexion`,
 garder sa vraie réponse (cookie `oauth`, `state`) et sauter directement
-au retour. La vraie connexion ne se teste qu'en ligne.
+au retour. La vraie connexion ne se teste qu'en ligne. Les webhooks
+Discord aussi sont imités (2 nov. 2026) : l'émulateur garde chaque
+message reçu et les montre à l'adresse `/__webhooks`.
 
 ## Comment travailler avec moi
 
@@ -446,4 +496,5 @@ au retour. La vraie connexion ne se teste qu'en ligne.
 
 ## Idées pour la suite (rien de décidé)
 
-- Rappel ou notification avant une soirée (Discord, e-mail).
+- Rappels par e-mail : il faudrait demander l'adresse (permission
+  Discord `email`), écarté pour l'instant.
