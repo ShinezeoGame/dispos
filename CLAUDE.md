@@ -145,6 +145,15 @@ nom de domaine à part reste à choisir.
   cache plutôt que d'afficher un message. Seules restent les aides qui
   apprennent un geste (glisser pour cocher) et, pour un profil d'avant
   les comptes, l'invitation à le relier à Discord.
+  **Allègement du 2 nov. 2026** (demandé : « ne rien surcharger ») :
+  - plus de légende sous l'agenda (les couleurs se comprennent seules,
+    toucher une case explique tout) ;
+  - les cartes « Meilleurs créneaux » sont des boutons entiers, avec
+    une petite ligne « Proposer une soirée » au lieu d'un gros bouton
+    chacune, et elles sont cachées en mode « Mes dispos » ;
+  - une soirée ne répète pas son jeu sous un titre qui le nomme déjà ;
+  - sur téléphone, pas de rond de couleur dans l'en-tête d'un groupe
+    (il coupait le nom du groupe) : il reste sur l'accueil.
 - **Un seul bouton d'invitation** : « Inviter », dans l'en-tête, en
   orange tant qu'on est seul dans le groupe (groupe.js). Pas d'autre
   bouton « copier le lien » ailleurs dans la page.
