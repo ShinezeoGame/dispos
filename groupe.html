@@ -207,6 +207,18 @@
           <p class="indice">Branché&nbsp;: les soirées y sont annoncées, avec un rappel une heure avant.</p>
           <button id="debrancher-discord" class="lien-discret" type="button">Débrancher</button>
         </div>
+        <!-- LE BOT DISCORD (AllReady+, organisateurs, js/reglages.js) :
+             l'ajouter à son serveur, puis /lier dans un salon. Caché si
+             le bot n'est pas configuré sur le site. -->
+        <div id="reglage-bot" class="reglage" hidden>
+          <div class="ligne-label">
+            <p class="reglage-titre">Bot Discord</p>
+            <button id="bot-plus" class="bouton-plus" type="button" data-plus aria-label="Le bot Discord : réservé à AllReady+, en savoir plus" hidden>+</button>
+          </div>
+          <p id="bot-aide" class="indice"></p>
+          <button id="ajouter-bot" class="bouton bouton-second bouton-petit" type="button" hidden>Ajouter le bot à ton serveur</button>
+          <button id="delier-bot" class="lien-discret" type="button" hidden>Délier le serveur</button>
+        </div>
         <!-- ALLREADY+ (js/plus.js) : « actif » pour un groupe abonné, sinon
              ce que l'abonnement apporte et de quoi en savoir plus. -->
         <div id="reglage-plus" class="reglage reglage-plus">

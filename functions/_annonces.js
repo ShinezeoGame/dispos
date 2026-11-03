@@ -166,6 +166,13 @@ export function annoncerSoiree(context, groupe, genre, soiree, auteur) {
       ? `🎮 Nouvelle soirée proposée par **${sansMarkdown(auteur)}**`
       : `📅 **${sansMarkdown(auteur)}** a déplacé la soirée : les réponses repartent de zéro.`;
     message = { content: enTete, embeds: [encadreSoiree(request, groupe, soiree)] };
+    /* Une nouvelle soirée, dans un groupe dont le bot a reçu un rôle
+       (/lier … role:@Raid) : ce rôle est mentionné, et SEULEMENT lui
+       (allowed_mentions.roles) ; ses membres reçoivent une notification. */
+    if (genre === 'nouvelle' && groupe.premium && groupe.discord_role) {
+      message.content = `<@&${groupe.discord_role}> ${enTete}`;
+      message.allowed_mentions = { parse: [], roles: [groupe.discord_role] };
+    }
   }
   context.waitUntil(envoyerAuGroupe(context.env.DB, groupe, message));
 }

@@ -21,6 +21,7 @@ const section = document.getElementById('reglages');
 const formRenommer = document.getElementById('form-renommer');
 const champNom = document.getElementById('nouveau-nom');
 
+const reglageBot = document.getElementById('reglage-bot');
 const reglageFuseau = document.getElementById('reglage-fuseau');
 const choixFuseau = document.getElementById('fuseau');
 const formDiscord = document.getElementById('form-discord');
@@ -38,6 +39,7 @@ quandCaChange(() => {
   formDiscord.hidden = !admin || etat.groupe.discord;
   reglageFuseau.hidden = !admin;
   if (admin) remplirFuseaux();
+  dessinerBot(admin);
   discordBranche.hidden = !admin || !etat.groupe.discord;
 });
 
@@ -56,6 +58,52 @@ formRenommer.addEventListener('submit', async (evenement) => {
 
 document.getElementById('copier-calendrier').addEventListener('click', () => {
   copier(`${location.origin}/api/groupes/${etat.code}/calendrier`, "Lien d'agenda copié !");
+});
+
+/* LE BOT DISCORD (AllReady+, 2 nov. 2026) : pour les organisateurs,
+   si le bot est configuré sur le site (etat.groupe.bot.possible).
+   Trois états : groupe gratuit (le « + » vers AllReady+), abonné mais
+   pas encore relié (ajouter le bot, puis /lier dans Discord), relié. */
+function dessinerBot(admin) {
+  const { premium, bot } = etat.groupe;
+  reglageBot.hidden = !admin || !bot.possible;
+  if (reglageBot.hidden) return;
+  document.getElementById('bot-plus').hidden = premium;
+  document.getElementById('ajouter-bot').hidden = !premium || bot.lie;
+  document.getElementById('delier-bot').hidden = !premium || !bot.lie;
+  document.getElementById('bot-aide').textContent = !premium
+    ? '/dispo et /soirees dans Discord, réponses par boutons, un rôle mentionné à chaque nouvelle soirée.'
+    : bot.lie
+      ? 'Relié à ton serveur ✓ : /dispo et /soirees y marchent.'
+      : `Ajoute le bot, puis tape dans un salon : /lier code:${etat.code}`;
+}
+
+/* Ajouter le bot : le serveur enregistre ses commandes chez Discord et
+   donne le lien d'ajout. La fenêtre s'ouvre AVANT la réponse (sinon le
+   navigateur la prendrait pour une fenêtre surgie et la bloquerait),
+   puis reçoit son adresse. opener = null : la page de Discord ne peut
+   rien faire sur celle-ci. */
+document.getElementById('ajouter-bot').addEventListener('click', async () => {
+  const fenetre = window.open('', '_blank');
+  if (fenetre) fenetre.opener = null;
+  try {
+    const { invitation } = await appeler('/bot', { methode: 'POST' });
+    if (fenetre) fenetre.location.href = invitation;
+    else location.href = invitation;
+  } catch (probleme) {
+    if (fenetre) fenetre.close();
+    annoncer(probleme.message, 'erreur');
+  }
+});
+
+document.getElementById('delier-bot').addEventListener('click', async () => {
+  try {
+    await appeler('/bot', { methode: 'DELETE' });
+    annoncer('Serveur Discord délié.');
+    await charger();
+  } catch (probleme) {
+    annoncer(probleme.message, 'erreur');
+  }
 });
 
 /* LE FUSEAU HORAIRE (2 nov. 2026) : la liste des fuseaux que connaît

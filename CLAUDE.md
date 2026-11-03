@@ -361,6 +361,10 @@ nom de domaine à part reste à choisir.
     functions/_push.js         code SERVEUR : clés VAPID, chiffrement, envoi des notifications
     functions/api/push.js      /api/push : la clé du site, s'abonner, se désabonner
     js/reglages.js             la section « Le groupe » (onglet La team)
+    js/plus.js                 AllReady+ : la fenêtre de l'offre, le « + »
+    functions/_reponses.js     code SERVEUR : répondre à une soirée (site et bot Discord)
+    functions/api/discord/interactions.js   le bot Discord : /lier, /dispo, /soirees, boutons
+    functions/api/groupes/[code]/bot.js     ajouter le bot à un serveur, le délier
     assets/discord.svg         le logo Discord des boutons (en pochoir, voir style.css)
     _headers, robots.txt, assets/favicon.svg, fonts/
 
@@ -412,7 +416,27 @@ nom de domaine à part reste à choisir.
    annonces marchent, seuls les rappels manquent. Adresse à changer le
    jour du vrai nom de domaine.
 
+8. **Le bot Discord** (AllReady+) : sur discord.com/developers/
+   applications, l'application AllReady → *General Information* :
+   copier la *Public Key*, la mettre dans le projet Pages (Settings →
+   Variables and Secrets) sous le nom `DISCORD_PUBLIC_KEY` (elle n'est
+   pas secrète, type *Text* suffit), redéployer. Puis, même page,
+   *Interactions Endpoint URL* :
+   `https://dispos.pages.dev/api/discord/interactions`, *Save Changes*
+   (Discord vérifie aussitôt que l'adresse répond : il faut que le
+   redéploiement soit fini). Sans la clé, le réglage « Bot Discord »
+   reste caché.
+
 ## Ce qui casse si on n'y fait pas attention
+
+- **Le bot refuse toute demande mal signée** (`signatureValable()`,
+  Ed25519 avec `DISCORD_PUBLIC_KEY`) : c'est ce qui empêche n'importe
+  qui de répondre aux soirées à la place des autres. Ne jamais
+  l'enlever, même pour un essai. Discord attend une réponse en moins de
+  3 secondes : pas de travail lent dans `interactions.js`.
+- **Répondre à une soirée passe par `repondreSoiree()`**
+  (`functions/_reponses.js`), sur le site comme dans Discord. Une
+  nouvelle règle de réponse va là, pas dans une route.
 
 - **La CSP n'a que deux exceptions**, pour Web Analytics :
   `static.cloudflareinsights.com` (script) et `cloudflareinsights.com`
@@ -700,6 +724,25 @@ streamers qui jouent avec leurs viewers.
   en « Peut-être » ceux qui l'avaient ; retirer tous les rôles garde
   les « Chaud ». Dans un groupe gratuit, une soirée complète refuse
   toujours (« Complet »).
+
+**Le bot Discord (en place)** :
+- La même application Discord que la connexion. Dans Le groupe, un
+  organisateur clique « Ajouter le bot à ton serveur » (POST
+  `[code]/bot` : enregistre les commandes chez Discord, puis ouvre la
+  page d'ajout), puis tape dans un salon `/lier code:ABCD2345`, en
+  option `role:@Raid`. « Délier » le détache.
+- Commandes (`functions/api/discord/interactions.js`) : `/lier`
+  (organisateurs du groupe, « Gérer le serveur » côté Discord),
+  `/dispo` (comme « Chaud ce soir », `casesDeCeSoir()`), `/soirees`
+  (les cinq prochaines, une rangée de boutons chacune ; un bouton par
+  rôle s'il y en a). Les boutons passent par `repondreSoiree()`
+  (`functions/_reponses.js`), le même code que le site : rôles, liste
+  d'attente, place libérée. Le bot ne répond qu'aux membres reliés à
+  un compte AllReady ; sinon il les invite à rejoindre le groupe.
+- Le rôle choisi avec `/lier` est mentionné dans l'annonce de chaque
+  nouvelle soirée (`groupes.discord_role`, et seulement lui).
+- `groupes.guild_id` : le serveur relié ('' = aucun). Un serveur ne
+  sert qu'un groupe.
 
 **Payant (AllReady+)** :
 1. Inscriptions avec rôles (tank / heal / DPS…), liste d'attente et

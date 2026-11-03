@@ -97,3 +97,98 @@ export async function identiteDiscord(env, request, code) {
     discord: String(utilisateur.username || '').slice(0, 40),
   };
 }
+
+
+/* LE BOT DISCORD (AllReady+, 2 nov. 2026)
+
+   Le bot n'est pas un programme allumé en permanence : c'est la même
+   application Discord que la connexion, à qui l'on donne des
+   « commandes » (/lier, /dispo, /soirees). Quand quelqu'un en tape une,
+   ou clique sur un bouton du bot, Discord envoie la demande à notre
+   adresse functions/api/discord/interactions.js, qui répond aussitôt.
+
+   Il lui faut, en plus des identifiants de la connexion, la clé
+   PUBLIQUE de l'application (DISCORD_PUBLIC_KEY, dans les variables
+   Cloudflare) : Discord signe chaque demande avec sa clé privée, et on
+   vérifie la signature avec la publique. Une demande mal signée est
+   refusée : sans ça, n'importe qui pourrait se faire passer pour
+   Discord et répondre aux soirées à la place des autres. */
+
+// Le bot est-il prêt sur ce site ? (identifiants + clé publique)
+export function botConfigure(env) {
+  return discordConfigure(env) && Boolean(env.DISCORD_PUBLIC_KEY);
+}
+
+// « a1b2… » (des octets écrits en hexadécimal) → les octets.
+function depuisHex(texte) {
+  return Uint8Array.from(String(texte).match(/../g) || [], (paire) => parseInt(paire, 16));
+}
+
+/* La signature : Discord signe l'heure d'envoi suivie du texte reçu
+   (en-têtes X-Signature-Timestamp et X-Signature-Ed25519). Ed25519 est
+   une méthode de signature que crypto.subtle connaît. Renvoie vrai ou
+   faux, sans jamais lever d'erreur. */
+export async function signatureValable(env, request, corps) {
+  const signature = request.headers.get('X-Signature-Ed25519');
+  const horodatage = request.headers.get('X-Signature-Timestamp');
+  if (!signature || !horodatage || !env.DISCORD_PUBLIC_KEY) return false;
+  try {
+    const cle = await crypto.subtle.importKey('raw', depuisHex(env.DISCORD_PUBLIC_KEY), { name: 'Ed25519' }, false, ['verify']);
+    return await crypto.subtle.verify('Ed25519', cle, depuisHex(signature), new TextEncoder().encode(horodatage + corps));
+  } catch {
+    return false;
+  }
+}
+
+/* Les trois commandes, telles que Discord les affiche quand on tape
+   « / ». contexts: [0] : sur un serveur seulement (pas en message
+   privé). /lier est réservée à ceux qui peuvent gérer le serveur
+   (default_member_permissions 32 = « Gérer le serveur »). Types
+   d'options : 3 = texte, 8 = rôle. */
+const COMMANDES = [
+  {
+    name: 'lier',
+    description: 'Relier ce serveur à ton groupe AllReady',
+    contexts: [0],
+    default_member_permissions: '32',
+    options: [
+      { type: 3, name: 'code', description: 'Le code du groupe (dans son lien : …/groupe?g=CODE)', required: true },
+      { type: 8, name: 'role', description: 'Un rôle à mentionner à chaque nouvelle soirée', required: false },
+    ],
+  },
+  { name: 'dispo', description: 'Je suis chaud ce soir (de 19 h, ou maintenant, jusqu’à 3 h)', contexts: [0] },
+  { name: 'soirees', description: 'Les prochaines soirées, avec des boutons pour répondre', contexts: [0] },
+];
+
+/* Enregistrer les commandes chez Discord. Il faut un jeton de
+   l'application elle-même (« client credentials » : ses identifiants,
+   sans personne de connecté), avec la permission de mettre à jour ses
+   commandes. PUT remplace toute la liste : le refaire ne crée pas de
+   doublons. Lancé quand un organisateur clique « Ajouter le bot ». */
+export async function enregistrerCommandes(env) {
+  const reponseJeton = await fetch('https://discord.com/api/oauth2/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': AGENT },
+    body: new URLSearchParams({
+      client_id: env.DISCORD_CLIENT_ID,
+      client_secret: env.DISCORD_CLIENT_SECRET,
+      grant_type: 'client_credentials',
+      scope: 'applications.commands.update',
+    }),
+  });
+  if (!reponseJeton.ok) throw new Error(`Discord refuse les identifiants (${reponseJeton.status}).`);
+  const { access_token } = await reponseJeton.json();
+  const reponse = await fetch(`https://discord.com/api/v10/applications/${env.DISCORD_CLIENT_ID}/commands`, {
+    method: 'PUT',
+    headers: { Authorization: 'Bearer ' + access_token, 'Content-Type': 'application/json', 'User-Agent': AGENT },
+    body: JSON.stringify(COMMANDES),
+  });
+  if (!reponse.ok) throw new Error(`Discord refuse les commandes (${reponse.status}).`);
+}
+
+/* Le lien pour ajouter le bot à un serveur : la page de Discord où l'on
+   choisit le serveur. scope=applications.commands : seulement les
+   commandes, aucune autre permission (le bot ne lit pas les messages). */
+export function invitationBot(env) {
+  return `https://discord.com/oauth2/authorize?client_id=${env.DISCORD_CLIENT_ID}&scope=applications.commands`;
+}

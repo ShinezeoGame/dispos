@@ -76,6 +76,8 @@ export const SCHEMA = [
     webhook TEXT NOT NULL DEFAULT '',
     fuseau TEXT NOT NULL DEFAULT 'Europe/Paris',
     premium INTEGER NOT NULL DEFAULT 0,
+    guild_id TEXT NOT NULL DEFAULT '',
+    discord_role TEXT NOT NULL DEFAULT '',
     cree_le TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
 
@@ -305,6 +307,12 @@ export const MIGRATIONS = [
   "ALTER TABLE soirees ADD COLUMN roles TEXT NOT NULL DEFAULT ''",
   "ALTER TABLE reponses ADD COLUMN role TEXT NOT NULL DEFAULT ''",
   "ALTER TABLE reponses ADD COLUMN inscrit_le TEXT NOT NULL DEFAULT ''",
+  /* 2 nov. 2026 : le bot Discord (AllReady+, functions/api/discord/).
+     groupes.guild_id : le numéro du serveur Discord relié au groupe
+     ('' = aucun) ; groupes.discord_role : le rôle à mentionner dans les
+     annonces de nouvelles soirées ('' = aucun). */
+  "ALTER TABLE groupes ADD COLUMN guild_id TEXT NOT NULL DEFAULT ''",
+  "ALTER TABLE groupes ADD COLUMN discord_role TEXT NOT NULL DEFAULT ''",
 ];
 
 
@@ -579,6 +587,30 @@ export function repartir(soiree, oui, premium) {
     else pris.set(cle, deja + 1);
   }
   return enAttente;
+}
+
+/* LES CASES DE « CE SOIR », CÔTÉ SERVEUR (2 nov. 2026), pour la
+   commande /dispo du bot Discord. Le même calcul que ceSoir() dans
+   js/etat.js : de 19 h (ou de l'heure en cours) à 3 h, et avant 3 h du
+   matin on est encore dans la soirée de la veille. maintenant :
+   « 2026-11-06 21:40 », l'heure du groupe (heureDuGroupe, _annonces.js).
+   Renvoie la semaine (son lundi, « 2026-11-02 ») et les cases
+   [[jour, heure], …], jour 0 = lundi. */
+export function casesDeCeSoir(maintenant) {
+  const [date, horaire] = maintenant.split(' ');
+  const heure = Number(horaire.slice(0, 2));
+  const jour = new Date(`${date}T12:00:00Z`);
+  let depart = Math.max(heure, 19);
+  if (heure < HEURE_FIN - 24) {
+    jour.setUTCDate(jour.getUTCDate() - 1);
+    depart = heure + 24;
+  }
+  const numero = (jour.getUTCDay() + 6) % 7; // lundi = 0
+  const lundi = new Date(jour);
+  lundi.setUTCDate(lundi.getUTCDate() - numero);
+  const cases = [];
+  for (let h = depart; h < HEURE_FIN; h++) cases.push([numero, h]);
+  return { semaine: lundi.toISOString().slice(0, 10), cases };
 }
 
 // soirees.roles tel que la base le rend → une liste ([] sans rôles).
@@ -863,7 +895,7 @@ export async function identifier({ request, env, params }, membreObligatoire = t
   const db = env.DB;
   const code = String(params.code || '').toUpperCase();
   const groupe = await db
-    .prepare('SELECT id, code, nom, webhook, fuseau, premium FROM groupes WHERE code = ?')
+    .prepare('SELECT id, code, nom, webhook, fuseau, premium, guild_id, discord_role FROM groupes WHERE code = ?')
     .bind(code)
     .first();
   if (!groupe) {

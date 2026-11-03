@@ -18,6 +18,7 @@ import {
   lireCorps, ligne, peutGerer, recalerHebdos, lireFuseau, repartir, rolesStockes,
 } from '../../../_outils.js';
 import { heureDuGroupe } from '../../../_annonces.js';
+import { botConfigure } from '../../../_discord.js';
 
 /* MODIFIER LE GROUPE — PATCH /api/groupes/ABCD2345
    { nom: "…" } pour le renommer, ou { fuseau: "America/Montreal" } pour
@@ -149,7 +150,12 @@ export async function onRequestGet(context) {
     // discord : un salon est-il branché ? Oui ou non, jamais l'adresse
     // du webhook (qui l'a peut écrire dans le salon).
     // premium : le groupe est-il abonné à AllReady+ ?
-    groupe: { code: groupe.code, nom: groupe.nom, discord: groupe.webhook !== '', fuseau: groupe.fuseau, premium: groupe.premium === 1 },
+    // bot : le bot Discord est-il prêt sur ce site, et relié à un serveur ?
+    groupe: {
+      code: groupe.code, nom: groupe.nom, discord: groupe.webhook !== '', fuseau: groupe.fuseau,
+      premium: groupe.premium === 1,
+      bot: { possible: botConfigure(context.env), lie: groupe.guild_id !== '' },
+    },
     moi: moi ? moi.id : null,
     // Le nom et le pseudo Discord, sans le numéro du compte : la page
     // n'en a pas besoin.
