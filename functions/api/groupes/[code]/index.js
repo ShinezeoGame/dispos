@@ -16,14 +16,15 @@
 import {
   json, erreur, estLundi, identifier, jeuxStockes, persoStockee, adressePhoto,
   lireCorps, ligne, peutGerer, recalerHebdos, lireFuseau, repartir, rolesStockes,
+  lireBanniere, banniereStockee, themesDebloques,
 } from '../../../_outils.js';
 import { heureDuGroupe } from '../../../_annonces.js';
 import { botConfigure } from '../../../_discord.js';
 
 /* MODIFIER LE GROUPE — PATCH /api/groupes/ABCD2345
-   { nom: "…" } pour le renommer, ou { fuseau: "America/Montreal" } pour
-   changer son fuseau horaire (2 nov. 2026). Réservé au premier membre
-   (adminDuGroupe, _outils.js). */
+   { nom: "…" } pour le renommer, { fuseau: "America/Montreal" } pour
+   changer son fuseau horaire (2 nov. 2026), ou { banniere: … } (AllReady+,
+   3 nov. 2026). Réservé aux organisateurs (peutGerer, _outils.js). */
 export async function onRequestPatch(context) {
   const { groupe, moi, refus } = await identifier(context);
   if (refus) return refus;
@@ -32,6 +33,15 @@ export async function onRequestPatch(context) {
     return erreur(403, 'Seuls les organisateurs du groupe peuvent le modifier.');
   }
   const corps = await lireCorps(context.request);
+  /* La bannière (AllReady+) : { banniere: { fond: "crepuscule",
+     emoji: "🐉" } }, ou { banniere: null } pour la retirer. */
+  if ('banniere' in corps) {
+    if (!groupe.premium) return erreur(403, "La bannière fait partie d'AllReady+.");
+    const banniere = lireBanniere(corps.banniere);
+    if (banniere === null) return erreur(400, 'Bannière invalide.');
+    await db.prepare('UPDATE groupes SET banniere = ? WHERE id = ?').bind(banniere, groupe.id).run();
+    return json(200, { banniere: banniereStockee(banniere) });
+  }
   if ('fuseau' in corps) {
     const fuseau = lireFuseau(corps.fuseau);
     if (!fuseau) return erreur(400, 'Fuseau horaire inconnu.');
@@ -157,13 +167,19 @@ export async function onRequestGet(context) {
       code: groupe.code, nom: groupe.nom, discord: groupe.webhook !== '', fuseau: groupe.fuseau,
       premium: groupe.premium === 1,
       bot: { possible: botConfigure(context.env), lie: groupe.guild_id !== '' },
+      // La bannière { fond, emoji } : seulement tant que le groupe est
+      // abonné (null sinon, elle revient s'il se réabonne).
+      banniere: groupe.premium === 1 ? banniereStockee(groupe.banniere) : null,
     },
     moi: moi ? moi.id : null,
     // Le nom et le pseudo Discord, sans le numéro du compte : la page
     // n'en a pas besoin.
     // agenda : une synchronisation d'agenda est-elle branchée ? (oui ou
     // non : jamais l'adresse, qui donne accès à l'agenda)
-    compte: compte ? { nom: compte.nom, discord: compte.discord, agenda: compte.agenda_ics !== '' } : null,
+    // themes : les thèmes exclusifs débloqués (soutien ou groupe AllReady+).
+    compte: compte
+      ? { nom: compte.nom, discord: compte.discord, agenda: compte.agenda_ics !== '', themes: await themesDebloques(db, compte.id) }
+      : null,
     semaine,
     // As-tu une semaine type ? (coche « Répéter chaque semaine »)
     semaineType: maSemaineType,

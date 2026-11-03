@@ -17,7 +17,8 @@ import './ce-soir.js'; // « À quoi jouer ce soir », onglet Soirées
 import './presence.js'; // AllReady+ : les soirées passées, « Qui était là ? »
 import './plus.js'; // AllReady+ : le « + », la fenêtre, Le groupe
 import './reglages.js'; // la section « Le groupe » de l'onglet La team
-import './apparence.js'; // le choix de la couleur du site
+import './banniere.js'; // AllReady+ : la bannière en haut de La team, et son réglage
+import { debloquerThemes } from './apparence.js'; // le choix de la couleur du site
 import './appli.js'; // le site comme une appli : service worker, installation, notifications
 import { jeuDeMots } from './jeu-de-mots.js';
 
@@ -88,6 +89,15 @@ function inviter() {
 }
 document.getElementById('bouton-inviter').addEventListener('click', inviter);
 boutonProfil.addEventListener('click', ouvrirProfil);
+
+/* LES THÈMES EXCLUSIFS (AllReady+, js/apparence.js) : débloqués si le
+   serveur le dit pour ton compte (compte.themes : soutien, ou un groupe
+   abonné), ou si tu es membre de ce groupe-ci et qu'il est abonné (un
+   profil d'avant les comptes n'a pas de compte). « Certain » seulement
+   avec un compte : sans, on ne retire pas un thème déjà choisi. */
+quandCaChange(() => {
+  debloquerThemes(Boolean(etat.compte?.themes) || Boolean(etat.groupe.premium && etat.moi), Boolean(etat.compte));
+});
 
 // Redessiné à chaque changement, comme le reste de la page.
 quandCaChange(() => {

@@ -251,6 +251,8 @@ nom de domaine à part reste à choisir.
   `popover` : ouverture, fermeture et Échap gérés par le navigateur).
   Ajouter un thème : un bloc CSS + une ligne dans `THEMES`, puis
   mesurer ses contrastes et regarder l'agenda (cases à 1 ou 2 personnes).
+  Trois **thèmes exclusifs** en plus (AllReady+, 3 nov. 2026) : voir
+  « Thèmes exclusifs et bannière » plus bas.
 - **Le logo** (« exceptionnel », à garder tel quel) : une coche dessinée par quatre ronds (les joueurs de la
   team : la validation, c'est le groupe au complet), reliés par un trait
   plein, puis « All » en
@@ -368,6 +370,7 @@ nom de domaine à part reste à choisir.
     functions/api/groupes/[code]/bot.js     ajouter le bot à un serveur, le délier
     js/agenda-perso.js         ton agenda Google / Apple / Outlook : la fenêtre, les cases hachurées
     js/presence.js             AllReady+ : les soirées passées, « Qui était là ? »
+    js/banniere.js             AllReady+ : la bannière en haut de La team, et son réglage
     functions/_agenda.js       code SERVEUR : lire un agenda iCal, trouver les créneaux occupés
     functions/api/compte/agenda.js          ranger ou oublier l'adresse de son agenda
     functions/api/groupes/[code]/occupe.js  tes créneaux occupés d'une semaine
@@ -615,7 +618,10 @@ nom de domaine à part reste à choisir.
   colonne) : `{ emoji, statut, style, plateformes, discord, pseudos }`.
   Ajouter une option = un champ dans `lirePerso()` (_outils.js), pas de
   migration. Les listes `EMOJIS`, `PLATEFORMES`, `STYLES` existent en
-  double (commun.js et _outils.js) : les changer ensemble.
+  double (commun.js et _outils.js) : les changer ensemble. `EMOJIS`
+  sert aussi à la bannière du groupe. Les fonds de la bannière aussi
+  sont en double : `FONDS_BANNIERE` (_outils.js) et `FONDS`
+  (js/banniere.js), plus leurs dégradés `--banniere-…` dans style.css.
 - **La connexion IGDB vit dans `functions/_igdb.js`** (jeton Twitch,
   envoi des requêtes), partagée par la recherche et la fiche. Les tags :
   tables de traduction en tête de `jeu/[id].js` ; un nom absent des
@@ -792,6 +798,27 @@ streamers qui jouent avec leurs viewers.
   à partir de trois seulement.
 - Les lignes s'appellent `.finie` : `.passee` est déjà la classe des
   cases passées de l'agenda.
+
+**Thèmes exclusifs et bannière (en place)** :
+- Trois thèmes de plus dans la palette, sous « AllReady+ » : Rubis,
+  Corail, Nébuleuse. Ils teintent aussi le fond, les cartes et les
+  bordures (vin, prune, nuit) ; contrastes notés au-dessus de leurs
+  blocs dans style.css. Débloqués pour un **soutien** ou un membre d'**au
+  moins un groupe AllReady+** : le serveur le dit (`compte.themes`,
+  `themesDebloques()` dans _outils.js, renvoyé par `GET /api/compte` et
+  par le chargement du groupe), puis la page appelle
+  `debloquerThemes()` (js/apparence.js). Verrouillés, ils montrent un
+  « + » : la fenêtre AllReady+ sur la page d'un groupe, un message sur
+  l'accueil. Un compte connecté qui n'y a plus droit retombe sur
+  Braise ; sans compte, rien n'est retiré (la page ne sait pas qui est
+  là).
+- **La bannière** : un organisateur choisit un fond (six dégradés, dont
+  « Couleurs du site », qui suit le thème de chacun) et un emoji dans Le
+  groupe. Elle s'affiche en haut de La team : nom du groupe, nombre de
+  membres, grand emoji penché. `groupes.banniere` (`{ fond, emoji }` en
+  JSON, '' = aucune), PATCH `[code]` `{ banniere }` (null = retirer),
+  vérifiée par `lireBanniere()`. Le serveur ne la renvoie que tant que
+  le groupe est abonné : elle revient s'il se réabonne.
 
 **Payant (AllReady+)** :
 1. Inscriptions avec rôles (tank / heal / DPS…), liste d'attente et

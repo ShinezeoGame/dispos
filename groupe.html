@@ -157,6 +157,13 @@
 
     <!-- LA TEAM (js/team.js) -->
     <section id="vue-team" class="vue" role="tabpanel" aria-labelledby="onglet-team" hidden>
+      <!-- LA BANNIÈRE DU GROUPE (AllReady+, js/banniere.js) : un fond et
+           un emoji choisis par un organisateur. Cachée sans bannière. -->
+      <section id="banniere" class="banniere" aria-labelledby="banniere-nom" hidden>
+        <h2 id="banniere-nom" class="banniere-nom"></h2>
+        <p id="banniere-infos" class="banniere-infos"></p>
+        <span id="banniere-emoji" class="banniere-emoji" aria-hidden="true"></span>
+      </section>
       <!-- LA TEAM EN CHIFFRES (js/stats.js) : trois repères au plus,
            chacun caché tant qu'il ne veut rien dire. -->
       <ul id="stats-team" class="stats-team" aria-label="La team en chiffres" hidden></ul>
@@ -228,6 +235,30 @@
           <button id="ajouter-bot" class="bouton bouton-second bouton-petit" type="button" hidden>Ajouter le bot à ton serveur</button>
           <button id="delier-bot" class="lien-discret" type="button" hidden>Délier le serveur</button>
         </div>
+        <!-- LA BANNIÈRE (AllReady+, organisateurs, js/banniere.js) : un
+             fond et un emoji en haut de La team. Dans un groupe gratuit,
+             seulement le titre et son « + ». -->
+        <form id="form-banniere" class="reglage" hidden>
+          <div class="ligne-label">
+            <p class="reglage-titre">Bannière</p>
+            <button id="banniere-plus" class="bouton-plus" type="button" data-plus aria-label="La bannière : réservée à AllReady+, en savoir plus" hidden>+</button>
+          </div>
+          <p id="banniere-aide" class="indice">Un fond et un emoji en haut de La team.</p>
+          <div id="banniere-choix" class="reglage" hidden>
+            <fieldset>
+              <legend>Fond</legend>
+              <div id="banniere-fonds" class="fonds-liste"></div>
+            </fieldset>
+            <fieldset>
+              <legend>Emoji</legend>
+              <div id="banniere-emojis" class="emojis-liste"></div>
+            </fieldset>
+            <div class="ligne-boutons">
+              <button class="bouton bouton-second bouton-petit">Enregistrer</button>
+              <button id="retirer-banniere" class="lien-discret" type="button" hidden>Retirer la bannière</button>
+            </div>
+          </div>
+        </form>
         <!-- ALLREADY+ (js/plus.js) : « actif » pour un groupe abonné, sinon
              ce que l'abonnement apporte et de quoi en savoir plus. -->
         <div id="reglage-plus" class="reglage reglage-plus">

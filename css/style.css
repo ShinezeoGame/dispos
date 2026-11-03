@@ -73,6 +73,15 @@
   --non: #ff5d73;            /* rouge : pas dispo, erreur */
   --voile-photo: rgb(0 0 0 / 0.6); /* assombrit ce que le recadrage ne garde pas */
 
+  /* Les fonds de la bannière d'un groupe (AllReady+, js/banniere.js).
+     « theme » suit le thème de chacun : voir .banniere plus bas. */
+  --banniere-braise: linear-gradient(120deg, #3b1206, #ff7a3d);
+  --banniere-crepuscule: linear-gradient(120deg, #2b1240, #ff4f8b 60%, #ff9a4d);
+  --banniere-lave: linear-gradient(120deg, #4a0a0e, #ff5a4f);
+  --banniere-nuit: linear-gradient(120deg, #0d0b1a, #3b2470 60%, #ff4f8b);
+  --banniere-aurore: linear-gradient(120deg, #ff9a8b, #ffcf8a);
+  --voile-banniere: rgb(0 0 0 / 0.5); /* sous le nom du groupe, pour qu'il se lise sur tous les fonds */
+
   --police-titre: 'Chakra Petch', system-ui, sans-serif;
   --police: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --rayon: 14px;
@@ -123,6 +132,27 @@
 [data-theme="neon"]   { --accent: #e84dff; --accent-vif: #f080ff; --soiree: #40e0ff; }
 [data-theme="plasma"] { --accent: #9b7bff; --accent-vif: #b9a3ff; --soiree: #ff8a4c; }
 [data-theme="glace"]  { --accent: #4fd1e8; --accent-vif: #85e3f2; --soiree: #ff7a9e; }
+
+/* LES THÈMES EXCLUSIFS (AllReady+, 3 nov. 2026, js/apparence.js) :
+   pour les membres d'un groupe abonné et les soutiens. Ils teintent
+   aussi le fond, les cartes et les bordures (vin, prune, nuit) : c'est
+   ce qui les distingue des six autres. Le texte ne change pas.
+   Contrastes mesurés (texte doux sur les cartes / accent sur les
+   cartes / texte sombre sur l'accent / soirée sur les cartes) :
+   Rubis 7,8 / 5,5 / 5,9 / 10,1 — Corail 7,7 / 7,9 / 8,6 / 8,0 —
+   Nébuleuse 7,8 / 6,9 / 7,4 / 7,4. */
+[data-theme="rubis"] {
+  --accent: #ff4d6d; --accent-vif: #ff7a91; --soiree: #ffb35c;
+  --fond: #140c0e; --surface: #1f1517; --surface-haute: #2b1d20; --case: #261a1d; --bordure: #452c31;
+}
+[data-theme="corail"] {
+  --accent: #ff8f6b; --accent-vif: #ffac91; --soiree: #c79bff;
+  --fond: #130e13; --surface: #1e171e; --surface-haute: #2a202a; --case: #241c24; --bordure: #42333f;
+}
+[data-theme="nebuleuse"] {
+  --accent: #b28dff; --accent-vif: #c9adff; --soiree: #ff7ab8;
+  --fond: #0f0d17; --surface: #191624; --surface-haute: #231f31; --case: #1e1a2b; --bordure: #383150;
+}
 
 
 /* 3. LES BASES */
@@ -1663,6 +1693,70 @@ input:disabled { opacity: 0.55; cursor: not-allowed; }
 .lien-danger { color: var(--non); }
 .membre-retirer { justify-self: start; font-size: 0.85rem; }
 
+/* LA BANNIÈRE DU GROUPE (AllReady+, js/banniere.js), en haut de La
+   team : un dégradé choisi par un organisateur, le nom du groupe, et un
+   grand emoji penché à droite. Un voile sombre à gauche
+   (--voile-banniere) garde le nom lisible, même sur le fond clair
+   « Aurore ». data-fond dit quel dégradé prendre. */
+.banniere {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 7.5rem;
+  margin-bottom: 1.5rem;
+  padding: 1.25rem 7rem 1.25rem 1.5rem;
+  overflow: hidden;
+  border-radius: var(--rayon);
+  background: linear-gradient(90deg, var(--voile-banniere), transparent 75%), var(--fond-banniere);
+}
+.banniere[data-fond="theme"], .choix-fond[data-fond="theme"] { --fond-banniere: linear-gradient(120deg, var(--accent), var(--soiree)); }
+.banniere[data-fond="braise"], .choix-fond[data-fond="braise"] { --fond-banniere: var(--banniere-braise); }
+.banniere[data-fond="crepuscule"], .choix-fond[data-fond="crepuscule"] { --fond-banniere: var(--banniere-crepuscule); }
+.banniere[data-fond="lave"], .choix-fond[data-fond="lave"] { --fond-banniere: var(--banniere-lave); }
+.banniere[data-fond="nuit"], .choix-fond[data-fond="nuit"] { --fond-banniere: var(--banniere-nuit); }
+.banniere[data-fond="aurore"], .choix-fond[data-fond="aurore"] { --fond-banniere: var(--banniere-aurore); }
+.banniere-nom {
+  font: 700 clamp(1.5rem, 4vw, 2.1rem)/1.1 var(--police-titre);
+  color: var(--texte);
+  overflow-wrap: anywhere;
+  text-shadow: 0 2px 12px rgb(0 0 0 / 0.45);
+}
+.banniere-infos { margin-top: 0.3rem; color: var(--texte); font-size: 0.9rem; opacity: 0.85; text-shadow: 0 1px 8px rgb(0 0 0 / 0.5); }
+.banniere-emoji {
+  position: absolute;
+  right: 1.5rem;
+  top: 50%;
+  font-size: 4.5rem;
+  line-height: 1;
+  transform: translateY(-50%) rotate(-12deg);
+  filter: drop-shadow(0 6px 14px rgb(0 0 0 / 0.4));
+}
+@media (max-width: 34rem) {
+  .banniere { min-height: 6rem; padding-right: 5rem; }
+  .banniere-emoji { right: 1rem; font-size: 3.2rem; }
+}
+
+/* Dans Le groupe : les fonds en petits rectangles à cocher, du même
+   dégradé que la bannière (data-fond posé sur chacun, comme les
+   échantillons de la palette). Les emojis reprennent .choix-emoji. */
+.reglage fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+.reglage legend { margin: 0.3rem 0 0.4rem; font-size: 0.9rem; }
+.fonds-liste { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.choix-fond {
+  position: relative;
+  width: 3.6rem;
+  height: 44px;
+  margin: 0;
+  border: 2px solid transparent;
+  border-radius: var(--rayon-petit);
+  background: var(--fond-banniere);
+  cursor: pointer;
+}
+.choix-fond input { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; margin: 0; opacity: 0; cursor: pointer; }
+.choix-fond:has(input:checked) { border-color: var(--texte); }
+.choix-fond:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+
 /* 12. LA TEAM */
 
 /* LA TEAM EN CHIFFRES (js/stats.js) : deux repères côte à côte, qui
@@ -2363,6 +2457,37 @@ button.tag-jeu:hover { border-color: var(--accent); }
 .theme-option:has(input:checked) { background: var(--surface); box-shadow: inset 0 0 0 1px var(--bordure); }
 .theme-option:has(input:checked) .echantillon { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--texte); }
 .theme-option:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Les thèmes exclusifs (AllReady+) : leur petit titre sur toute la
+   largeur, un échantillon en dégradé (l'accent vers la couleur des
+   soirées), et, verrouillés, un bouton un peu éteint avec son « + ». */
+.choix-theme-exclusifs { grid-column: 1 / -1; margin: 0.5rem 0 0.15rem; }
+.echantillon.exclusif { background: linear-gradient(135deg, var(--accent), var(--soiree)); }
+.theme-option.verrouille {
+  border: 0;
+  background: none;
+  color: var(--texte-doux);
+  font-family: inherit;
+  text-align: left;
+}
+.theme-option.verrouille:hover { background: var(--surface); color: var(--texte); }
+/* Le « + » en pastille sur le coin bas droit de l'échantillon (pas à
+   côté du nom : « Nébuleuse » ne laisserait pas la place). Le calcul :
+   l'échantillon commence à 0,5rem du bord et mesure 1,4rem. */
+.theme-plus {
+  position: absolute;
+  left: 1.3rem;
+  top: calc(50% + 0.1rem);
+  display: grid;
+  place-items: center;
+  width: 0.95rem;
+  height: 0.95rem;
+  border: 2px solid var(--surface-haute);
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--sur-accent);
+  font: 700 0.65rem/1 var(--police-titre);
+}
 
 
 /* 14 BIS. LES ANIMATIONS

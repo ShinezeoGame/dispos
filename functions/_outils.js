@@ -46,6 +46,9 @@ export const MAX_JEUX = 12; // par profil
 // identique aux listes de js/commun.js, qui les affiche.
 export const EMOJIS = ['🎮', '🕹️', '👾', '🤖', '👻', '💀', '🐉', '🦊', '🐸', '🐼', '🦄', '🔥', '⚡', '🌙', '🍕', '🎧'];
 export const PLATEFORMES = ['pc', 'playstation', 'xbox', 'switch', 'mobile'];
+// Les fonds de la bannière d'un groupe (AllReady+). Même liste dans
+// js/reglages.js (FONDS), qui les nomme ; les dégradés sont dans style.css.
+export const FONDS_BANNIERE = ['theme', 'braise', 'crepuscule', 'lave', 'nuit', 'aurore'];
 export const STYLES = ['chill', 'tryhard', 'les-deux'];
 
 
@@ -78,6 +81,7 @@ export const SCHEMA = [
     premium INTEGER NOT NULL DEFAULT 0,
     guild_id TEXT NOT NULL DEFAULT '',
     discord_role TEXT NOT NULL DEFAULT '',
+    banniere TEXT NOT NULL DEFAULT '',
     cree_le TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
 
@@ -334,6 +338,9 @@ export const MIGRATIONS = [
      créneaux occupés (AllReady+, functions/_agenda.js). Un secret :
      jamais renvoyé. '' = pas d'agenda. */
   "ALTER TABLE comptes ADD COLUMN agenda_ics TEXT NOT NULL DEFAULT ''",
+  /* 3 nov. 2026 : groupes.banniere, la bannière du groupe (AllReady+) :
+     { fond, emoji } en JSON, '' = aucune. Voir lireBanniere. */
+  "ALTER TABLE groupes ADD COLUMN banniere TEXT NOT NULL DEFAULT ''",
 ];
 
 
@@ -693,6 +700,44 @@ export function recalerHebdos(db, aujourdhui, groupeId = null, fuseau = null) {
 // js/soirees.js (le sélecteur de jeux).
 export const MAX_CHOIX = 4;
 
+/* LA BANNIÈRE D'UN GROUPE (AllReady+, 3 nov. 2026) : un fond (un
+   dégradé, FONDS_BANNIERE) et un emoji (EMOJIS, ou '' pour aucun),
+   choisis par un organisateur. lireBanniere vérifie ce que la page
+   envoie et renvoie le texte à ranger dans groupes.banniere : '' pour
+   « pas de bannière » (null envoyé), ou null si c'est invalide.
+   banniereStockee fait le chemin inverse, pour la page. */
+export function lireBanniere(valeur) {
+  if (valeur === null) return '';
+  if (typeof valeur !== 'object' || Array.isArray(valeur)) return null;
+  const emoji = valeur.emoji || '';
+  if (!FONDS_BANNIERE.includes(valeur.fond) || (emoji && !EMOJIS.includes(emoji))) return null;
+  return JSON.stringify({ fond: valeur.fond, emoji });
+}
+
+export function banniereStockee(texte) {
+  if (!texte) return null;
+  try {
+    return JSON.parse(texte);
+  } catch {
+    return null;
+  }
+}
+
+/* LES THÈMES EXCLUSIFS (AllReady+, 3 nov. 2026) : débloqués pour un
+   compte qui soutient AllReady (comptes.soutien) ou qui a un profil
+   dans au moins un groupe abonné. Une seule requête : EXISTS s'arrête
+   au premier groupe abonné trouvé. */
+export async function themesDebloques(db, compteId) {
+  const ligne = await db
+    .prepare(`SELECT (c.soutien = 1 OR EXISTS (
+                SELECT 1 FROM membres m JOIN groupes g ON g.id = m.groupe_id
+                WHERE m.compte_id = c.id AND g.premium = 1)) AS oui
+              FROM comptes c WHERE c.id = ?`)
+    .bind(compteId)
+    .first();
+  return Boolean(ligne && ligne.oui);
+}
+
 /* QUI DÉCIDE DANS LE GROUPE (2 nov. 2026) : le premier membre, celui
    qui l'a rejoint en premier (le plus petit id), en général celui qui
    l'a créé. Lui seul renomme le groupe et retire quelqu'un. S'il s'en
@@ -919,7 +964,7 @@ export async function identifier({ request, env, params }, membreObligatoire = t
   const db = env.DB;
   const code = String(params.code || '').toUpperCase();
   const groupe = await db
-    .prepare('SELECT id, code, nom, webhook, fuseau, premium, guild_id, discord_role FROM groupes WHERE code = ?')
+    .prepare('SELECT id, code, nom, webhook, fuseau, premium, guild_id, discord_role, banniere FROM groupes WHERE code = ?')
     .bind(code)
     .first();
   if (!groupe) {

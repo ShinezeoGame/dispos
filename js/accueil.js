@@ -3,7 +3,7 @@
 
 import { api, lireGroupes, retenirGroupe, oublierGroupe, creer, annoncer, fuseauDeLAppareil, LIEN_SOUTIEN } from './commun.js';
 import { messageConnexion, deconnecter } from './compte.js';
-import './apparence.js'; // le choix de la couleur du site
+import { debloquerThemes } from './apparence.js'; // le choix de la couleur du site
 import { quandAppliChange, peutInstaller, installer } from './appli.js'; // le site comme une appli
 
 // « Installer l'appli », en bas, dès que le navigateur le propose.
@@ -122,6 +122,8 @@ let groupesDuCompte = []; // retenus pour la question de la suppression
 
 api('/compte')
   .then(({ compte, groupes }) => {
+    // Les thèmes exclusifs (AllReady+) : voir debloquerThemes, apparence.js.
+    debloquerThemes(Boolean(compte?.themes), Boolean(compte));
     if (!compte) {
       document.getElementById('bouton-connexion').hidden = false;
       return;

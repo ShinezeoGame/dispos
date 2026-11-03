@@ -1,6 +1,6 @@
 /* QUI EST CONNECTÉ ? — GET /api/compte
 
-   Renvoie : { compte: { nom: "Max", discord: "max92" },
+   Renvoie : { compte: { nom: "Max", discord: "max92", themes: false },
                groupes: [{ code: "ABCD2345", nom: "Les potes du jeudi" }, …] }
    ou, sans connexion : { compte: null, groupes: [] }
 
@@ -9,7 +9,7 @@
    seulement du navigateur : connecté sur un nouvel appareil, tu les
    retrouves tous. */
 
-import { json, erreur, compteConnecte, fermerSession } from '../../_outils.js';
+import { json, erreur, compteConnecte, fermerSession, themesDebloques } from '../../_outils.js';
 
 export async function onRequestGet({ request, env }) {
   const compte = await compteConnecte(request, env.DB);
@@ -25,7 +25,12 @@ export async function onRequestGet({ request, env }) {
     .bind(compte.id)
     .all();
 
-  return json(200, { compte: { nom: compte.nom, discord: compte.discord }, groupes: results });
+  // themes : les thèmes exclusifs sont-ils débloqués ? (soutien, ou un
+  // groupe AllReady+ ; voir themesDebloques et js/apparence.js)
+  return json(200, {
+    compte: { nom: compte.nom, discord: compte.discord, themes: await themesDebloques(env.DB, compte.id) },
+    groupes: results,
+  });
 }
 
 
