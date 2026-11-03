@@ -159,7 +159,9 @@ export async function onRequestGet(context) {
     moi: moi ? moi.id : null,
     // Le nom et le pseudo Discord, sans le numéro du compte : la page
     // n'en a pas besoin.
-    compte: compte ? { nom: compte.nom, discord: compte.discord } : null,
+    // agenda : une synchronisation d'agenda est-elle branchée ? (oui ou
+    // non : jamais l'adresse, qui donne accès à l'agenda)
+    compte: compte ? { nom: compte.nom, discord: compte.discord, agenda: compte.agenda_ics !== '' } : null,
     semaine,
     // As-tu une semaine type ? (coche « Répéter chaque semaine »)
     semaineType: maSemaineType,

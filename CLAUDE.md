@@ -365,6 +365,10 @@ nom de domaine à part reste à choisir.
     functions/_reponses.js     code SERVEUR : répondre à une soirée (site et bot Discord)
     functions/api/discord/interactions.js   le bot Discord : /lier, /dispo, /soirees, boutons
     functions/api/groupes/[code]/bot.js     ajouter le bot à un serveur, le délier
+    js/agenda-perso.js         ton agenda Google / Apple / Outlook : la fenêtre, les cases hachurées
+    functions/_agenda.js       code SERVEUR : lire un agenda iCal, trouver les créneaux occupés
+    functions/api/compte/agenda.js          ranger ou oublier l'adresse de son agenda
+    functions/api/groupes/[code]/occupe.js  tes créneaux occupés d'une semaine
     assets/discord.svg         le logo Discord des boutons (en pochoir, voir style.css)
     _headers, robots.txt, assets/favicon.svg, fonts/
 
@@ -434,6 +438,9 @@ nom de domaine à part reste à choisir.
   qui de répondre aux soirées à la place des autres. Ne jamais
   l'enlever, même pour un essai. Discord attend une réponse en moins de
   3 secondes : pas de travail lent dans `interactions.js`.
+- **L'adresse iCal d'un agenda est un secret** (qui l'a lit l'agenda) :
+  jamais renvoyée, et seulement chez Google, Apple ou Microsoft en https
+  (`adresseAgendaValable()`) : jamais une adresse collée telle quelle.
 - **Répondre à une soirée passe par `repondreSoiree()`**
   (`functions/_reponses.js`), sur le site comme dans Discord. Une
   nouvelle règle de réponse va là, pas dans une route.
@@ -743,6 +750,26 @@ streamers qui jouent avec leurs viewers.
   nouvelle soirée (`groupes.discord_role`, et seulement lui).
 - `groupes.guild_id` : le serveur relié ('' = aucun). Un serveur ne
   sert qu'un groupe.
+
+**La synchronisation d'agenda (en place)** :
+- En mode « Mes dispos », « Synchroniser mon agenda » (avec un « + »
+  dans un groupe gratuit) ouvre une fenêtre où coller l'**adresse
+  secrète iCal** de Google Agenda, d'Apple (iCloud) ou d'Outlook ; les
+  aides disent où la trouver. Pas de connexion Google ni d'autorisation
+  à demander. L'adresse appartient au compte (`comptes.agenda_ics`),
+  sert dans tous ses groupes AllReady+, et n'est **jamais renvoyée** :
+  le groupe ne dit que `compte.agenda` (vrai / faux).
+- Les cases où l'agenda a un rendez-vous sont **hachurées**, en mode
+  « Mes dispos » seulement, pour soi seul (`js/agenda-perso.js`,
+  route `[code]/occupe?semaine=…`, relue à chaque semaine affichée,
+  gardée 5 minutes par le navigateur). Seuls les créneaux sortent,
+  jamais les titres.
+- La lecture (`functions/_agenda.js`) : heures UTC, fuseaux (TZID),
+  heures flottantes, répétitions chaque jour ou chaque semaine (BYDAY,
+  INTERVAL, COUNT, UNTIL), dates sautées (EXDATE) ou déplacées
+  (RECURRENCE-ID), lignes pliées ; les annulés, les « disponible » et
+  les journées entières ne comptent pas. Testée sur un faux agenda qui
+  a tous ces cas (dans les tests hors dépôt).
 
 **Payant (AllReady+)** :
 1. Inscriptions avec rôles (tank / heal / DPS…), liste d'attente et

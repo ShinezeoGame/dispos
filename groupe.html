@@ -112,6 +112,8 @@
           <div id="agenda-aide" class="agenda-aide" hidden>
             <p id="aide-agenda" class="aide"></p>
             <label class="repeter"><input type="checkbox" id="repeter"> Répéter chaque semaine</label>
+            <!-- Ton agenda Google, Apple ou Outlook (AllReady+, js/agenda-perso.js). -->
+            <button id="mon-agenda" class="lien-discret mon-agenda" type="button" hidden></button>
           </div>
           <!-- La grille est entièrement fabriquée par js/agenda.js :
                7 jours × 18 heures, chaque case est un bouton. -->
@@ -496,6 +498,30 @@
        envoyer nulle part, en laissant sa valeur « ok » dans returnValue ;
        c'est recadrage.js qui découpe alors la photo. Le cercle par-dessus
        la photo montre ce qui sera gardé. -->
+  <!-- SYNCHRONISER MON AGENDA (AllReady+, js/agenda-perso.js) : coller
+       l'adresse secrète iCal ; les aides apprennent où la trouver. -->
+  <dialog id="dialogue-agenda" class="dialogue" aria-labelledby="titre-agenda-perso">
+    <form id="form-agenda" method="dialog">
+      <div class="dialogue-tete">
+        <h2 id="titre-agenda-perso">Synchroniser mon agenda</h2>
+        <button type="button" class="bouton-icone" data-fermer aria-label="Fermer">×</button>
+      </div>
+      <p class="indice">Tes rendez-vous hachurent tes cases occupées, ici seulement : personne d'autre ne les voit.</p>
+      <label for="adresse-agenda">Adresse secrète au format iCal</label>
+      <input id="adresse-agenda" type="url" required autocomplete="off" placeholder="https://calendar.google.com/calendar/ical/…">
+      <ul class="indice liste-aide">
+        <li>Google Agenda : Paramètres → ton agenda → « Adresse secrète au format iCal ».</li>
+        <li>Apple (iCloud.com) : Agenda → partager → « Agenda public » → copier le lien.</li>
+        <li>Outlook : Paramètres → Agenda → Agendas partagés → Publier → lien ICS.</li>
+      </ul>
+      <p class="erreur" role="alert"></p>
+      <div class="dialogue-actions">
+        <button type="button" id="debrancher-agenda" class="bouton bouton-second" hidden>Débrancher</button>
+        <button type="submit" class="bouton">Synchroniser</button>
+      </div>
+    </form>
+  </dialog>
+
   <!-- LA FENÊTRE ALLREADY+ (js/plus.js) : ce que l'abonnement apporte,
        son prix, et comment s'abonner. Ouverte depuis Le groupe, et
        depuis chaque fonctionnalité réservée (le petit « + »). -->

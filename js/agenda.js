@@ -22,6 +22,7 @@ import {
   libelleHeure, avatar, annoncer, creer, majuscule, animerEntree, maintenant, fuseauDeLAppareil, nomDuFuseau,
 } from './commun.js';
 import { proposerSoiree } from './soirees.js';
+import { occupees, preparerAgendaPerso } from './agenda-perso.js'; // ton agenda Google/Apple (AllReady+)
 import { ouvrirProfil } from './profil.js';
 
 const grille = document.getElementById('grille');
@@ -214,6 +215,7 @@ function dessiner() {
   aide.hidden = mode !== 'moi';
   ligneAide.hidden = mode !== 'moi';
   caseRepeter.checked = Boolean(etat.semaineType);
+  if (mode === 'moi' && etat.moi) preparerAgendaPerso();
 
   dessinerGrille();
   dessinerMeilleurs();
@@ -420,7 +422,11 @@ function dessinerGrille() {
         // aria-pressed : un lecteur d'écran annonce « bouton bascule,
         // enfoncé » pour une case cochée.
         bouton.setAttribute('aria-pressed', cochee);
-        bouton.setAttribute('aria-label', nomDeCase(jour, heure));
+        // Occupée d'après ton agenda synchronisé (AllReady+) : hachurée.
+        const occupee = occupees().has(cle);
+        bouton.classList.toggle('occupee', occupee);
+        bouton.title = occupee ? "Occupé d'après ton agenda" : '';
+        bouton.setAttribute('aria-label', nomDeCase(jour, heure) + (occupee ? ", occupé d'après ton agenda" : ''));
         bouton.disabled = passee;
       } else {
         const ids = parCase.get(cle) || [];

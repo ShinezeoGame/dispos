@@ -93,6 +93,7 @@ export const SCHEMA = [
     nom TEXT NOT NULL,
     discord TEXT NOT NULL DEFAULT '',
     soutien INTEGER NOT NULL DEFAULT 0,
+    agenda_ics TEXT NOT NULL DEFAULT '',
     cree_le TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
 
@@ -313,6 +314,11 @@ export const MIGRATIONS = [
      annonces de nouvelles soirées ('' = aucun). */
   "ALTER TABLE groupes ADD COLUMN guild_id TEXT NOT NULL DEFAULT ''",
   "ALTER TABLE groupes ADD COLUMN discord_role TEXT NOT NULL DEFAULT ''",
+  /* 2 nov. 2026 : comptes.agenda_ics, l'adresse secrète iCal de
+     l'agenda personnel (Google, Apple, Outlook), pour griser les
+     créneaux occupés (AllReady+, functions/_agenda.js). Un secret :
+     jamais renvoyé. '' = pas d'agenda. */
+  "ALTER TABLE comptes ADD COLUMN agenda_ics TEXT NOT NULL DEFAULT ''",
 ];
 
 
@@ -861,7 +867,7 @@ export async function compteConnecte(request, db) {
   const jeton = lireCookie(request, NOM_COOKIE);
   if (!/^[0-9a-f]{64}$/.test(jeton)) return null;
   return db
-    .prepare(`SELECT c.id, c.nom, c.discord FROM sessions s
+    .prepare(`SELECT c.id, c.nom, c.discord, c.agenda_ics FROM sessions s
               JOIN comptes c ON c.id = s.compte_id
               WHERE s.jeton_hash = ? AND s.expire > datetime('now')`)
     .bind(await hacher(jeton))
