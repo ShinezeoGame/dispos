@@ -100,6 +100,7 @@ export async function charger() {
 
   etat.soirees = donnees.soirees;
   etat.stats = donnees.stats;             // la team en chiffres (stats.js)
+  etat.presence = donnees.presence;       // AllReady+ : soirées passées, fiabilité (presence.js), ou null
   retenirGroupe(etat.code, { nom: donnees.groupe.nom });
   redessiner();
 }

@@ -1,6 +1,8 @@
 /* RÉPONDRE À UNE SOIRÉE, LA MODIFIER OU L'ANNULER — /api/groupes/ABCD2345/soirees/12
 
    PUT    { reponse: "oui" | "peutetre" | "non" } → ta réponse
+   PUT    { vote: 1 }                              → ton vote « À quoi on joue ? »
+   PUT    { presents: [3, 5] }                     → « Qui était là ? » (AllReady+)
    PATCH  { jeu, titre, jour, horaire, note }      → modifie la soirée
    DELETE                                         → annule la soirée
 
@@ -8,7 +10,7 @@
    pour l'une, onRequestPatch pour l'autre, etc. Modifier et annuler
    sont réservés à la personne qui a proposé la soirée. */
 
-import { json, erreur, lireCorps, identifier, lireSoiree, peutGerer, REPONSES } from '../../../../_outils.js';
+import { json, erreur, lireCorps, identifier, lireSoiree, peutGerer, repartir, rolesStockes, REPONSES } from '../../../../_outils.js';
 import { annoncerSoiree, heureDuGroupe } from '../../../../_annonces.js';
 import { repondreSoiree } from '../../../../_reponses.js';
 
@@ -33,6 +35,8 @@ export async function onRequestPut(context) {
   const corps = await lireCorps(context.request);
   // Un vote « À quoi on joue ? » plutôt qu'une réponse : voir plus bas.
   if ('vote' in corps) return voter(db, soiree, moi, corps.vote);
+  // Le pointage « Qui était là ? » : voir pointer(), plus bas.
+  if ('presents' in corps) return pointer(db, groupe, moi, soiree, corps.presents);
   const { reponse } = corps;
   if (!REPONSES.includes(reponse)) return erreur(400, 'Réponse inconnue.');
 
@@ -74,6 +78,72 @@ async function voter(db, soiree, moi, vote) {
         .bind(soiree.id, moi.id, vote),
     db.prepare(`UPDATE soirees SET jeu = ${champ('nom')}, jeu_cover = COALESCE(${champ('cover')}, ''),
                 jeu_id = ${champ('id')} WHERE id = ?1`).bind(soiree.id),
+  ]);
+  return json(200, { ok: true });
+}
+
+/* « QUI ÉTAIT LÀ ? » (AllReady+, 2 nov. 2026) — PUT { presents: [3, 5] }
+
+   Une fois la soirée commencée, la personne qui l'a proposée (ou un
+   organisateur, peutGerer) coche qui est vraiment venu. presents : les
+   numéros des membres venus.
+
+   Chaque membre pointé devient une ligne de la table presences :
+   — attendu = 1 s'il avait dit « Chaud » et jouait (pas en liste
+     d'attente : repartir, _outils.js). C'est sur eux que se calcule la
+     fiabilité de chacun (« Fiable à 80 % », js/team.js) ;
+   — venu = 1 s'il était là. Un membre venu sans avoir dit « Chaud » a
+     aussi sa ligne (attendu = 0) : il ne compte pas contre lui.
+
+   Les attendus sont figés au PREMIER pointage : le corriger ensuite ne
+   change que les « venu ». Sans ça, quelqu'un qui n'est pas venu
+   pourrait passer en « Pas dispo » après coup et effacer son absence.
+
+   La date de la soirée (jour) fait partie de la ligne : une soirée de
+   chaque semaine garde le même numéro d'une semaine à l'autre, et ses
+   réponses sont effacées quand elle avance (recalerHebdos). Les
+   présences, elles, restent : c'est l'historique.
+
+   Le tout en un batch : on efface le pointage précédent de ce jour-là,
+   puis on écrit le nouveau d'une seule requête (json_each déplie la
+   liste envoyée en texte JSON : une ligne par membre, sans dépasser
+   les 100 paramètres par requête de D1). */
+async function pointer(db, groupe, moi, soiree, presents) {
+  if (!groupe.premium) return erreur(403, "Les présences font partie d'AllReady+.");
+  if (soiree.createur_id !== moi.id && !await peutGerer(db, groupe, moi)) {
+    return erreur(403, 'Seule la personne qui a proposé la soirée peut dire qui était là.');
+  }
+  if (`${soiree.jour} ${soiree.horaire}` > heureDuGroupe(groupe.fuseau)) {
+    return erreur(400, "La soirée n'a pas encore commencé.");
+  }
+  if (!Array.isArray(presents) || presents.length > 200 || !presents.every(Number.isInteger)) {
+    return erreur(400, 'Liste de présents invalide.');
+  }
+
+  const [membres, oui, deja] = await db.batch([
+    db.prepare('SELECT id FROM membres WHERE groupe_id = ?').bind(groupe.id),
+    db.prepare("SELECT membre_id, role, inscrit_le FROM reponses WHERE soiree_id = ? AND reponse = 'oui'").bind(soiree.id),
+    db.prepare('SELECT membre_id FROM presences WHERE soiree_id = ? AND jour = ? AND attendu = 1').bind(soiree.id, soiree.jour),
+  ]);
+  // Seuls les membres du groupe : un numéro inventé est ignoré.
+  const duGroupe = new Set(membres.results.map((membre) => membre.id));
+  const venus = new Set(presents.filter((id) => duGroupe.has(id)));
+  let attendus;
+  if (deja.results.length) {
+    attendus = new Set(deja.results.map((ligne) => ligne.membre_id)); // figés au premier pointage
+  } else {
+    const enAttente = repartir({ roles: rolesStockes(soiree.roles), places: soiree.places }, oui.results, true);
+    attendus = new Set(oui.results.map((r) => r.membre_id).filter((id) => !enAttente.has(id)));
+  }
+  // Une ligne par membre attendu ou venu : { m: membre, a: attendu, v: venu }.
+  const lignes = [...new Set([...attendus, ...venus])]
+    .map((id) => ({ m: id, a: attendus.has(id) ? 1 : 0, v: venus.has(id) ? 1 : 0 }));
+  await db.batch([
+    db.prepare('DELETE FROM presences WHERE soiree_id = ? AND jour = ?').bind(soiree.id, soiree.jour),
+    db.prepare(`INSERT INTO presences (soiree_id, jour, membre_id, attendu, venu)
+                SELECT ?1, ?2, json_extract(value, '$.m'), json_extract(value, '$.a'), json_extract(value, '$.v')
+                FROM json_each(?3)`)
+      .bind(soiree.id, soiree.jour, JSON.stringify(lignes)),
   ]);
   return json(200, { ok: true });
 }

@@ -146,6 +146,8 @@ export async function onRequestGet(context) {
     return Object.fromEntries(oui.map((r) => [r.membre_id, { role: r.role, attente: enAttente.has(r.membre_id) }]));
   }
 
+  const presence = groupe.premium ? await presencesDuGroupe(db, groupe) : null;
+
   return json(200, {
     // discord : un salon est-il branché ? Oui ou non, jamais l'adresse
     // du webhook (qui l'a peut écrire dans le salon).
@@ -197,5 +199,74 @@ export async function onRequestGet(context) {
       votes: votesParSoiree[soiree.id] || {},
       reponses: reponsesParSoiree[soiree.id] || {},
     })),
+    // Présence et assiduité (AllReady+) : voir presencesDuGroupe, plus
+    // bas. null dans un groupe gratuit.
+    presence,
   });
+}
+
+
+/* PRÉSENCE ET ASSIDUITÉ (AllReady+, 2 nov. 2026)
+
+   Deux choses pour la page :
+   — passees : les cinq dernières soirées déjà commencées (30 jours au
+     plus), pour « Qui était là ? » (js/presence.js). Pour chacune :
+     pointee (le pointage est-il fait ?), presents (qui était là, s'il
+     est fait) et chauds (ceux qui jouaient : cochés d'avance la
+     première fois, puis ceux que le pointage a retenus) ;
+   — fiabilite : { 3: { attendus: 10, venus: 8 } } pour chaque membre,
+     toutes soirées pointées du groupe confondues (js/team.js).
+
+   « Déjà commencée » se compare en texte, « 2026-11-06 21:00 » contre
+   l'heure du groupe (heureDuGroupe) : les dates et heures écrites
+   ainsi se rangent dans le bon ordre. Une seconde série de requêtes,
+   seulement pour un groupe abonné. */
+async function presencesDuGroupe(db, groupe) {
+  const maintenant = heureDuGroupe(groupe.fuseau);
+  const [passees, oui, pointages, fiabilite] = await db.batch([
+    db.prepare(`SELECT id, titre, jeu, jeu_cover, jour, horaire, createur_id, places, roles FROM soirees
+                WHERE groupe_id = ? AND jour >= date(?, '-30 days') AND jour || ' ' || horaire <= ?
+                ORDER BY jour DESC, horaire DESC LIMIT 5`)
+      .bind(groupe.id, maintenant.slice(0, 10), maintenant),
+    db.prepare(`SELECT r.soiree_id, r.membre_id, r.role, r.inscrit_le FROM reponses r
+                JOIN soirees s ON s.id = r.soiree_id
+                WHERE s.groupe_id = ? AND s.jour >= date(?, '-30 days') AND r.reponse = 'oui'`)
+      .bind(groupe.id, maintenant.slice(0, 10)),
+    // Le pointage de la date actuelle de chaque soirée (p.jour = s.jour).
+    db.prepare(`SELECT p.soiree_id, p.membre_id, p.attendu, p.venu FROM presences p
+                JOIN soirees s ON s.id = p.soiree_id AND s.jour = p.jour
+                WHERE s.groupe_id = ? AND s.jour >= date(?, '-30 days')`)
+      .bind(groupe.id, maintenant.slice(0, 10)),
+    // SUM(attendu * venu) : venu ET attendu (1 × 1), les seules
+    // présences qui comptent pour la fiabilité.
+    db.prepare(`SELECT p.membre_id, SUM(p.attendu) AS attendus, SUM(p.attendu * p.venu) AS venus
+                FROM presences p JOIN soirees s ON s.id = p.soiree_id
+                WHERE s.groupe_id = ? GROUP BY p.membre_id`)
+      .bind(groupe.id),
+  ]);
+  return {
+    passees: passees.results.map((soiree) => {
+      const pointage = pointages.results.filter((p) => p.soiree_id === soiree.id);
+      // Les « Chaud » qui jouaient : ceux figés par le pointage s'il est
+      // fait (attendu), sinon ceux des réponses actuelles.
+      let chauds;
+      if (pointage.length) {
+        chauds = pointage.filter((p) => p.attendu === 1).map((p) => p.membre_id);
+      } else {
+        const lesOui = oui.results.filter((r) => r.soiree_id === soiree.id);
+        const enAttente = repartir({ roles: rolesStockes(soiree.roles), places: soiree.places }, lesOui, true);
+        chauds = lesOui.map((r) => r.membre_id).filter((id) => !enAttente.has(id));
+      }
+      return {
+        id: soiree.id, titre: soiree.titre, jeu: soiree.jeu, jeu_cover: soiree.jeu_cover,
+        jour: soiree.jour, horaire: soiree.horaire, createur_id: soiree.createur_id,
+        pointee: pointage.length > 0,
+        presents: pointage.filter((p) => p.venu === 1).map((p) => p.membre_id),
+        chauds,
+      };
+    }),
+    fiabilite: Object.fromEntries(fiabilite.results.map((rangee) => [
+      rangee.membre_id, { attendus: rangee.attendus, venus: rangee.venus },
+    ])),
+  };
 }

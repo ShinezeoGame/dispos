@@ -45,7 +45,8 @@ nom de domaine à part reste à choisir.
   (`X-WR-TIMEZONE`).
 - **Les soirées de chaque semaine** (2 nov. 2026) : case « Chaque
   semaine » dans le formulaire (`soirees.hebdo`). La carte dit « chaque
-  jeudi ». Le lendemain de son jour, la soirée avance d'autant de
+  jeudi ». Le surlendemain de son jour (le lendemain reste pour
+  pointer qui était là, AllReady+), la soirée avance d'autant de
   semaines qu'il faut (`recalerHebdos()`, _outils.js, lancé au
   chargement du groupe ET par le réveil des rappels, pour les groupes
   que personne n'ouvre) : réponses et votes remis à zéro, sauf la
@@ -366,6 +367,7 @@ nom de domaine à part reste à choisir.
     functions/api/discord/interactions.js   le bot Discord : /lier, /dispo, /soirees, boutons
     functions/api/groupes/[code]/bot.js     ajouter le bot à un serveur, le délier
     js/agenda-perso.js         ton agenda Google / Apple / Outlook : la fenêtre, les cases hachurées
+    js/presence.js             AllReady+ : les soirées passées, « Qui était là ? »
     functions/_agenda.js       code SERVEUR : lire un agenda iCal, trouver les créneaux occupés
     functions/api/compte/agenda.js          ranger ou oublier l'adresse de son agenda
     functions/api/groupes/[code]/occupe.js  tes créneaux occupés d'une semaine
@@ -770,6 +772,26 @@ streamers qui jouent avec leurs viewers.
   (RECURRENCE-ID), lignes pliées ; les annulés, les « disponible » et
   les journées entières ne comptent pas. Testée sur un faux agenda qui
   a tous ces cas (dans les tests hors dépôt).
+
+**Présence et assiduité (en place)** :
+- En bas de l'onglet Soirées, « Passées » (`js/presence.js`) : les
+  cinq dernières soirées déjà commencées, 30 jours au plus. Celui qui
+  l'a proposée et les organisateurs ont « Qui était là ? » : une case
+  par membre, les « Chaud » en tête et cochés d'avance (sans la liste
+  d'attente). Une soirée pointée dit « 4 là · absent : Max » pour toute
+  la team, avec « Corriger ». Les autres ne voient que les soirées
+  pointées ; rien dans un groupe gratuit (`presence: null`).
+- Table `presences` (`soiree_id`, `jour`, `membre_id`, `attendu`,
+  `venu`) : `jour` dans la clé, parce qu'une soirée de chaque semaine
+  garde son numéro et perd ses réponses chaque semaine ; l'historique,
+  lui, reste. PUT `soirees/[id]` `{ presents: [ids] }` (`pointer()`).
+  **Les attendus sont figés au premier pointage** : passer en « Pas
+  dispo » après coup n'efface pas une absence.
+- Sur la carte de chacun (La team) : « Fiable à 80 % (8 soirées sur
+  10) », venues parmi les soirées pointées où il avait dit « Chaud »,
+  à partir de trois seulement.
+- Les lignes s'appellent `.finie` : `.passee` est déjà la classe des
+  cases passées de l'agenda.
 
 **Payant (AllReady+)** :
 1. Inscriptions avec rôles (tank / heal / DPS…), liste d'attente et

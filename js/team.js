@@ -70,6 +70,19 @@ function fabriquerCarte(membre, estMoi) {
     ? `${heures} h cochée${heures > 1 ? 's' : ''} ${quelleSemaine}`
     : '';
 
+  /* LA FIABILITÉ (AllReady+, js/presence.js) : sur les soirées
+     pointées où il avait dit « Chaud », combien de fois il est venu.
+     À partir de trois seulement : après une seule soirée manquée,
+     « Fiable à 0 % » serait injuste. Rien dans un groupe gratuit
+     (etat.presence vaut null). */
+  const fiabilite = etat.presence?.fiabilite[membre.id];
+  const ligneFiabilite = carte.querySelector('.membre-fiabilite');
+  if (fiabilite && fiabilite.attendus >= 3) {
+    const part = Math.round((100 * fiabilite.venus) / fiabilite.attendus);
+    ligneFiabilite.textContent = `Fiable à ${part} % (${fiabilite.venus} soirée${fiabilite.venus > 1 ? 's' : ''} sur ${fiabilite.attendus})`;
+    ligneFiabilite.hidden = false;
+  }
+
   /* Les jeux : une étiquette par jeu, avec sa petite couverture. Un jeu
      trouvé dans IGDB (il a un id) devient un bouton : survolé, touché ou
      atteint au clavier, il ouvre sa fiche (fiche-jeu.js). */

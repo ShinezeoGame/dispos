@@ -220,6 +220,21 @@ export const SCHEMA = [
     auth TEXT NOT NULL,
     cree_le TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
+  // LES PRÉSENCES (AllReady+, 2 nov. 2026) : pour une soirée pointée
+  // (« Qui était là ? »), une ligne par membre attendu ou venu. jour :
+  // la date de cette soirée-là (une soirée de chaque semaine garde le
+  // même numéro d'une semaine à l'autre). attendu : il avait dit
+  // « Chaud » (et jouait, pas en liste d'attente) ; venu : il était là.
+  // L'historique ne dépend donc pas des réponses, effacées chaque
+  // semaine pour une soirée qui revient.
+  `CREATE TABLE IF NOT EXISTS presences (
+    soiree_id INTEGER NOT NULL REFERENCES soirees(id) ON DELETE CASCADE,
+    jour TEXT NOT NULL,
+    membre_id INTEGER NOT NULL REFERENCES membres(id) ON DELETE CASCADE,
+    attendu INTEGER NOT NULL DEFAULT 0,
+    venu INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (soiree_id, jour, membre_id)
+  )`,
   // Les index sont des tables des matières : ils évitent de relire
   // toute la table pour trouver les membres ou les soirées d'un groupe.
   `CREATE INDEX IF NOT EXISTS membres_par_groupe ON membres (groupe_id)`,
@@ -637,9 +652,12 @@ export function lireFuseau(texte) {
 
 /* LES SOIRÉES DE CHAQUE SEMAINE (2 nov. 2026)
 
-   Une soirée « chaque semaine » dont le jour est passé avance d'autant
-   de semaines qu'il faut pour retomber aujourd'hui ou après : jeudi
-   dernier → jeudi qui vient. Les réponses et les votes de la semaine
+   Une soirée « chaque semaine » dont le jour est passé depuis plus d'un
+   jour avance d'autant de semaines qu'il faut pour retomber aujourd'hui
+   ou après : jeudi dernier → jeudi qui vient. « Plus d'un jour » (le
+   surlendemain, et non le lendemain) : une soirée de nuit finit après
+   minuit, et ses organisateurs doivent encore pouvoir pointer qui
+   était là (présences, AllReady+) le lendemain. Les réponses et les votes de la semaine
    finie ne valent pas pour la suivante : effacés, sauf la réponse de
    la personne qui l'a proposée. Le rappel est réarmé.
 
@@ -658,7 +676,7 @@ export function recalerHebdos(db, aujourdhui, groupeId = null, fuseau = null) {
   const dansLeGroupe = groupeId !== null
     ? 'AND groupe_id = ?2'
     : 'AND groupe_id IN (SELECT id FROM groupes WHERE fuseau = ?2)';
-  const passees = `SELECT id FROM soirees WHERE hebdo = 1 AND jour < ?1 ${dansLeGroupe}`;
+  const passees = `SELECT id FROM soirees WHERE hebdo = 1 AND jour < date(?1, '-1 day') ${dansLeGroupe}`;
   const lier = (instruction) => instruction.bind(aujourdhui, groupeId !== null ? groupeId : fuseau);
   return [
     lier(db.prepare(`DELETE FROM reponses WHERE soiree_id IN (${passees})
@@ -667,7 +685,7 @@ export function recalerHebdos(db, aujourdhui, groupeId = null, fuseau = null) {
     lier(db.prepare(`UPDATE soirees
                      SET jour = date(jour, '+' || (7 * CAST((julianday(?1) - julianday(jour) + 6) / 7 AS INTEGER)) || ' days'),
                          rappel = 0
-                     WHERE hebdo = 1 AND jour < ?1 ${dansLeGroupe}`)),
+                     WHERE hebdo = 1 AND jour < date(?1, '-1 day') ${dansLeGroupe}`)),
   ];
 }
 

@@ -1585,6 +1585,59 @@ input:disabled { opacity: 0.55; cursor: not-allowed; }
   .choix button { flex: 1; padding: 0 0.5rem; }
 }
 
+/* LES SOIRÉES PASSÉES (AllReady+, js/presence.js) : sous les soirées à
+   venir, plus discrètes qu'elles (pas de carte : de simples lignes
+   séparées par un trait). Le texte à gauche, le résultat et le bouton
+   à droite ; sur téléphone, ils passent dessous (flex-wrap). Les
+   lignes s'appellent « finie » et non « passee » : .passee est déjà la
+   classe des cases passées de l'agenda (agenda.js). */
+.passees { display: grid; gap: 0.6rem; margin-top: 2rem; }
+.liste-passees { margin: 0; padding: 0; list-style: none; }
+.finie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 1rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--bordure);
+}
+.finie-texte { flex: 1 1 14rem; min-width: 0; }
+.finie-titre { font-weight: 600; overflow-wrap: anywhere; }
+.finie-quand, .finie-resultat { color: var(--texte-doux); font-size: 0.88rem; }
+/* Sur téléphone, le résultat et le bouton toujours sous le titre :
+   sinon ils passent à côté ou dessous selon la longueur du texte. */
+@media (max-width: 34rem) {
+  .finie-texte { flex-basis: 100%; }
+}
+
+/* La fenêtre « Qui était là ? » : une ligne par membre, la case, son
+   avatar, son pseudo, et « chaud » en petit pour ceux qui l'avaient dit. */
+.presence-membres { display: grid; gap: 0.15rem; margin: 0.75rem 0 0; padding: 0; list-style: none; }
+.presence-membre {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 44px;
+  margin: 0;
+  font-weight: 400;
+  cursor: pointer;
+}
+.presence-membre input {
+  width: 1.1rem;
+  height: 1.1rem;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.presence-pseudo { overflow-wrap: anywhere; }
+.presence-chaud {
+  color: var(--accent);
+  font: 600 0.72rem var(--police-titre);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
 
 /* LE GROUPE (js/reglages.js), sous les cartes de la team : séparé par
    un trait, étroit, discret. « Quitter » en rouge (--non) : on ne clique
@@ -1702,7 +1755,7 @@ button.stat-jeu { cursor: help; }
     0 0 0 4px var(--soiree),
     0 0 16px 2px color-mix(in srgb, var(--soiree) 45%, transparent);
 }
-.membre-semaine { color: var(--texte-doux); font-size: 0.85rem; }
+.membre-semaine, .membre-fiabilite { color: var(--texte-doux); font-size: 0.85rem; }
 
 /* « orga » (AllReady+) : même pastille que « toi », en rose. */
 .membre-orga {

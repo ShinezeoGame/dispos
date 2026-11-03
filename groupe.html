@@ -145,6 +145,13 @@
       </section>
       <div id="liste-soirees" class="liste-soirees"></div>
       <p id="aucune-soiree" class="vide" hidden>Aucune soirée prévue.</p>
+      <!-- LES SOIRÉES PASSÉES (AllReady+, js/presence.js) : « Qui était
+           là ? » pour celui qui l'a proposée et les organisateurs, le
+           résultat pour tout le monde. Cachée s'il n'y a rien à montrer. -->
+      <section id="passees" class="passees" aria-labelledby="titre-passees" hidden>
+        <h2 id="titre-passees" class="titre-section">Passées</h2>
+        <ul id="liste-passees" class="liste-passees"></ul>
+      </section>
     </section>
 
 
@@ -285,6 +292,8 @@
           <h3 class="membre-pseudo"></h3>
           <p class="membre-statut"></p>
           <p class="membre-semaine"></p>
+          <!-- AllReady+ (js/team.js) : « Fiable à 80 % », d'après les présences pointées. -->
+          <p class="membre-fiabilite" hidden></p>
         </div>
         <span class="membre-toi" hidden>toi</span>
         <!-- AllReady+ : le premier membre et les organisateurs qu'il a nommés. -->
@@ -518,6 +527,23 @@
       <div class="dialogue-actions">
         <button type="button" id="debrancher-agenda" class="bouton bouton-second" hidden>Débrancher</button>
         <button type="submit" class="bouton">Synchroniser</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- QUI ÉTAIT LÀ ? (AllReady+, js/presence.js) : une case par membre,
+       ceux qui avaient dit « Chaud » en premier, cochés d'avance. -->
+  <dialog id="dialogue-presence" class="dialogue" aria-labelledby="titre-presence">
+    <form id="form-presence" method="dialog">
+      <div class="dialogue-tete">
+        <h2 id="titre-presence">Qui était là ?</h2>
+        <button type="button" class="bouton-icone" data-fermer aria-label="Fermer">×</button>
+      </div>
+      <p id="presence-soiree" class="indice"></p>
+      <ul id="presence-membres" class="presence-membres"></ul>
+      <p class="erreur" role="alert"></p>
+      <div class="dialogue-actions">
+        <button type="submit" class="bouton">Enregistrer</button>
       </div>
     </form>
   </dialog>
