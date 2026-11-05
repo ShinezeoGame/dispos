@@ -1693,6 +1693,30 @@ input:disabled { opacity: 0.55; cursor: not-allowed; }
 .lien-danger { color: var(--non); }
 .membre-retirer { justify-self: start; font-size: 0.85rem; }
 
+/* L'INVITATION AUX NOTIFICATIONS (js/notifications.js), en haut de la
+   page, sous les onglets : une cloche, une phrase, le bouton, et une croix pour la
+   faire partir. Sur une ligne sur ordinateur ; sur téléphone, le
+   bouton passe dessous (flex-wrap). Liseré de la couleur d'accent :
+   elle se remarque sans crier. */
+.invitation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1rem;
+  margin-bottom: 1.25rem;
+  padding: 0.75rem 0.75rem 0.75rem 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--bordure));
+  border-radius: var(--rayon);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+}
+.invitation-icone { font-size: 1.3rem; }
+.invitation-texte { flex: 1 1 12rem; font-size: 0.95rem; } /* 12rem : la cloche reste à côté, même sur téléphone */
+.invitation .bouton-icone { margin-left: auto; }
+
+/* « Me prévenir » (Le groupe → Sur cet appareil) : une case par ligne. */
+.notifs-liste { display: grid; }
+.notifs-liste label { font-weight: 400; }
+
 /* LA BANNIÈRE DU GROUPE (AllReady+, js/banniere.js), en haut de La
    team : un dégradé choisi par un organisateur, le nom du groupe, et un
    grand emoji penché à droite. Un voile sombre à gauche
@@ -1741,7 +1765,7 @@ input:disabled { opacity: 0.55; cursor: not-allowed; }
    dégradé que la bannière (data-fond posé sur chacun, comme les
    échantillons de la palette). Les emojis reprennent .choix-emoji. */
 .reglage fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
-.reglage legend { margin: 0.3rem 0 0.4rem; font-size: 0.9rem; }
+.reglage legend { margin: 0.3rem 0 0.4rem; padding: 0; font-size: 0.9rem; }
 .fonds-liste { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .choix-fond {
   position: relative;

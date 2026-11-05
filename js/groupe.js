@@ -18,6 +18,7 @@ import './presence.js'; // AllReady+ : les soirées passées, « Qui était là 
 import './plus.js'; // AllReady+ : le « + », la fenêtre, Le groupe
 import './reglages.js'; // la section « Le groupe » de l'onglet La team
 import './banniere.js'; // AllReady+ : la bannière en haut de La team, et son réglage
+import './notifications.js'; // l'invitation aux notifications, et ce qu'on veut recevoir
 import { debloquerThemes } from './apparence.js'; // le choix de la couleur du site
 import './appli.js'; // le site comme une appli : service worker, installation, notifications
 import { jeuDeMots } from './jeu-de-mots.js';

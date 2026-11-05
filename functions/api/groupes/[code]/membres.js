@@ -13,6 +13,7 @@ import {
   json, erreur, lireCorps, lireProfil, pseudoPris,
   genererJeton, hacher, identifier, MAX_MEMBRES,
 } from '../../../_outils.js';
+import { prevenirNouveauMembre } from '../../../_evenements.js';
 
 export async function onRequestPost(context) {
   const { groupe, moi, compte, refus } = await identifier(context, false);
@@ -57,5 +58,7 @@ export async function onRequestPost(context) {
       JSON.stringify(profil.perso), await hacher(genererJeton()))
     .first();
 
+  // Les autres membres sont prévenus (notification « membres », _evenements.js).
+  prevenirNouveauMembre(context, groupe, { id, pseudo: profil.pseudo });
   return json(201, { membre: { id, ...profil } });
 }

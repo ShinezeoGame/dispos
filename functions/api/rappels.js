@@ -79,8 +79,9 @@ export async function onRequestPost({ request, env }) {
   ]);
 
   // Les appareils abonnés de tous les « Chaud », en une seule requête.
+  // Sauf ceux qui ont coupé les rappels (sorte « rappels », _push.js).
   const appareils = await abonnementsDe(db,
-    [...new Set(chauds.results.map((rangee) => rangee.compte_id).filter(Boolean))]);
+    [...new Set(chauds.results.map((rangee) => rangee.compte_id).filter(Boolean))], 'rappels');
   const site = new URL(request.url).origin;
 
   /* Pour chaque soirée : un message Discord si le groupe a branché un

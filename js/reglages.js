@@ -183,8 +183,8 @@ async function dessinerAppareil() {
   boutonActiver.hidden = !possibles || abonne;
   boutonCouper.hidden = !abonne;
   aideAppareil.textContent = abonne
-    ? 'Notifications activées : les nouvelles soirées, et un rappel une heure avant celles où tu es chaud.'
-    : possibles ? 'Les nouvelles soirées, et un rappel une heure avant celles où tu es chaud.'
+    ? 'Notifications activées sur cet appareil.'
+    : possibles ? 'Les soirées, les « Chaud », qui est dispo ce soir… sur ce téléphone ou ce PC, même site fermé.'
     : iphoneHorsAppli ? "Sur iPhone : Partager → « Sur l'écran d'accueil », puis ouvre AllReady depuis son icône pour activer les notifications."
     : '';
   reglageAppareil.hidden = !aideAppareil.textContent && boutonInstaller.hidden;

@@ -20,6 +20,7 @@
 import {
   json, erreur, lireCorps, estLundi, identifier, HEURE_DEBUT, HEURE_FIN,
 } from '../../../_outils.js';
+import { prevenirDispoCeSoir } from '../../../_evenements.js';
 
 // Une case valide : un tableau de deux nombres entiers, dans l'agenda.
 function caseValide(creneau) {
@@ -30,7 +31,7 @@ function caseValide(creneau) {
 }
 
 export async function onRequestPut(context) {
-  const { moi, refus } = await identifier(context);
+  const { groupe, moi, refus } = await identifier(context);
   if (refus) return refus;
 
   const corps = await lireCorps(context.request);
@@ -46,6 +47,17 @@ export async function onRequestPut(context) {
 
   const db = context.env.DB;
   const texte = JSON.stringify(creneaux);
+
+  /* Ce qui était coché AVANT (la semaine enregistrée, sinon la semaine
+     type si elle s'applique) : pour savoir, après, s'il vient de se
+     dire dispo ce soir (prevenirDispoCeSoir, _evenements.js). */
+  const [ligne, membre] = await db.batch([
+    db.prepare('SELECT creneaux FROM dispos WHERE membre_id = ? AND semaine = ?').bind(moi.id, corps.semaine),
+    db.prepare('SELECT semaine_type FROM membres WHERE id = ?').bind(moi.id),
+  ]);
+  let avant = ligne.results[0] ? JSON.parse(ligne.results[0].creneaux) : [];
+  const typeAvant = membre.results[0]?.semaine_type;
+  if (!ligne.results[0] && typeAvant && JSON.parse(typeAvant).depuis <= corps.semaine) avant = JSON.parse(typeAvant).creneaux;
   const modele = JSON.stringify({ depuis: corps.semaine, creneaux });
 
   /* « INSERT … ON CONFLICT DO UPDATE » : crée la ligne de la semaine
@@ -71,5 +83,8 @@ export async function onRequestPut(context) {
   // batch : tout ou rien (une transaction).
   await db.batch(instructions);
 
+  // Après la réponse (waitUntil) : la page n'attend pas les notifications.
+  context.waitUntil(prevenirDispoCeSoir(context, groupe, moi, corps.semaine, avant, creneaux)
+    .catch((probleme) => console.error('push', probleme)));
   return json(200, { ok: true });
 }

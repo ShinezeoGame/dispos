@@ -66,6 +66,16 @@
   <main class="groupe">
     <p id="chargement" class="message-centre">Chargement du groupe…</p>
 
+    <!-- L'INVITATION AUX NOTIFICATIONS (js/notifications.js) : en haut de
+         la page, sous les onglets, tant qu'elles ne sont pas activées sur cet appareil
+         et que la croix n'a pas été touchée. -->
+    <aside id="invitation-notifs" class="invitation" hidden>
+      <span class="invitation-icone" aria-hidden="true">🔔</span>
+      <p id="invitation-texte" class="invitation-texte"></p>
+      <button id="invitation-activer" class="bouton bouton-petit" type="button">Activer les notifications</button>
+      <button id="invitation-fermer" class="bouton-icone" type="button" aria-label="Plus tard">×</button>
+    </aside>
+
     <section id="erreur-groupe" class="message-centre" hidden>
       <h2>Oups</h2>
       <p id="erreur-groupe-texte"></p>
@@ -204,7 +214,13 @@
             <button id="activer-notifs" class="bouton bouton-second bouton-petit" type="button" hidden>Activer les notifications</button>
             <button id="installer-appli" class="bouton bouton-second bouton-petit" type="button" hidden>Installer l'appli</button>
           </div>
-          <button id="couper-notifs" class="lien-discret" type="button" hidden>Couper les notifications</button>
+          <!-- Une fois activées : ce qu'on veut recevoir (js/notifications.js).
+               Pour le compte : tous ses appareils, tous ses groupes. -->
+          <fieldset id="notifs-sortes" hidden>
+            <legend>Me prévenir</legend>
+            <div id="notifs-liste" class="notifs-liste"></div>
+          </fieldset>
+          <button id="couper-notifs" class="lien-discret" type="button" hidden>Couper les notifications sur cet appareil</button>
         </div>
         <!-- DISCORD (premier membre seulement, js/reglages.js) : un salon
              où annoncer les soirées, avec un rappel une heure avant

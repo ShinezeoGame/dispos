@@ -152,12 +152,45 @@ nom de domaine à part reste à choisir.
   le propose (aussi en bas de l'accueil), « Activer les notifications »
   (compte Discord requis), puis « Couper ». Sur iPhone, une aide :
   Partager → « Sur l'écran d'accueil » (pas de notifications avant).
-  On est prévenu d'une **nouvelle soirée** dans ses groupes et, si on a
-  dit « Chaud », **moins d'une heure avant** (par le même réveil que
-  Discord, étape 7). `js/appli.js` côté page, `functions/_push.js`
-  côté serveur (chiffrement RFC 8291 et signature VAPID faits à la
-  main avec crypto.subtle, vérifiés sur l'exemple de la RFC), route
-  `/api/push` (clé, abonner, désabonner).
+  `js/appli.js` côté page, `functions/_push.js` côté serveur
+  (chiffrement RFC 8291 et signature VAPID faits à la main avec
+  crypto.subtle, vérifiés sur l'exemple de la RFC), route `/api/push`
+  (clé, abonner, désabonner).
+- **Tout ce qui se passe dans le groupe, en notifications** (5 nov.
+  2026, demandé : « notifier les gens de tout ce qu'il se passe dans
+  leur groupe »). Cinq sortes (`TYPES_NOTIFS`) :
+  - `soirees` : une soirée proposée, déplacée ou annulée ;
+  - `reponses` : un « Chaud » à une soirée que tu as proposée
+    (« Chaud : Léa et Sam · 3/4 places ») ;
+  - `dispos` : qui est dispo ce soir (« Léa, Sam et Tom sont dispo ce
+    soir »), dès qu'un membre coche sa première heure de ce soir, une
+    fois par membre et par soir (`membres.dispo_annoncee`), sur le site
+    comme avec `/dispo` ;
+  - `membres` : quelqu'un rejoint le groupe ;
+  - `rappels` : moins d'une heure avant (par le réveil, étape 7), et
+    « une place s'est libérée ».
+
+  Celui qui agit n'est jamais prévenu de son propre geste. Les textes
+  sont dans `functions/_evenements.js`, sauf ceux d'avant (nouvelle
+  soirée dans `soirees/index.js`, rappel dans `rappels.js`, place
+  libérée dans `_reponses.js`). Un même `tag` remplace la notification
+  précédente au lieu d'empiler : une seule « dispo ce soir » par groupe
+  et par soir, une seule liste de « Chaud » par soirée.
+
+  Chacun coupe les sortes qu'il ne veut pas : « Me prévenir », dans Le
+  groupe → Sur cet appareil, une fois activées. Le choix vaut pour le
+  compte, donc tous ses appareils et tous ses groupes
+  (`comptes.notifs`, liste JSON des sortes coupées, '' = tout ;
+  `PATCH /api/compte { coupees }`). Le tri se fait à l'envoi
+  (`abonnementsDe(…, type)`, _push.js).
+
+  **L'invitation** (`js/notifications.js`) : un bandeau 🔔 en haut de la
+  page d'un groupe, sous les onglets, « Activer les notifications »,
+  pour un membre connecté pas encore abonné sur cet appareil. La croix
+  le fait partir pour de bon (localStorage, clé
+  `allready-invitation-notifs`). Caché si le navigateur a refusé les
+  notifications. Sur iPhone hors écran d'accueil, il dit comment l'y
+  mettre.
 - **La fiche d'un jeu** au survol (au toucher sur téléphone, au focus
   au clavier) : jaquette, année, tags traduits en français (modes, mots-
   clés comme Roguelike, thèmes comme Horreur, genres) et résumé IGDB, en
@@ -362,6 +395,7 @@ nom de domaine à part reste à choisir.
     manifest.webmanifest       nom, couleurs et icônes de l'appli installée
     assets/icone.svg           l'icône de l'appli ; icone-192/512/180.png en sont tirées
     functions/_push.js         code SERVEUR : clés VAPID, chiffrement, envoi des notifications
+    functions/_evenements.js   code SERVEUR : ce qui se passe dans un groupe, en notifications
     functions/api/push.js      /api/push : la clé du site, s'abonner, se désabonner
     js/reglages.js             la section « Le groupe » (onglet La team)
     js/plus.js                 AllReady+ : la fenêtre de l'offre, le « + »
@@ -371,6 +405,7 @@ nom de domaine à part reste à choisir.
     js/agenda-perso.js         ton agenda Google / Apple / Outlook : la fenêtre, les cases hachurées
     js/presence.js             AllReady+ : les soirées passées, « Qui était là ? »
     js/banniere.js             AllReady+ : la bannière en haut de La team, et son réglage
+    js/notifications.js        l'invitation aux notifications, et « Me prévenir »
     functions/_agenda.js       code SERVEUR : lire un agenda iCal, trouver les créneaux occupés
     functions/api/compte/agenda.js          ranger ou oublier l'adresse de son agenda
     functions/api/groupes/[code]/occupe.js  tes créneaux occupés d'une semaine
@@ -600,7 +635,10 @@ nom de domaine à part reste à choisir.
   4rem des autres onglets), partagé en 18 lignes. Oublier cette marge
   laissait un petit défilement inutile sur les portables (2 nov. 2026).
   Recalculée au redessin, au redimensionnement, à l'arrivée de la police
-  et quand l'onglet réapparaît (ResizeObserver). Ne pas fixer de hauteur
+  et quand l'onglet réapparaît (ResizeObserver, qui surveille aussi
+  l'invitation aux notifications : tout nouvel élément posé au-dessus de
+  la grille doit y être ajouté, sinon l'agenda dépasse de l'écran quand
+  il apparaît). Ne pas fixer de hauteur
   en dur sur `.case` : seulement le repli `var(--hauteur-case, 1,9rem)`.
 - **L'onglet Agenda a deux colonnes sur ordinateur** (`.agenda-corps` :
   `.agenda-principal` avec la grille, `.agenda-cote` avec le détail puis
@@ -618,7 +656,9 @@ nom de domaine à part reste à choisir.
   colonne) : `{ emoji, statut, style, plateformes, discord, pseudos }`.
   Ajouter une option = un champ dans `lirePerso()` (_outils.js), pas de
   migration. Les listes `EMOJIS`, `PLATEFORMES`, `STYLES` existent en
-  double (commun.js et _outils.js) : les changer ensemble. `EMOJIS`
+  double (commun.js et _outils.js) : les changer ensemble. Les sortes de
+  notifications aussi : `TYPES_NOTIFS` (_outils.js) et `NOTIFS`
+  (js/notifications.js). `EMOJIS`
   sert aussi à la bannière du groupe. Les fonds de la bannière aussi
   sont en double : `FONDS_BANNIERE` (_outils.js) et `FONDS`
   (js/banniere.js), plus leurs dégradés `--banniere-…` dans style.css.

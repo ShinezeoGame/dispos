@@ -330,11 +330,15 @@ function ajusterHauteur() {
 /* On recalcule quand la fenêtre change de taille, quand la police des
    titres finit d'arriver (elle change la hauteur de l'en-tête), et quand
    l'onglet Agenda réapparaît (ResizeObserver : prévenu dès que la taille
-   de la section change, y compris de « caché » à « visible »). */
+   de la section change, y compris de « caché » à « visible »). Et quand
+   l'invitation aux notifications, au-dessus, apparaît ou s'en va
+   (js/notifications.js) : elle pousse la grille vers le bas. */
 window.addEventListener('resize', ajusterHauteur);
 ordinateur.addEventListener('change', ajusterHauteur);
 document.fonts.ready.then(ajusterHauteur);
-new ResizeObserver(ajusterHauteur).observe(document.getElementById('vue-agenda'));
+const observateur = new ResizeObserver(ajusterHauteur);
+observateur.observe(document.getElementById('vue-agenda'));
+observateur.observe(document.getElementById('invitation-notifs'));
 
 function dessinerSemaine() {
   const ecart = Math.round((etat.semaine - lundiDe(maintenant())) / (7 * 86400000));

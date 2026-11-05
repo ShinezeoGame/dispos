@@ -16,7 +16,7 @@
 import {
   json, erreur, estLundi, identifier, jeuxStockes, persoStockee, adressePhoto,
   lireCorps, ligne, peutGerer, recalerHebdos, lireFuseau, repartir, rolesStockes,
-  lireBanniere, banniereStockee, themesDebloques,
+  lireBanniere, banniereStockee, themesDebloques, notifsCoupees,
 } from '../../../_outils.js';
 import { heureDuGroupe } from '../../../_annonces.js';
 import { botConfigure } from '../../../_discord.js';
@@ -177,8 +177,12 @@ export async function onRequestGet(context) {
     // agenda : une synchronisation d'agenda est-elle branchée ? (oui ou
     // non : jamais l'adresse, qui donne accès à l'agenda)
     // themes : les thèmes exclusifs débloqués (soutien ou groupe AllReady+).
+    // notifs : les sortes de notifications coupées (js/reglages.js).
     compte: compte
-      ? { nom: compte.nom, discord: compte.discord, agenda: compte.agenda_ics !== '', themes: await themesDebloques(db, compte.id) }
+      ? {
+        nom: compte.nom, discord: compte.discord, agenda: compte.agenda_ics !== '',
+        themes: await themesDebloques(db, compte.id), notifs: notifsCoupees(compte.notifs),
+      }
       : null,
     semaine,
     // As-tu une semaine type ? (coche « Répéter chaque semaine »)

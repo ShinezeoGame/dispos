@@ -26,6 +26,7 @@ import { peutGerer, casesDeCeSoir, REPONSES } from '../../_outils.js';
 import { signatureValable } from '../../_discord.js';
 import { heureDuGroupe, texteMoment } from '../../_annonces.js';
 import { repondreSoiree } from '../../_reponses.js';
+import { prevenirDispoCeSoir } from '../../_evenements.js';
 
 // Un message du bot. prive : visible par la seule personne qui a tapé.
 function message(contenu, { prive = true, composants } = {}) {
@@ -71,7 +72,7 @@ export async function onRequestPost(context) {
   const profil = await profilDe(db, groupe, discordId);
   if (!profil) return message(`Rejoins d'abord « ${groupe.nom} » sur AllReady, avec ce compte Discord : ${lien}`);
 
-  if (nomCommande === 'dispo') return dispo(db, groupe, profil);
+  if (nomCommande === 'dispo') return dispo(context, groupe, profil);
   if (nomCommande === 'soirees') return soirees(db, groupe, lien);
   if (interaction.type === 3) return bouton(context, db, groupe, profil, String(interaction.data.custom_id));
   return message('Commande inconnue.');
@@ -106,7 +107,8 @@ async function lier(db, interaction, discordId, site) {
    ajoutées à celles déjà cochées cette semaine. Une semaine pas encore
    enregistrée part de la semaine type, si elle s'applique : sinon,
    enregistrer la semaine effacerait le modèle pour elle. */
-async function dispo(db, groupe, profil) {
+async function dispo(context, groupe, profil) {
+  const db = context.env.DB;
   const { semaine, cases } = casesDeCeSoir(heureDuGroupe(groupe.fuseau));
   const ligne = await db.prepare('SELECT creneaux FROM dispos WHERE membre_id = ? AND semaine = ?').bind(profil.id, semaine).first();
   let deja = ligne ? JSON.parse(ligne.creneaux) : [];
@@ -119,6 +121,9 @@ async function dispo(db, groupe, profil) {
                     ON CONFLICT (membre_id, semaine) DO UPDATE SET creneaux = excluded.creneaux`)
     .bind(profil.id, semaine, JSON.stringify([...toutes.values()]))
     .run();
+  // Le groupe est prévenu, comme depuis le site (_evenements.js).
+  context.waitUntil(prevenirDispoCeSoir(context, groupe, profil, semaine, deja, [...toutes.values()])
+    .catch((probleme) => console.error('push', probleme)));
   return message(`C'est noté, ${profil.pseudo} : chaud ce soir de ${cases[0][1] % 24}h à 3h. Ça se voit sur l'agenda.`);
 }
 

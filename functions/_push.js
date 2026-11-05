@@ -197,12 +197,21 @@ async function deposer(db, cles, site, abonnement, message) {
 }
 
 /* Les appareils abonnés de ces comptes (leurs id), en une requête
-   (json_each : toute la liste dans un seul paramètre). */
-export async function abonnementsDe(db, compteIds) {
+   (json_each : toute la liste dans un seul paramètre).
+
+   type (5 nov. 2026) : la sorte de notification (TYPES_NOTIFS, dans
+   _outils.js). Les comptes qui l'ont coupée sont laissés de côté :
+   comptes.notifs est une liste JSON comme ["membres","dispos"], et
+   instr() y cherche « "membres" », guillemets compris (sans eux,
+   « soirees » se trouverait aussi dans un mot plus long). */
+export async function abonnementsDe(db, compteIds, type = null) {
   if (!compteIds.length) return [];
   const { results } = await db
-    .prepare('SELECT compte_id, endpoint, p256dh, auth FROM abonnements WHERE compte_id IN (SELECT value FROM json_each(?))')
-    .bind(JSON.stringify(compteIds))
+    .prepare(`SELECT a.compte_id, a.endpoint, a.p256dh, a.auth FROM abonnements a
+              JOIN comptes c ON c.id = a.compte_id
+              WHERE a.compte_id IN (SELECT value FROM json_each(?1))
+                AND (?2 IS NULL OR instr(c.notifs, '"' || ?2 || '"') = 0)`)
+    .bind(JSON.stringify(compteIds), type)
     .all();
   return results;
 }
@@ -217,14 +226,16 @@ export async function envoyerA(db, site, abonnements, message) {
   return statuts.filter((statut) => statut >= 200 && statut < 300).length;
 }
 
-// Prévenir des comptes sur tous leurs appareils abonnés.
-export async function notifierComptes(db, site, compteIds, message) {
-  return envoyerA(db, site, await abonnementsDe(db, compteIds), message);
+// Prévenir des comptes sur tous leurs appareils abonnés (sauf ceux
+// qui ont coupé cette sorte de notification).
+export async function notifierComptes(db, site, compteIds, message, type = null) {
+  return envoyerA(db, site, await abonnementsDe(db, compteIds, type), message);
 }
 
 /* Prévenir tout le groupe sauf une personne (celle qui vient d'agir),
-   après la réponse (waitUntil), comme les annonces Discord. */
-export function notifierGroupe(context, groupe, saufMembreId, message) {
+   après la réponse (waitUntil), comme les annonces Discord. type : la
+   sorte de notification, voir abonnementsDe. */
+export function notifierGroupe(context, groupe, saufMembreId, message, type = null) {
   const db = context.env.DB;
   const site = new URL(context.request.url).origin;
   context.waitUntil((async () => {
@@ -232,6 +243,6 @@ export function notifierGroupe(context, groupe, saufMembreId, message) {
       .prepare('SELECT DISTINCT compte_id FROM membres WHERE groupe_id = ? AND id != ? AND compte_id IS NOT NULL')
       .bind(groupe.id, saufMembreId)
       .all();
-    await notifierComptes(db, site, results.map((rangee) => rangee.compte_id), message);
+    await notifierComptes(db, site, results.map((rangee) => rangee.compte_id), message, type);
   })().catch((probleme) => console.error('push', probleme)));
 }

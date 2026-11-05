@@ -46,6 +46,26 @@ export const MAX_JEUX = 12; // par profil
 // identique aux listes de js/commun.js, qui les affiche.
 export const EMOJIS = ['🎮', '🕹️', '👾', '🤖', '👻', '💀', '🐉', '🦊', '🐸', '🐼', '🦄', '🔥', '⚡', '🌙', '🍕', '🎧'];
 export const PLATEFORMES = ['pc', 'playstation', 'xbox', 'switch', 'mobile'];
+/* LES SORTES DE NOTIFICATIONS (5 nov. 2026). Chacun peut couper
+   celles qu'il ne veut pas (comptes.notifs). Même liste dans
+   js/reglages.js (NOTIFS), qui les nomme :
+   — soirees : une soirée proposée, déplacée ou annulée ;
+   — reponses : un « Chaud » à une soirée que tu as proposée ;
+   — dispos : qui est dispo ce soir ;
+   — membres : quelqu'un rejoint le groupe ;
+   — rappels : une heure avant ta soirée, et « une place s'est libérée ». */
+export const TYPES_NOTIFS = ['soirees', 'reponses', 'dispos', 'membres', 'rappels'];
+
+// Les sortes coupées, lues dans comptes.notifs (une liste, vide au départ).
+export function notifsCoupees(texte) {
+  try {
+    const liste = texte ? JSON.parse(texte) : [];
+    return Array.isArray(liste) ? liste.filter((type) => TYPES_NOTIFS.includes(type)) : [];
+  } catch {
+    return [];
+  }
+}
+
 // Les fonds de la bannière d'un groupe (AllReady+). Même liste dans
 // js/reglages.js (FONDS), qui les nomme ; les dégradés sont dans style.css.
 export const FONDS_BANNIERE = ['theme', 'braise', 'crepuscule', 'lave', 'nuit', 'aurore'];
@@ -98,6 +118,7 @@ export const SCHEMA = [
     discord TEXT NOT NULL DEFAULT '',
     soutien INTEGER NOT NULL DEFAULT 0,
     agenda_ics TEXT NOT NULL DEFAULT '',
+    notifs TEXT NOT NULL DEFAULT '',
     cree_le TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
 
@@ -130,6 +151,7 @@ export const SCHEMA = [
     perso TEXT NOT NULL DEFAULT '{}',
     semaine_type TEXT,
     organisateur INTEGER NOT NULL DEFAULT 0,
+    dispo_annoncee TEXT NOT NULL DEFAULT '',
     jeton_hash TEXT NOT NULL UNIQUE,
     cree_le TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
@@ -341,6 +363,15 @@ export const MIGRATIONS = [
   /* 3 nov. 2026 : groupes.banniere, la bannière du groupe (AllReady+) :
      { fond, emoji } en JSON, '' = aucune. Voir lireBanniere. */
   "ALTER TABLE groupes ADD COLUMN banniere TEXT NOT NULL DEFAULT ''",
+  /* 5 nov. 2026 : les notifications de tout ce qui se passe dans un
+     groupe (functions/_evenements.js).
+     comptes.notifs : les sortes de notifications que la personne a
+     coupées, en liste JSON (« ["membres"] ») ; '' = elle reçoit tout.
+     membres.dispo_annoncee : le soir (« 2026-11-05 ») où le groupe a
+     déjà été prévenu que ce membre est dispo, pour ne le dire qu'une
+     fois par soirée. */
+  "ALTER TABLE comptes ADD COLUMN notifs TEXT NOT NULL DEFAULT ''",
+  "ALTER TABLE membres ADD COLUMN dispo_annoncee TEXT NOT NULL DEFAULT ''",
 ];
 
 
@@ -930,7 +961,7 @@ export async function compteConnecte(request, db) {
   const jeton = lireCookie(request, NOM_COOKIE);
   if (!/^[0-9a-f]{64}$/.test(jeton)) return null;
   return db
-    .prepare(`SELECT c.id, c.nom, c.discord, c.agenda_ics FROM sessions s
+    .prepare(`SELECT c.id, c.nom, c.discord, c.agenda_ics, c.notifs FROM sessions s
               JOIN comptes c ON c.id = s.compte_id
               WHERE s.jeton_hash = ? AND s.expire > datetime('now')`)
     .bind(await hacher(jeton))

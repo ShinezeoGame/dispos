@@ -13,13 +13,14 @@
 import { json, erreur, lireCorps, identifier, lireSoiree, peutGerer, repartir, rolesStockes, REPONSES } from '../../../../_outils.js';
 import { annoncerSoiree, heureDuGroupe } from '../../../../_annonces.js';
 import { repondreSoiree } from '../../../../_reponses.js';
+import { prevenirSoireeDeplacee, prevenirSoireeAnnulee } from '../../../../_evenements.js';
 
 /* La soirée doit appartenir AU groupe du lien. Sans ce
    « AND groupe_id = ? », un membre d'un groupe pourrait répondre aux
    soirées d'un autre groupe en changeant le numéro dans l'adresse. */
 async function trouverSoiree(db, groupeId, id) {
   return db
-    .prepare('SELECT id, createur_id, titre, jour, horaire, places, choix, roles FROM soirees WHERE id = ? AND groupe_id = ?')
+    .prepare('SELECT id, createur_id, titre, jour, horaire, fin, places, choix, roles FROM soirees WHERE id = ? AND groupe_id = ?')
     .bind(Number(id), groupeId)
     .first();
 }
@@ -219,6 +220,8 @@ export async function onRequestPatch(context) {
   // corrigé ne mérite pas un message de plus dans le salon.
   if (autreMoment) {
     annoncerSoiree(context, groupe, 'deplacee', { ...soiree, jeu: soiree.jeu.nom, jeu_cover: soiree.jeu.cover }, moi.pseudo);
+    // Et en notification, au reste du groupe (_evenements.js).
+    prevenirSoireeDeplacee(context, groupe, { ...soiree, id: ancienne.id }, moi);
   }
 
   return json(200, { ok: true, reponsesEffacees: autreMoment });
@@ -244,6 +247,7 @@ export async function onRequestDelete(context) {
   // vieille soirée de la liste n'intéresse personne.
   if (`${soiree.jour} ${soiree.horaire}` > heureDuGroupe(groupe.fuseau)) {
     annoncerSoiree(context, groupe, 'annulee', soiree, moi.pseudo);
+    prevenirSoireeAnnulee(context, groupe, soiree, moi);
   }
   return json(200, { ok: true });
 }

@@ -15,6 +15,7 @@
 
 import { erreur, repartir, rolesStockes } from './_outils.js';
 import { notifierComptes } from './_push.js';
+import { prevenirChaud } from './_evenements.js';
 
 export async function repondreSoiree(context, groupe, soiree, membreId, reponse, roleDemande) {
   const db = context.env.DB;
@@ -45,6 +46,13 @@ export async function repondreSoiree(context, groupe, soiree, membreId, reponse,
     .bind(soiree.id).all()).results;
   const avant = limitee ? repartir({ roles, places: soiree.places }, await lireOui(), true) : new Set();
 
+  /* Était-il déjà « Chaud » ? Pour ne prévenir la personne qui a
+     proposé la soirée que d'un nouveau « Chaud » (prevenirChaud,
+     _evenements.js), pas d'un « Chaud » redit. */
+  const dejaChaud = reponse === 'oui' && await db
+    .prepare("SELECT 1 FROM reponses WHERE soiree_id = ? AND membre_id = ? AND reponse = 'oui'")
+    .bind(soiree.id, membreId).first();
+
   /* Même principe que pour les dispos : crée la réponse ou la remplace.
      inscrit_le : l'heure d'arrivée, qui décide de la place dans la file.
      Redire la même chose (même réponse, même rôle) garde l'ancienne
@@ -59,6 +67,8 @@ export async function repondreSoiree(context, groupe, soiree, membreId, reponse,
     .bind(soiree.id, membreId, reponse, role, new Date().toISOString())
     .run();
 
+  if (reponse === 'oui' && !dejaChaud) prevenirChaud(context, groupe, soiree, membreId);
+
   if (!limitee) return { attente: false };
   const apres = repartir({ roles, places: soiree.places }, await lireOui(), true);
   /* Ceux qui attendaient et qui jouent maintenant : une notification. */
@@ -72,7 +82,7 @@ export async function repondreSoiree(context, groupe, soiree, membreId, reponse,
       corps: `Tu joues : ${soiree.titre}.`,
       url: `/groupe?g=${groupe.code}`,
       tag: `place-${soiree.id}`,
-    }).catch(() => {}));
+    }, 'rappels').catch(() => {}));
   }
   return { attente: apres.has(membreId) };
 }

@@ -56,7 +56,7 @@ export async function onRequestPost(context) {
     corps: `${soiree.titre} · ${texteMoment(soiree)} · proposée par ${moi.pseudo}`,
     url: `/groupe?g=${groupe.code}`,
     tag: `soiree-${id}`,
-  });
+  }, 'soirees');
 
   return json(201, { id });
 }

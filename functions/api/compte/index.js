@@ -9,7 +9,9 @@
    seulement du navigateur : connecté sur un nouvel appareil, tu les
    retrouves tous. */
 
-import { json, erreur, compteConnecte, fermerSession, themesDebloques } from '../../_outils.js';
+import {
+  json, erreur, lireCorps, compteConnecte, fermerSession, themesDebloques, notifsCoupees, TYPES_NOTIFS,
+} from '../../_outils.js';
 
 export async function onRequestGet({ request, env }) {
   const compte = await compteConnecte(request, env.DB);
@@ -31,6 +33,26 @@ export async function onRequestGet({ request, env }) {
     compte: { nom: compte.nom, discord: compte.discord, themes: await themesDebloques(env.DB, compte.id) },
     groupes: results,
   });
+}
+
+
+/* TES NOTIFICATIONS — PATCH /api/compte (5 nov. 2026)
+
+   Reçoit : { coupees: ["dispos", "membres"] } : les sortes de
+   notifications que tu ne veux plus (TYPES_NOTIFS, _outils.js). Elles
+   valent pour ton compte : tous tes appareils, tous tes groupes. Une
+   sorte inconnue est ignorée ; une liste vide remet tout. Renvoie la
+   liste rangée : { coupees: […] }. */
+export async function onRequestPatch({ request, env }) {
+  const compte = await compteConnecte(request, env.DB);
+  if (!compte) return erreur(401, "Tu n'es pas connecté.");
+  const { coupees } = await lireCorps(request);
+  if (!Array.isArray(coupees)) return erreur(400, 'Liste de notifications invalide.');
+  // Dans l'ordre de TYPES_NOTIFS, sans doublon ni sorte inconnue.
+  const liste = TYPES_NOTIFS.filter((type) => coupees.includes(type));
+  await env.DB.prepare('UPDATE comptes SET notifs = ? WHERE id = ?')
+    .bind(liste.length ? JSON.stringify(liste) : '', compte.id).run();
+  return json(200, { coupees: notifsCoupees(JSON.stringify(liste)) });
 }
 
 
