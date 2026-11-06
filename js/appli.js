@@ -54,10 +54,10 @@ export const iphoneHorsAppli = /iPhone|iPad|iPod/.test(navigator.userAgent) && !
 /* Un téléphone Android, hors de l'appli (6 nov. 2026) : on y propose de
    télécharger l'APK (/allready.apk, voir CLAUDE.md, « L'appli
    Android »). Dans l'appli elle-même, comme dans le site installé par
-   Chrome, la page s'affiche en « standalone » (sans barre d'adresse) :
-   pas de lien, on y est déjà. */
+   Chrome, <html> porte la classe « appli » (js/theme.js) : pas de
+   lien, on y est déjà. */
 export const androidHorsAppli = /Android/i.test(navigator.userAgent)
-  && !matchMedia('(display-mode: standalone)').matches;
+  && !document.documentElement.classList.contains('appli'); // posée par js/theme.js
 
 /* LA MISE À JOUR DE L'APPLI ANDROID (6 nov. 2026, demandé : « que je
    n'aie pas à la retélécharger à chaque fois »).
@@ -70,11 +70,10 @@ export const androidHorsAppli = /Android/i.test(navigator.userAgent)
    dans android/twa-manifest.json). À augmenter EN MÊME TEMPS que lui.
 
    L'appli s'ouvre sur /?appli=3 (startUrl de twa-manifest.json, le
-   numéro de sa version). La page le retient pour toute la visite
-   (sessionStorage : l'appli et Chrome partagent le stockage du site,
-   pas la session), puis l'efface de l'adresse. Les versions 1 et 2 ne
-   disaient rien : on les reconnaît à leur « referrer », l'adresse
-   android-app:// que l'appli donne à la page qu'elle ouvre.
+   numéro de sa version). js/theme.js, avant l'affichage, le retient
+   pour toute la visite (sessionStorage : l'appli et Chrome partagent
+   le stockage du site, pas la session) et l'efface de l'adresse. Les
+   versions 1 et 2 ne disaient rien : reconnues à leur « referrer ».
 
    Une version plus ancienne que VERSION_APK : le bandeau « Mettre à
    jour » (#maj-appli), qui télécharge l'APK. Android propose alors de
@@ -82,17 +81,9 @@ export const androidHorsAppli = /Android/i.test(navigator.userAgent)
    cache jusqu'à la prochaine ouverture de l'appli. */
 export const VERSION_APK = 3;
 
+// La version notée par js/theme.js au début de la visite (0 : pas l'appli).
 function versionInstallee() {
   try {
-    const parametres = new URLSearchParams(location.search);
-    if (parametres.has('appli')) {
-      sessionStorage.setItem('allready-appli', parametres.get('appli'));
-      parametres.delete('appli');
-      const reste = parametres.toString();
-      history.replaceState(null, '', location.pathname + (reste ? `?${reste}` : '') + location.hash);
-    } else if (document.referrer.startsWith('android-app://fr.allready.app') && !sessionStorage.getItem('allready-appli')) {
-      sessionStorage.setItem('allready-appli', '2'); // une appli d'avant la 1.0.2
-    }
     return Number(sessionStorage.getItem('allready-appli')) || 0;
   } catch {
     return 0; // stockage bloqué : on ne sait pas, on ne dit rien

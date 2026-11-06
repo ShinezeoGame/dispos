@@ -505,6 +505,26 @@ téléphone Android seulement**, et jamais depuis l'appli elle-même
   `maskableIconUrl`, `monochromeIconUrl` et `webManifestUrl` vers
   127.0.0.1 le temps de la fabrication.
 
+### Le mode appli (6 nov. 2026, demandé : « je veux une vraie application »)
+
+Le même code, mais ouvert depuis l'appli (Android, ou le site installé
+par le navigateur), AllReady prend une allure d'appli. `js/theme.js`,
+avant l'affichage, pose la classe `appli` sur `<html>` : affichage
+« standalone », ou version de l'appli notée pendant la visite
+(`?appli=N` ou referrer `android-app://`, sessionStorage
+`allready-appli`). Toutes les règles du mode appli sont dans
+style.css, « 14. Le mode appli », et ne valent que sous `.appli` : le
+site dans un navigateur ne change pas.
+
+- **Bloc 1, l'ouverture** : la première page de la visite
+  (sessionStorage `allready-visite`), si c'est l'accueil, saute au
+  dernier groupe ouvert (localStorage `allready-dernier-groupe`, posé
+  par groupe.js, effacé par `oublierGroupe()`). Ensuite le logo ramène
+  à l'accueil, qui devient la liste de tes groupes : sans la vitrine
+  (`.hero`) dès qu'il y a un groupe, sans la phrase du pied de page
+  (« Supprimer mon compte » reste : le Play Store exige qu'on puisse
+  supprimer son compte depuis l'appli).
+
 ## Mise en ligne (à faire une fois)
 
 1. Cloudflare → Workers & Pages → D1 → créer une base `dispos`.
@@ -706,7 +726,9 @@ téléphone Android seulement**, et jamais depuis l'appli elle-même
   bas) puis effacés de la barre d'adresse.
 - **`js/theme.js` doit rester un script classique dans `<head>`**, avant
   la feuille de style : en module ou en `defer`, la page s'afficherait
-  d'abord en orange puis changerait de couleur.
+  d'abord en orange puis changerait de couleur. Il pose aussi la classe
+  `appli` et fait le saut vers le dernier groupe (le mode appli) : pour
+  la même raison, rien ne doit s'afficher avant.
 - **Le nom du groupe a la même taille que le nom du site** (1.35rem) :
   c'est ce qui aligne leurs lignes de base dans l'en-tête. Avec une
   taille plus petite, il paraît flotter 2 px trop haut.

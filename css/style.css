@@ -2516,6 +2516,24 @@ button.tag-jeu:hover { border-color: var(--accent); }
 }
 
 
+/* 14. LE MODE APPLI (6 nov. 2026, demandé : « je veux une vraie
+   application »)
+
+   Ouvert depuis l'appli (Android, ou le site installé), js/theme.js
+   pose la classe « appli » sur <html> avant l'affichage. Les règles
+   qui suivent ne valent que là : le site, dans un navigateur, ne
+   change pas.
+
+   L'accueil de l'appli, c'est la liste de tes groupes : la vitrine (le
+   grand titre et l'aperçu de l'agenda, qui présentent le site à un
+   nouveau venu) disparaît dès que tu as un groupe. Sans groupe, elle
+   reste : c'est l'écran de bienvenue. Le pied de page garde ses liens
+   (« Supprimer mon compte » doit rester trouvable dans l'appli), sans
+   sa phrase de site. */
+.appli .accueil:has(> .mes-groupes:not([hidden])) .hero { display: none; }
+.appli .pied > p { display: none; }
+
+
 /* 14 BIS. LES ANIMATIONS
 
    Du mouvement qui a un sens, rapide et discret. Uniquement sur

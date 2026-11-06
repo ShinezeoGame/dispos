@@ -168,6 +168,13 @@ async function demarrer() {
   document.getElementById('chargement').hidden = true;
   document.querySelector('.onglets').hidden = false;
   afficherOnglet(onglets[0]);
+  /* Le dernier groupe ouvert : l'appli s'ouvrira directement dessus la
+     prochaine fois (voir « Le mode appli » dans js/theme.js). */
+  try {
+    localStorage.setItem('allready-dernier-groupe', etat.code);
+  } catch {
+    // Stockage bloqué : l'appli s'ouvrira sur l'accueil.
+  }
   /* Pas encore membre : la fenêtre pour rejoindre s'ouvre tout de suite
      (et affiche elle-même l'éventuel échec de connexion Discord). Déjà
      membre et revenu d'un échec (« Relier à Discord ») : on le dit en

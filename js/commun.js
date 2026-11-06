@@ -148,6 +148,12 @@ export function oublierGroupe(code) {
   const groupes = lireGroupes();
   delete groupes[code];
   ecrireGroupes(groupes);
+  // Et l'appli ne s'ouvrira plus dessus (mode appli, js/theme.js).
+  try {
+    if (localStorage.getItem('allready-dernier-groupe') === code) localStorage.removeItem('allready-dernier-groupe');
+  } catch {
+    // Stockage bloqué : rien n'était retenu.
+  }
 }
 
 
