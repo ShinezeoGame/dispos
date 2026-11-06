@@ -410,6 +410,7 @@ nom de domaine à part reste à choisir.
     js/notifications.js        l'invitation aux notifications, et « Me prévenir »
     js/tirer.js                mode appli : tirer vers le bas pour rafraîchir
     assets/onglet-*.svg        mode appli : les icônes de la barre d'onglets du bas
+    assets/raccourci-*.png     mode appli : les icônes des raccourcis (appui long sur l'icône)
     allready.apk               l'appli Android à télécharger (voir « L'appli Android »)
     android/twa-manifest.json  sa configuration, pour la refabriquer
     android/icone/             son icône (trois couches), qui remplace celle de Bubblewrap
@@ -441,12 +442,13 @@ téléphone Android seulement**, et jamais depuis l'appli elle-même
 - **Identité** : `fr.allready.app`, Android 7 (API 24) au minimum (la
   bibliothèque de Google l'exige). Versions : 1.0.0 (code 1, 6 nov.
   2026), puis 1.0.1 (code 2, même jour : l'icône), puis 1.0.2 (code 3,
-  même jour : l'appli annonce sa version).
+  même jour : l'appli annonce sa version), puis 1.1.0 (code 4, même
+  jour : les raccourcis de l'icône, mode appli).
 - **Les mises à jour** (1.0.2, demandé : « que je n'aie pas à la
   retélécharger à chaque fois ») : un changement du SITE apparaît
   dans l'appli tout seul, sans rien télécharger. Seul l'emballage
   (icône, nom, couleurs, adresse du site) demande un nouvel APK. Ce
-  jour-là, l'appli le dit : elle s'ouvre sur `/?appli=3` (son numéro,
+  jour-là, l'appli le dit : elle s'ouvre sur `/?appli=4` (son numéro,
   `startUrl`), la page le retient pour la visite (sessionStorage), et
   s'il est plus petit que `VERSION_APK` (js/appli.js), le bandeau
   « Une nouvelle version de l'appli est prête · Mettre à jour »
@@ -489,8 +491,8 @@ téléphone Android seulement**, et jamais depuis l'appli elle-même
      avec `jdkPath` et `androidSdkPath` ;
   2. copier `android/twa-manifest.json` et la clé dans un dossier de
      travail, augmenter `appVersionCode` de 1 et `appVersion`, mettre
-     le même numéro dans `startUrl` (`/?appli=4`) **et dans
-     `VERSION_APK` (js/appli.js)**, puis
+     le même numéro dans `startUrl` (`/?appli=5`), dans l'adresse de
+     chaque raccourci **et dans `VERSION_APK` (js/appli.js)**, puis
      `bubblewrap update --skipVersionUpgrade`, **puis recopier
      `android/icone/` dans `app/src/main/res/`** (update remet l'icône
      de Bubblewrap, celle sans logo) ;
@@ -506,8 +508,9 @@ téléphone Android seulement**, et jamais depuis l'appli elle-même
   (outils Android) » autorise dl.google.com. Le Node de Bubblewrap n'y
   passe pas par le proxy : lui servir l'icône et le manifeste depuis le
   dépôt (`python3 -m http.server`) et pointer `iconUrl`,
-  `maskableIconUrl`, `monochromeIconUrl` et `webManifestUrl` vers
-  127.0.0.1 le temps de la fabrication.
+  `maskableIconUrl`, `monochromeIconUrl`, `webManifestUrl` et le
+  `chosenIconUrl` de chaque raccourci vers 127.0.0.1 le temps de la
+  fabrication.
 
 ### Le mode appli (6 nov. 2026, demandé : « je veux une vraie application »)
 
@@ -567,6 +570,22 @@ site dans un navigateur ne change pas.
   garde `sauvegardeEnAttente`) ; « Chaud ce soir » n'annonce sa réussite
   que si c'est vraiment enregistré. Au retour du réseau, le groupe se
   recharge (groupe.js, « online »).
+- **Bloc 5, les raccourcis de l'icône** (appui long sur l'icône) :
+  « Chaud ce soir », « Proposer une soirée », « Mes groupes ». Déclarés
+  deux fois : dans `manifest.webmanifest` (`shortcuts`, pour le site
+  installé par Chrome) et dans `android/twa-manifest.json` (pour
+  l'APK, avec `&appli=N`). Ils ouvrent `/?raccourci=chaud|soiree|groupes` :
+  js/theme.js envoie `chaud` et `soiree` vers le dernier groupe (en
+  gardant le raccourci dans l'adresse), `groupes` reste sur la liste.
+  `suivreRaccourci()` (groupe.js) fait l'action une fois le groupe
+  chargé, puis efface le raccourci de l'adresse : `chaudCeSoir({
+  basculer: false })` (agenda.js, ne retire jamais : « Tu es déjà chaud
+  ce soir. ») ou l'onglet Soirées et `proposerSoiree()`. Icônes :
+  `assets/raccourci-*.png` (site, et les images de Bubblewrap) et, dans
+  l'APK, des icônes adaptatives `android/icone/drawable-anydpi-v26/
+  shortcut_0…2.xml` (fond, symbole orange, version blanche) : leur
+  numéro suit l'ordre des raccourcis dans twa-manifest.json. Android
+  accepte 4 raccourcis au plus.
 
 ## Mise en ligne (à faire une fois)
 
@@ -674,10 +693,11 @@ site dans un navigateur ne change pas.
   écrit aussi dans `oublierDonneesHorsLigne()` (commun.js), appelé à la
   déconnexion et à la suppression du compte : les deux noms doivent
   rester les mêmes.
-- **Le numéro de l'appli Android est écrit trois fois** :
-  `appVersionCode` et `startUrl` (`/?appli=N`) dans
-  `android/twa-manifest.json`, et `VERSION_APK` dans js/appli.js. Les
-  changer ensemble, au moment où le nouvel `allready.apk` est poussé :
+- **Le numéro de l'appli Android est écrit à plusieurs endroits** :
+  `appVersionCode`, `startUrl` (`/?appli=N`) et l'adresse de chaque
+  raccourci (`…&appli=N`) dans `android/twa-manifest.json`, et
+  `VERSION_APK` dans js/appli.js. Les changer ensemble, au moment où
+  le nouvel `allready.apk` est poussé :
   `VERSION_APK` plus grand que l'APK publié ferait réclamer sans fin
   une mise à jour introuvable ; plus petit, personne ne serait prévenu.
   Le bandeau `#maj-appli` est au-dessus de l'agenda : il est surveillé
