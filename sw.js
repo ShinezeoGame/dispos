@@ -31,6 +31,10 @@ self.addEventListener('push', (evenement) => {
   evenement.waitUntil(self.registration.showNotification(message.titre || 'AllReady', {
     body: message.corps || '',
     icon: '/assets/icone-192.png',
+    // La petite icône de la barre d'état d'Android (6 nov. 2026) : le
+    // téléphone n'en garde que la forme (les parties transparentes), d'où
+    // ce logo blanc sur fond transparent. Sans elle, Chrome y met la sienne.
+    badge: '/assets/icone-monochrome.png',
     tag: message.tag,
     lang: 'fr',
     data: { url: message.url || '/' },

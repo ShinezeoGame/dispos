@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- LA VERSION D'UNE SEULE COULEUR (6 nov. 2026), pour les icônes
+     « à thème » d'Android 13 et des téléphones Samsung : seule sa forme
+     compte, le téléphone la peint dans la couleur du thème. Un peu plus
+     petite que le premier plan (0,7), comme le veut Android pour ces
+     icônes.
+     Le logo d'AllReady (la coche de quatre ronds reliés par un trait),
+     avec les coordonnées de assets/icone.svg (repère de 64 unités),
+     posé au centre d'une icône Android de 108 × 108 dp. Le groupe
+     agrandit le logo autour de son centre (pivot 32,75 ; 32,5), puis
+     le déplace au centre de l'icône (54 ; 54). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:pivotX="32.75"
+        android:pivotY="32.5"
+        android:scaleX="0.7"
+        android:scaleY="0.7"
+        android:translateX="21.25"
+        android:translateY="21.5">
+        <path
+            android:pathData="M12.5,33.5 L26,47 L53,18"
+            android:fillColor="#00000000"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeWidth="5.5"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round" />
+        <path
+            android:pathData="M6.0,33.5 a6.5,6.5 0 1,0 13.0,0 a6.5,6.5 0 1,0 -13.0,0 z M19.5,47 a6.5,6.5 0 1,0 13.0,0 a6.5,6.5 0 1,0 -13.0,0 z M33.0,32.5 a6.5,6.5 0 1,0 13.0,0 a6.5,6.5 0 1,0 -13.0,0 z M46.5,18 a6.5,6.5 0 1,0 13.0,0 a6.5,6.5 0 1,0 -13.0,0 z"
+            android:fillColor="#FFFFFFFF" />
+    </group>
+</vector>

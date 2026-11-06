@@ -408,6 +408,8 @@ nom de domaine à part reste à choisir.
     js/notifications.js        l'invitation aux notifications, et « Me prévenir »
     allready.apk               l'appli Android à télécharger (voir « L'appli Android »)
     android/twa-manifest.json  sa configuration, pour la refabriquer
+    android/icone/             son icône (trois couches), qui remplace celle de Bubblewrap
+    assets/icone-monochrome.png   le logo blanc sur transparent (notifications)
     .well-known/assetlinks.json   la preuve que l'appli et le site vont ensemble
     .gitignore                 garde la clé de signature hors du dépôt
     functions/_agenda.js       code SERVEUR : lire un agenda iCal, trouver les créneaux occupés
@@ -433,7 +435,20 @@ téléphone Android seulement**, et jamais depuis l'appli elle-même
   permission Android « Notifications » de l'appli remplace celle du
   site). Sans Chrome, elle s'ouvre dans un onglet personnalisé.
 - **Identité** : `fr.allready.app`, Android 7 (API 24) au minimum (la
-  bibliothèque de Google l'exige), version 1.0.0 (code 1).
+  bibliothèque de Google l'exige). Versions : 1.0.0 (code 1, 6 nov.
+  2026), puis 1.0.1 (code 2, même jour : l'icône).
+- **L'icône** (1.0.1, demandé : « elle n'a pas de logo ») : une icône
+  Android a trois couches, le fond, le logo par-dessus, et une version
+  d'une seule couleur pour les icônes « à thème » (Android 13, thèmes
+  Samsung). Le modèle de Bubblewrap mettait tout le dessin dans le fond
+  et laissait le logo vide : un thème qui remplace le fond par le sien
+  (les bulles de verre d'un Samsung) montrait une bulle vide. Nos trois
+  couches sont dans `android/icone/` (dessins vectoriels du logo, avec
+  les coordonnées de `assets/icone.svg`). La petite icône des
+  notifications vient de `assets/icone-monochrome.png`
+  (`monochromeIconUrl`), qui sert aussi de `badge` aux notifications du
+  site (sw.js) : Android n'en garde que la forme, une image pleine y
+  devenait un carré blanc.
 - **La clé de signature** (`allready.keystore`, alias `allready`, et
   son mot de passe) : envoyée au propriétaire le 6 nov. 2026, **jamais
   dans le dépôt** (`.gitignore`). Une mise à jour de l'APK doit être
@@ -455,7 +470,9 @@ téléphone Android seulement**, et jamais depuis l'appli elle-même
      avec `jdkPath` et `androidSdkPath` ;
   2. copier `android/twa-manifest.json` et la clé dans un dossier de
      travail, augmenter `appVersionCode` de 1 et `appVersion`, puis
-     `bubblewrap update --skipVersionUpgrade` ;
+     `bubblewrap update --skipVersionUpgrade`, **puis recopier
+     `android/icone/` dans `app/src/main/res/`** (update remet l'icône
+     de Bubblewrap, celle sans logo) ;
   3. un premier `./gradlew assembleRelease` à la main (au premier
      lancement, Gradle télécharge tant de choses que Bubblewrap
      s'étrangle sur son texte : « maxBuffer length exceeded ») ;
@@ -468,8 +485,8 @@ téléphone Android seulement**, et jamais depuis l'appli elle-même
   (outils Android) » autorise dl.google.com. Le Node de Bubblewrap n'y
   passe pas par le proxy : lui servir l'icône et le manifeste depuis le
   dépôt (`python3 -m http.server`) et pointer `iconUrl`,
-  `maskableIconUrl` et `webManifestUrl` vers 127.0.0.1 le temps de la
-  fabrication.
+  `maskableIconUrl`, `monochromeIconUrl` et `webManifestUrl` vers
+  127.0.0.1 le temps de la fabrication.
 
 ## Mise en ligne (à faire une fois)
 
@@ -575,7 +592,8 @@ téléphone Android seulement**, et jamais depuis l'appli elle-même
   d'adresse. Le dossier commence par un point : le garder tel quel.
 - **Les icônes PNG de l'appli sont tirées de `assets/icone.svg`** (le
   logo dans le cercle central, la seule zone qu'un téléphone ne rogne
-  jamais) : changer le dessin = refaire les trois PNG.
+  jamais) : changer le dessin = refaire les trois PNG, et aussi
+  `assets/icone-monochrome.png`, `android/icone/` et l'APK.
 - **L'heure, c'est celle du groupe** : jamais `new Date()` ni
   `Date.now()` dans les scripts de la page pour dire « maintenant »,
   toujours `maintenant()` (commun.js) ; côté serveur, toujours

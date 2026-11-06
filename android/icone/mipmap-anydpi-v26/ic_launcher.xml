@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- L'ICÔNE DE L'APPLI ANDROID (6 nov. 2026), à partir d'Android 8.
+
+     Une icône Android « adaptative » a trois couches :
+     — background : le fond, que le téléphone découpe à sa forme ;
+     — foreground : le logo, posé par-dessus ;
+     — monochrome : le logo d'une seule couleur, pour les icônes « à
+       thème » (Android 13 et plus, thèmes Samsung).
+
+     Pourquoi ce fichier remplace celui de Bubblewrap : le sien met tout
+     le dessin dans le FOND et laisse le premier plan vide. Un thème
+     d'icônes qui remplace le fond par le sien (les bulles de verre d'un
+     Samsung, par exemple) n'affichait donc plus rien : une bulle vide.
+     À recopier dans app/src/main/res/ après chaque « bubblewrap
+     update » (voir CLAUDE.md, « L'appli Android »). -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@drawable/ic_allready_fond" />
+    <foreground android:drawable="@drawable/ic_allready_premier_plan" />
+    <monochrome android:drawable="@drawable/ic_allready_monochrome" />
+</adaptive-icon>

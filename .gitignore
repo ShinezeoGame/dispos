@@ -7,6 +7,9 @@
 *.jks
 mot-de-passe*.txt
 # Ce que Bubblewrap fabrique dans android/ quand on reconstruit l'APK :
-# seul twa-manifest.json y est gardé.
+# seuls twa-manifest.json et l'icône y sont gardés.
 android/*
 !android/twa-manifest.json
+# … et l'icône Android, à recopier dans le projet après chaque
+# « bubblewrap update » (CLAUDE.md, « L'appli Android »).
+!android/icone/

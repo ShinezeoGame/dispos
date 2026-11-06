@@ -21,8 +21,8 @@
     "path": "./allready.keystore",
     "alias": "allready"
   },
-  "appVersion": "1.0.0",
-  "appVersionCode": 1,
+  "appVersion": "1.0.1",
+  "appVersionCode": 2,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://dispos.pages.dev/manifest.webmanifest",
@@ -35,5 +35,6 @@
   "isChromeOSOnly": false,
   "isMetaQuest": false,
   "fullScopeUrl": "https://dispos.pages.dev/",
-  "minSdkVersion": 24
+  "minSdkVersion": 24,
+  "monochromeIconUrl": "https://dispos.pages.dev/assets/icone-monochrome.png"
 }
