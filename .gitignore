@@ -1,0 +1,12 @@
+# La clé de signature de l'appli Android et son mot de passe : des
+# secrets. Avec eux, n'importe qui pourrait publier une fausse mise à
+# jour d'AllReady. Ils restent chez toi, jamais dans le dépôt (qui est
+# en plus servi tel quel par Cloudflare). Voir CLAUDE.md, « L'appli
+# Android ».
+*.keystore
+*.jks
+mot-de-passe*.txt
+# Ce que Bubblewrap fabrique dans android/ quand on reconstruit l'APK :
+# seul twa-manifest.json y est gardé.
+android/*
+!android/twa-manifest.json

@@ -1,0 +1,39 @@
+{
+  "packageId": "fr.allready.app",
+  "host": "dispos.pages.dev",
+  "name": "AllReady",
+  "launcherName": "AllReady",
+  "display": "standalone",
+  "orientation": "default",
+  "themeColor": "#110F0E",
+  "themeColorDark": "#110F0E",
+  "navigationColor": "#110F0E",
+  "navigationColorDark": "#110F0E",
+  "navigationDividerColor": "#110F0E",
+  "navigationDividerColorDark": "#110F0E",
+  "backgroundColor": "#110F0E",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://dispos.pages.dev/assets/icone-512.png",
+  "maskableIconUrl": "https://dispos.pages.dev/assets/icone-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./allready.keystore",
+    "alias": "allready"
+  },
+  "appVersion": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://dispos.pages.dev/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://dispos.pages.dev/",
+  "minSdkVersion": 24
+}

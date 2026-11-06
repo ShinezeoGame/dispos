@@ -1,0 +1,10 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "fr.allready.app",
+      "sha256_cert_fingerprints": ["79:68:AA:65:7B:9E:95:F2:D9:53:4B:01:85:92:38:5C:DD:0C:3A:96:0F:79:D2:6A:47:30:42:F5:68:DE:D5:CE"]
+    }
+  }
+]

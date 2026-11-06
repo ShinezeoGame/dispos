@@ -51,6 +51,14 @@ export async function installer() {
 // Un iPhone ou un iPad où le site n'est pas encore ajouté à l'écran d'accueil.
 export const iphoneHorsAppli = /iPhone|iPad|iPod/.test(navigator.userAgent) && !navigator.standalone;
 
+/* Un téléphone Android, hors de l'appli (6 nov. 2026) : on y propose de
+   télécharger l'APK (/allready.apk, voir CLAUDE.md, « L'appli
+   Android »). Dans l'appli elle-même, comme dans le site installé par
+   Chrome, la page s'affiche en « standalone » (sans barre d'adresse) :
+   pas de lien, on y est déjà. */
+export const androidHorsAppli = /Android/i.test(navigator.userAgent)
+  && !matchMedia('(display-mode: standalone)').matches;
+
 // 3. Les notifications.
 export const notificationsPossibles = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 

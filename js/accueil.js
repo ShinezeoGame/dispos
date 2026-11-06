@@ -4,12 +4,14 @@
 import { api, lireGroupes, retenirGroupe, oublierGroupe, creer, annoncer, fuseauDeLAppareil, LIEN_SOUTIEN } from './commun.js';
 import { messageConnexion, deconnecter } from './compte.js';
 import { debloquerThemes } from './apparence.js'; // le choix de la couleur du site
-import { quandAppliChange, peutInstaller, installer } from './appli.js'; // le site comme une appli
+import { quandAppliChange, peutInstaller, installer, androidHorsAppli } from './appli.js'; // le site comme une appli
 
 // « Installer l'appli », en bas, dès que le navigateur le propose.
 const boutonInstaller = document.getElementById('installer-appli');
 quandAppliChange(() => { boutonInstaller.hidden = !peutInstaller(); });
 boutonInstaller.addEventListener('click', installer);
+// « Télécharger l'appli Android » : sur un téléphone Android, hors de l'appli.
+document.getElementById('telecharger-apk').hidden = !androidHorsAppli;
 
 // Revenu de Discord sur un échec : on le dit.
 if (messageConnexion) annoncer(messageConnexion, 'erreur');

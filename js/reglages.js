@@ -14,7 +14,7 @@ import { etat, quandCaChange, appeler, charger } from './etat.js';
 import { annoncer, copier, oublierGroupe, nomDuFuseau } from './commun.js';
 import {
   quandAppliChange, peutInstaller, installer, iphoneHorsAppli,
-  notificationsPossibles, abonnementActuel, activerNotifications, couperNotifications,
+  notificationsPossibles, abonnementActuel, activerNotifications, couperNotifications, androidHorsAppli,
 } from './appli.js';
 
 const section = document.getElementById('reglages');
@@ -174,12 +174,14 @@ const aideAppareil = document.getElementById('aide-appareil');
 const boutonInstaller = document.getElementById('installer-appli');
 const boutonActiver = document.getElementById('activer-notifs');
 const boutonCouper = document.getElementById('couper-notifs');
+const lienApk = document.getElementById('telecharger-apk');
 
 async function dessinerAppareil() {
   if (!etat.groupe) return;
   const abonne = notificationsPossibles && Boolean(await abonnementActuel());
   const possibles = notificationsPossibles && Boolean(etat.compte);
   boutonInstaller.hidden = !peutInstaller();
+  lienApk.hidden = !androidHorsAppli; // l'APK : sur Android, hors de l'appli
   boutonActiver.hidden = !possibles || abonne;
   boutonCouper.hidden = !abonne;
   aideAppareil.textContent = abonne
@@ -187,7 +189,7 @@ async function dessinerAppareil() {
     : possibles ? 'Les soirées, les « Chaud », qui est dispo ce soir… sur ce téléphone ou ce PC, même site fermé.'
     : iphoneHorsAppli ? "Sur iPhone : Partager → « Sur l'écran d'accueil », puis ouvre AllReady depuis son icône pour activer les notifications."
     : '';
-  reglageAppareil.hidden = !aideAppareil.textContent && boutonInstaller.hidden;
+  reglageAppareil.hidden = !aideAppareil.textContent && boutonInstaller.hidden && lienApk.hidden;
 }
 quandCaChange(dessinerAppareil);
 quandAppliChange(dessinerAppareil);

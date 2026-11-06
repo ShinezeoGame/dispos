@@ -406,11 +406,70 @@ nom de domaine à part reste à choisir.
     js/presence.js             AllReady+ : les soirées passées, « Qui était là ? »
     js/banniere.js             AllReady+ : la bannière en haut de La team, et son réglage
     js/notifications.js        l'invitation aux notifications, et « Me prévenir »
+    allready.apk               l'appli Android à télécharger (voir « L'appli Android »)
+    android/twa-manifest.json  sa configuration, pour la refabriquer
+    .well-known/assetlinks.json   la preuve que l'appli et le site vont ensemble
+    .gitignore                 garde la clé de signature hors du dépôt
     functions/_agenda.js       code SERVEUR : lire un agenda iCal, trouver les créneaux occupés
     functions/api/compte/agenda.js          ranger ou oublier l'adresse de son agenda
     functions/api/groupes/[code]/occupe.js  tes créneaux occupés d'une semaine
     assets/discord.svg         le logo Discord des boutons (en pochoir, voir style.css)
     _headers, robots.txt, assets/favicon.svg, fonts/
+
+## L'appli Android (APK, 6 nov. 2026, demandé)
+
+`allready.apk`, à la racine du site : « Télécharger l'appli Android »,
+en bas de l'accueil et dans Le groupe → Sur cet appareil, **sur un
+téléphone Android seulement**, et jamais depuis l'appli elle-même
+(`androidHorsAppli`, js/appli.js : la page y est en
+`display-mode: standalone`). Adresse directe à partager :
+`https://dispos.pages.dev/allready.apk`.
+
+- **Ce que c'est** : une « Trusted Web Activity », fabriquée avec
+  Bubblewrap (l'outil de Google). L'appli ouvre le site dans Chrome, en
+  plein écran, avec l'icône et le nom d'AllReady. Elle ne contient pas
+  le site : **une modification du site n'a jamais besoin d'un nouvel
+  APK**. Les notifications passent par l'appli (délégation : la
+  permission Android « Notifications » de l'appli remplace celle du
+  site). Sans Chrome, elle s'ouvre dans un onglet personnalisé.
+- **Identité** : `fr.allready.app`, Android 7 (API 24) au minimum (la
+  bibliothèque de Google l'exige), version 1.0.0 (code 1).
+- **La clé de signature** (`allready.keystore`, alias `allready`, et
+  son mot de passe) : envoyée au propriétaire le 6 nov. 2026, **jamais
+  dans le dépôt** (`.gitignore`). Une mise à jour de l'APK doit être
+  signée avec la même clé, sinon Android refuse de l'installer
+  par-dessus. Clé perdue = nouvelle clé, nouvelle empreinte dans
+  assetlinks.json, et chacun désinstalle puis réinstalle.
+- **`.well-known/assetlinks.json`** contient le nom de l'appli et
+  l'empreinte SHA-256 de cette clé. Android le lit sur le site : s'il
+  manque ou ne correspond pas, l'appli marche quand même mais affiche
+  une barre d'adresse en haut.
+- **Le jour du vrai nom de domaine** : changer `host` (et les adresses)
+  dans `android/twa-manifest.json`, mettre assetlinks.json sur le
+  nouveau domaine, puis refabriquer l'APK (version suivante).
+- **Refabriquer** (nouveau nom, icône, couleurs ou domaine) :
+  1. outils (hors du dépôt) : Java 17 (Bubblewrap refuse les autres),
+     le kit Android (`platforms;android-36`, `build-tools;36.1.0`, par
+     `sdkmanager`, depuis dl.google.com), Bubblewrap
+     (`npm install @bubblewrap/cli`), puis `~/.bubblewrap/config.json`
+     avec `jdkPath` et `androidSdkPath` ;
+  2. copier `android/twa-manifest.json` et la clé dans un dossier de
+     travail, augmenter `appVersionCode` de 1 et `appVersion`, puis
+     `bubblewrap update --skipVersionUpgrade` ;
+  3. un premier `./gradlew assembleRelease` à la main (au premier
+     lancement, Gradle télécharge tant de choses que Bubblewrap
+     s'étrangle sur son texte : « maxBuffer length exceeded ») ;
+  4. `bubblewrap build --skipPwaValidation`, avec les mots de passe
+     dans `BUBBLEWRAP_KEYSTORE_PASSWORD` et `BUBBLEWRAP_KEY_PASSWORD` ;
+  5. copier `app-release-signed.apk` en `allready.apk`, rapporter le
+     nouveau `twa-manifest.json` dans android/, commit et push.
+
+  Dans les sessions cloud de Claude : l'environnement « ShinezeoGame
+  (outils Android) » autorise dl.google.com. Le Node de Bubblewrap n'y
+  passe pas par le proxy : lui servir l'icône et le manifeste depuis le
+  dépôt (`python3 -m http.server`) et pointer `iconUrl`,
+  `maskableIconUrl` et `webManifestUrl` vers 127.0.0.1 le temps de la
+  fabrication.
 
 ## Mise en ligne (à faire une fois)
 
@@ -510,6 +569,10 @@ nom de domaine à part reste à choisir.
 - **`sw.js` reste à la racine du site** : un service worker ne
   s'occupe que des pages rangées sous son dossier. Il ne met rien en
   cache exprès : un cache oublié servirait de vieilles pages.
+- **Ne jamais toucher à `.well-known/assetlinks.json` sans
+  refabriquer l'APK** (et inversement) : l'empreinte doit être celle de
+  la clé qui signe l'APK, sinon l'appli Android affiche une barre
+  d'adresse. Le dossier commence par un point : le garder tel quel.
 - **Les icônes PNG de l'appli sont tirées de `assets/icone.svg`** (le
   logo dans le cercle central, la seule zone qu'un téléphone ne rogne
   jamais) : changer le dessin = refaire les trois PNG.
