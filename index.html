@@ -58,6 +58,14 @@
   </header>
 
   <main class="accueil">
+    <!-- LA MISE À JOUR DE L'APPLI ANDROID (js/appli.js) : seulement dans
+         l'appli, quand un APK plus récent est publié. -->
+    <aside id="maj-appli" class="invitation" hidden>
+      <span class="invitation-icone" aria-hidden="true">✨</span>
+      <p class="invitation-texte">Une nouvelle version de l'appli est prête.</p>
+      <a class="bouton bouton-petit" href="/allready.apk" download>Mettre à jour</a>
+      <button id="maj-appli-fermer" class="bouton-icone" type="button" aria-label="Plus tard">×</button>
+    </aside>
     <!-- TES GROUPES (2 nov. 2026, demandé) : quand on a déjà un groupe,
          c'est lui qu'on vient ouvrir, pas en créer un autre. En tête de
          page sur téléphone, dans une colonne à droite sur ordinateur ;

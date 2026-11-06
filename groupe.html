@@ -75,6 +75,14 @@
       <button id="invitation-activer" class="bouton bouton-petit" type="button">Activer les notifications</button>
       <button id="invitation-fermer" class="bouton-icone" type="button" aria-label="Plus tard">×</button>
     </aside>
+    <!-- LA MISE À JOUR DE L'APPLI ANDROID (js/appli.js) : seulement dans
+         l'appli, quand un APK plus récent est publié. -->
+    <aside id="maj-appli" class="invitation" hidden>
+      <span class="invitation-icone" aria-hidden="true">✨</span>
+      <p class="invitation-texte">Une nouvelle version de l'appli est prête.</p>
+      <a class="bouton bouton-petit" href="/allready.apk" download>Mettre à jour</a>
+      <button id="maj-appli-fermer" class="bouton-icone" type="button" aria-label="Plus tard">×</button>
+    </aside>
 
     <section id="erreur-groupe" class="message-centre" hidden>
       <h2>Oups</h2>

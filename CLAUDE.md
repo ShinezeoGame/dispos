@@ -436,7 +436,22 @@ téléphone Android seulement**, et jamais depuis l'appli elle-même
   site). Sans Chrome, elle s'ouvre dans un onglet personnalisé.
 - **Identité** : `fr.allready.app`, Android 7 (API 24) au minimum (la
   bibliothèque de Google l'exige). Versions : 1.0.0 (code 1, 6 nov.
-  2026), puis 1.0.1 (code 2, même jour : l'icône).
+  2026), puis 1.0.1 (code 2, même jour : l'icône), puis 1.0.2 (code 3,
+  même jour : l'appli annonce sa version).
+- **Les mises à jour** (1.0.2, demandé : « que je n'aie pas à la
+  retélécharger à chaque fois ») : un changement du SITE apparaît
+  dans l'appli tout seul, sans rien télécharger. Seul l'emballage
+  (icône, nom, couleurs, adresse du site) demande un nouvel APK. Ce
+  jour-là, l'appli le dit : elle s'ouvre sur `/?appli=3` (son numéro,
+  `startUrl`), la page le retient pour la visite (sessionStorage), et
+  s'il est plus petit que `VERSION_APK` (js/appli.js), le bandeau
+  « Une nouvelle version de l'appli est prête · Mettre à jour »
+  (`#maj-appli`, accueil et page d'un groupe) télécharge l'APK.
+  Android l'installe par-dessus (même clé), rien n'est perdu. Les
+  versions 1 et 2 ne donnaient pas leur numéro : reconnues à leur
+  referrer `android-app://fr.allready.app`. Sans Play Store, Android
+  ne laisse aucune appli se mettre à jour toute seule : il faut ce
+  clic, puis « Mettre à jour ».
 - **L'icône** (1.0.1, demandé : « elle n'a pas de logo ») : une icône
   Android a trois couches, le fond, le logo par-dessus, et une version
   d'une seule couleur pour les icônes « à thème » (Android 13, thèmes
@@ -469,7 +484,9 @@ téléphone Android seulement**, et jamais depuis l'appli elle-même
      (`npm install @bubblewrap/cli`), puis `~/.bubblewrap/config.json`
      avec `jdkPath` et `androidSdkPath` ;
   2. copier `android/twa-manifest.json` et la clé dans un dossier de
-     travail, augmenter `appVersionCode` de 1 et `appVersion`, puis
+     travail, augmenter `appVersionCode` de 1 et `appVersion`, mettre
+     le même numéro dans `startUrl` (`/?appli=4`) **et dans
+     `VERSION_APK` (js/appli.js)**, puis
      `bubblewrap update --skipVersionUpgrade`, **puis recopier
      `android/icone/` dans `app/src/main/res/`** (update remet l'icône
      de Bubblewrap, celle sans logo) ;
@@ -586,6 +603,14 @@ téléphone Android seulement**, et jamais depuis l'appli elle-même
 - **`sw.js` reste à la racine du site** : un service worker ne
   s'occupe que des pages rangées sous son dossier. Il ne met rien en
   cache exprès : un cache oublié servirait de vieilles pages.
+- **Le numéro de l'appli Android est écrit trois fois** :
+  `appVersionCode` et `startUrl` (`/?appli=N`) dans
+  `android/twa-manifest.json`, et `VERSION_APK` dans js/appli.js. Les
+  changer ensemble, au moment où le nouvel `allready.apk` est poussé :
+  `VERSION_APK` plus grand que l'APK publié ferait réclamer sans fin
+  une mise à jour introuvable ; plus petit, personne ne serait prévenu.
+  Le bandeau `#maj-appli` est au-dessus de l'agenda : il est surveillé
+  par le ResizeObserver d'agenda.js, comme l'invitation.
 - **Ne jamais toucher à `.well-known/assetlinks.json` sans
   refabriquer l'APK** (et inversement) : l'empreinte doit être celle de
   la clé qui signe l'APK, sinon l'appli Android affiche une barre

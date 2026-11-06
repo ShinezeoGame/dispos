@@ -339,6 +339,7 @@ document.fonts.ready.then(ajusterHauteur);
 const observateur = new ResizeObserver(ajusterHauteur);
 observateur.observe(document.getElementById('vue-agenda'));
 observateur.observe(document.getElementById('invitation-notifs'));
+observateur.observe(document.getElementById('maj-appli')); // la mise à jour de l'appli (appli.js)
 
 function dessinerSemaine() {
   const ecart = Math.round((etat.semaine - lundiDe(maintenant())) / (7 * 86400000));

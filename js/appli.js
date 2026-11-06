@@ -59,6 +59,66 @@ export const iphoneHorsAppli = /iPhone|iPad|iPod/.test(navigator.userAgent) && !
 export const androidHorsAppli = /Android/i.test(navigator.userAgent)
   && !matchMedia('(display-mode: standalone)').matches;
 
+/* LA MISE À JOUR DE L'APPLI ANDROID (6 nov. 2026, demandé : « que je
+   n'aie pas à la retélécharger à chaque fois »).
+
+   L'appli affiche le site en direct : un changement du site y apparaît
+   tout seul. Seul l'« emballage » (icône, nom, adresse du site) demande
+   un nouvel APK, ce qui est rare. Ce jour-là, l'appli doit le dire.
+
+   VERSION_APK : le numéro de l'APK publié (allready.apk, appVersionCode
+   dans android/twa-manifest.json). À augmenter EN MÊME TEMPS que lui.
+
+   L'appli s'ouvre sur /?appli=3 (startUrl de twa-manifest.json, le
+   numéro de sa version). La page le retient pour toute la visite
+   (sessionStorage : l'appli et Chrome partagent le stockage du site,
+   pas la session), puis l'efface de l'adresse. Les versions 1 et 2 ne
+   disaient rien : on les reconnaît à leur « referrer », l'adresse
+   android-app:// que l'appli donne à la page qu'elle ouvre.
+
+   Une version plus ancienne que VERSION_APK : le bandeau « Mettre à
+   jour » (#maj-appli), qui télécharge l'APK. Android propose alors de
+   l'installer par-dessus : même appli, rien n'est perdu. La croix le
+   cache jusqu'à la prochaine ouverture de l'appli. */
+export const VERSION_APK = 3;
+
+function versionInstallee() {
+  try {
+    const parametres = new URLSearchParams(location.search);
+    if (parametres.has('appli')) {
+      sessionStorage.setItem('allready-appli', parametres.get('appli'));
+      parametres.delete('appli');
+      const reste = parametres.toString();
+      history.replaceState(null, '', location.pathname + (reste ? `?${reste}` : '') + location.hash);
+    } else if (document.referrer.startsWith('android-app://fr.allready.app') && !sessionStorage.getItem('allready-appli')) {
+      sessionStorage.setItem('allready-appli', '2'); // une appli d'avant la 1.0.2
+    }
+    return Number(sessionStorage.getItem('allready-appli')) || 0;
+  } catch {
+    return 0; // stockage bloqué : on ne sait pas, on ne dit rien
+  }
+}
+
+const bandeauMaj = document.getElementById('maj-appli');
+if (bandeauMaj) {
+  const installee = versionInstallee();
+  let cache = false;
+  try {
+    cache = sessionStorage.getItem('allready-maj-cachee') === '1';
+  } catch {
+    // stockage bloqué : le bandeau reste
+  }
+  bandeauMaj.hidden = !(installee > 0 && installee < VERSION_APK) || cache;
+  document.getElementById('maj-appli-fermer').addEventListener('click', () => {
+    bandeauMaj.hidden = true;
+    try {
+      sessionStorage.setItem('allready-maj-cachee', '1');
+    } catch {
+      // stockage bloqué : caché pour cette page seulement
+    }
+  });
+}
+
 // 3. Les notifications.
 export const notificationsPossibles = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 

@@ -1712,6 +1712,8 @@ input:disabled { opacity: 0.55; cursor: not-allowed; }
 .invitation-icone { font-size: 1.3rem; }
 .invitation-texte { flex: 1 1 12rem; font-size: 0.95rem; } /* 12rem : la cloche reste à côté, même sur téléphone */
 .invitation .bouton-icone { margin-left: auto; }
+/* Sur l'accueil, l'espace entre les blocs vient déjà de la grille. */
+.accueil > .invitation { margin-bottom: 0; }
 
 /* « Me prévenir » (Le groupe → Sur cet appareil) : une case par ligne. */
 .notifs-liste { display: grid; }
