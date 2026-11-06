@@ -2533,6 +2533,70 @@ button.tag-jeu:hover { border-color: var(--accent); }
 .appli .accueil:has(> .mes-groupes:not([hidden])) .hero { display: none; }
 .appli .pied > p { display: none; }
 
+/* BLOC 2 : LA BARRE D'ONGLETS EN BAS (sur téléphone). Les onglets de
+   l'en-tête descendent en bas de l'écran, à portée du pouce, chacun
+   avec son icône au-dessus du nom, comme dans la plupart des applis.
+   Ils restent les mêmes boutons (role="tab", groupe.js) : le clavier,
+   les lecteurs d'écran et la pastille des soirées marchent pareil.
+
+   L'icône : un dessin de assets/ (onglet-….svg) posé en pochoir
+   (mask) sur un carré de la couleur du texte (currentColor). Elle prend
+   donc la couleur de l'onglet : grise, ou celle du thème quand il est
+   choisi. env(safe-area-inset-bottom) : la place de la barre de gestes
+   d'Android ou d'iPhone, sous laquelle rien ne doit se cacher.
+
+   Dans l'en-tête, un « ‹ » devant le logo dit qu'il ramène en arrière,
+   à la liste de tes groupes (l'accueil de l'appli). */
+.appli .barre .logo::before {
+  content: '‹';
+  margin-right: 0.1rem;
+  color: var(--texte-doux);
+  font: 700 1.7rem/1 var(--police-titre);
+}
+#onglet-agenda { --icone: url('/assets/onglet-agenda.svg'); }
+#onglet-soirees { --icone: url('/assets/onglet-soirees.svg'); }
+#onglet-team { --icone: url('/assets/onglet-team.svg'); }
+@media (max-width: 40rem) {
+  .appli .onglets {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 15;
+    max-width: none;
+    padding: 0 0 env(safe-area-inset-bottom);
+    border-top: 1px solid var(--bordure);
+    background: var(--surface);
+  }
+  .appli .onglets [role="tablist"] { width: 100%; gap: 0; }
+  .appli .onglets [role="tab"] {
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.2rem;
+    min-height: 62px;
+    padding: 0.45rem 0 0.4rem;
+    font-size: 0.78rem;
+  }
+  .appli .onglets [role="tab"]::before {
+    content: '';
+    width: 1.5rem;
+    height: 1.5rem;
+    background: currentColor;
+    -webkit-mask: var(--icone) center / contain no-repeat;
+    mask: var(--icone) center / contain no-repeat;
+  }
+  .appli .onglets [role="tab"][aria-selected="true"] { color: var(--accent); }
+  /* Le trait de l'onglet actif passe en haut de la barre, plus court. */
+  .appli .onglets [role="tab"][aria-selected="true"]::after { top: -1px; bottom: auto; left: 30%; right: 30%; border-radius: 0 0 3px 3px; }
+  /* La pastille des soirées sans réponse, sur le coin de l'icône. */
+  .appli #pastille-soirees { position: absolute; top: 0.25rem; left: calc(50% + 0.45rem); }
+  .appli .jeu-de-mots { display: none; }
+  /* La page et le message du bas ne passent pas sous la barre. */
+  .appli .groupe { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)); }
+  .appli .annonce { bottom: calc(4.9rem + env(safe-area-inset-bottom)); }
+}
+
 
 /* 14 BIS. LES ANIMATIONS
 

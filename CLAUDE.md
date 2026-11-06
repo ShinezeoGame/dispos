@@ -524,6 +524,14 @@ site dans un navigateur ne change pas.
   (`.hero`) dès qu'il y a un groupe, sans la phrase du pied de page
   (« Supprimer mon compte » reste : le Play Store exige qu'on puisse
   supprimer son compte depuis l'appli).
+- **Bloc 2, la barre d'onglets en bas** (téléphone, 40rem et moins) :
+  les onglets de l'en-tête (`.onglets`, toujours les mêmes boutons
+  `role="tab"`) passent en barre fixe en bas de l'écran, chacun avec
+  son icône (`assets/onglet-agenda.svg`, `onglet-soirees.svg`,
+  `onglet-team.svg`, en pochoir `mask` sur `currentColor` : elles
+  suivent le thème). La page et les messages du bas sont remontés de
+  la hauteur de la barre. Un « ‹ » devant le logo dit qu'il ramène à
+  la liste de tes groupes.
 
 ## Mise en ligne (à faire une fois)
 
