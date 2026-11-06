@@ -10,8 +10,8 @@ import { lireGroupes, retenirGroupe, oublierGroupe, avatar, copier, creer, anime
 import { tirerPourRafraichir } from './tirer.js'; // mode appli : tirer vers le bas pour rafraîchir
 import { ouvrirProfil } from './profil.js';
 import { messageConnexion } from './compte.js';
-import './agenda.js';
-import './soirees.js';
+import { chaudCeSoir } from './agenda.js';
+import { proposerSoiree } from './soirees.js';
 import './team.js';
 import './stats.js'; // la team en chiffres, au-dessus des cartes
 import './ce-soir.js'; // « À quoi jouer ce soir », onglet Soirées
@@ -172,6 +172,7 @@ async function demarrer() {
   document.getElementById('chargement').hidden = true;
   document.querySelector('.onglets').hidden = false;
   afficherOnglet(onglets[0]);
+  suivreRaccourci();
   /* Le dernier groupe ouvert : l'appli s'ouvrira directement dessus la
      prochaine fois (voir « Le mode appli » dans js/theme.js). */
   try {
@@ -187,6 +188,27 @@ async function demarrer() {
   else if (messageConnexion) annoncer(messageConnexion, 'erreur');
 }
 if (codeValable) demarrer();
+
+/* LES RACCOURCIS DE L'ICÔNE (mode appli) : js/theme.js a envoyé ici
+   avec ?raccourci=chaud ou ?raccourci=soiree. On l'efface de
+   l'adresse (un rechargement ne doit pas le refaire), puis :
+   — chaud : tes heures de ce soir cochées (chaudCeSoir, agenda.js),
+     sans jamais les retirer ;
+   — soiree : l'onglet Soirées, et la fenêtre « Proposer une soirée ».
+   Pas encore membre : la fenêtre pour rejoindre est déjà ouverte. */
+function suivreRaccourci() {
+  const parametres = new URLSearchParams(location.search);
+  const raccourci = parametres.get('raccourci');
+  if (!raccourci) return;
+  parametres.delete('raccourci');
+  history.replaceState(null, '', `${location.pathname}?${parametres}`);
+  if (!etat.moi) return;
+  if (raccourci === 'chaud') chaudCeSoir({ basculer: false });
+  if (raccourci === 'soiree') {
+    afficherOnglet(document.getElementById('onglet-soirees'));
+    proposerSoiree();
+  }
+}
 
 /* TIRER POUR RAFRAÎCHIR (mode appli, js/tirer.js) : recharge les
    données du groupe, sans quitter l'onglet ouvert. Une coupure réseau

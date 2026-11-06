@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- L'ICÔNE DU RACCOURCI « Chaud ce soir (une flamme) » (mode appli, 6 nov. 2026),
+     à partir d'Android 8. Bubblewrap ne fabrique qu'une image
+     (drawable-…/shortcut_0.png, à partir de assets/raccourci-chaud.png) :
+     ce fichier la remplace par une icône adaptative à trois couches,
+     comme l'icône de l'appli (voir mipmap-anydpi-v26/ic_launcher.xml).
+     Le numéro 0 suit l'ordre des raccourcis dans
+     android/twa-manifest.json : changer l'ordre là-bas = renommer ici. -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@drawable/ic_allready_fond" />
+    <foreground android:drawable="@drawable/ic_raccourci_chaud" />
+    <monochrome android:drawable="@drawable/ic_raccourci_chaud_mono" />
+</adaptive-icon>

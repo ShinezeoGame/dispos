@@ -13,7 +13,7 @@
   "navigationDividerColorDark": "#110F0E",
   "backgroundColor": "#110F0E",
   "enableNotifications": true,
-  "startUrl": "/?appli=3",
+  "startUrl": "/?appli=4",
   "iconUrl": "https://dispos.pages.dev/assets/icone-512.png",
   "maskableIconUrl": "https://dispos.pages.dev/assets/icone-512.png",
   "splashScreenFadeOutDuration": 300,
@@ -21,9 +21,28 @@
     "path": "./allready.keystore",
     "alias": "allready"
   },
-  "appVersion": "1.0.2",
-  "appVersionCode": 3,
-  "shortcuts": [],
+  "appVersion": "1.1.0",
+  "appVersionCode": 4,
+  "shortcuts": [
+    {
+      "name": "Chaud ce soir",
+      "shortName": "Chaud",
+      "url": "https://dispos.pages.dev/?raccourci=chaud&appli=4",
+      "chosenIconUrl": "https://dispos.pages.dev/assets/raccourci-chaud.png"
+    },
+    {
+      "name": "Proposer une soirée",
+      "shortName": "Proposer",
+      "url": "https://dispos.pages.dev/?raccourci=soiree&appli=4",
+      "chosenIconUrl": "https://dispos.pages.dev/assets/raccourci-soiree.png"
+    },
+    {
+      "name": "Mes groupes",
+      "shortName": "Groupes",
+      "url": "https://dispos.pages.dev/?raccourci=groupes&appli=4",
+      "chosenIconUrl": "https://dispos.pages.dev/assets/raccourci-groupes.png"
+    }
+  ],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://dispos.pages.dev/manifest.webmanifest",
   "fallbackType": "customtabs",

@@ -265,13 +265,23 @@ function dessinerChaud() {
 
 /* Le clic : d'abord revenir à la semaine de ce soir si l'agenda en
    montre une autre, puis cocher (ou décocher) d'un coup, redessiner
-   toute la page (agenda, cartes de la team…) et enregistrer aussitôt. */
-boutonChaud.addEventListener('click', async () => {
+   toute la page (agenda, cartes de la team…) et enregistrer aussitôt.
+
+   chaudCeSoir() sert aussi au raccourci « Chaud ce soir » de l'appli
+   (mode appli, groupe.js) : avec { basculer: false }, il ne fait que
+   cocher. Un raccourci qui te retirerait si tu étais déjà chaud
+   surprendrait. */
+export async function chaudCeSoir({ basculer = true } = {}) {
   vibrer(); // mode appli : un tic
   const { semaine, cles } = ceSoir();
   if (etat.semaine.getTime() !== semaine.getTime()) await changerSemaine(semaine);
   const miennes = mesCases();
-  const retirer = cles.every((cle) => miennes.has(cle));
+  const dejaChaud = cles.every((cle) => miennes.has(cle));
+  if (dejaChaud && !basculer) {
+    annoncer('Tu es déjà chaud ce soir.');
+    return;
+  }
+  const retirer = dejaChaud;
   for (const cle of cles) {
     if (retirer) miennes.delete(cle);
     else miennes.add(cle);
@@ -281,7 +291,8 @@ boutonChaud.addEventListener('click', async () => {
   // Le message de réussite seulement si c'est vraiment enregistré : en
   // cas d'échec, sauvegarder() a déjà affiché l'erreur.
   if (await sauvegarder()) annoncer(retirer ? 'Plus dispo ce soir.' : 'Chaud ce soir ! Ça se voit sur l\'agenda.');
-});
+}
+boutonChaud.addEventListener('click', () => chaudCeSoir());
 
 
 /* TOUT L'AGENDA D'UN COUP D'ŒIL (ordinateur, 2 nov. 2026, demandé :

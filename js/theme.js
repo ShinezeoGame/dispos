@@ -70,7 +70,27 @@ try {
     const premiere = !sessionStorage.getItem('allready-visite');
     sessionStorage.setItem('allready-visite', '1');
     const dernier = localStorage.getItem('allready-dernier-groupe');
-    if (premiere && location.pathname === '/' && dernier && /^[A-Z0-9]{8}$/.test(dernier)) {
+    const groupeConnu = dernier && /^[A-Z0-9]{8}$/.test(dernier);
+
+    /* LES RACCOURCIS DE L'ICÔNE (appui long sur l'icône de l'appli,
+       manifest.webmanifest et android/twa-manifest.json) : ils ouvrent
+       l'accueil avec ?raccourci=… .
+       — « groupes » : rester sur la liste de tes groupes, sans sauter ;
+       — « chaud » et « soiree » : aller au dernier groupe, en emportant
+         le raccourci (groupe.js fait l'action une fois le groupe
+         chargé). Sans groupe encore, on reste sur l'accueil. */
+    const raccourci = location.pathname === '/' ? parametres.get('raccourci') : null;
+    if (raccourci === 'chaud' || raccourci === 'soiree') {
+      if (groupeConnu) {
+        location.replace('/groupe?g=' + dernier + '&raccourci=' + raccourci);
+        return;
+      }
+    }
+    if (raccourci) {
+      history.replaceState(null, '', '/');
+      return;
+    }
+    if (premiere && location.pathname === '/' && groupeConnu) {
       location.replace('/groupe?g=' + dernier);
     }
   } catch {

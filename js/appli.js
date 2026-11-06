@@ -69,7 +69,7 @@ export const androidHorsAppli = /Android/i.test(navigator.userAgent)
    VERSION_APK : le numéro de l'APK publié (allready.apk, appVersionCode
    dans android/twa-manifest.json). À augmenter EN MÊME TEMPS que lui.
 
-   L'appli s'ouvre sur /?appli=3 (startUrl de twa-manifest.json, le
+   L'appli s'ouvre sur /?appli=4 (startUrl de twa-manifest.json, le
    numéro de sa version). js/theme.js, avant l'affichage, le retient
    pour toute la visite (sessionStorage : l'appli et Chrome partagent
    le stockage du site, pas la session) et l'efface de l'adresse. Les
@@ -79,7 +79,7 @@ export const androidHorsAppli = /Android/i.test(navigator.userAgent)
    jour » (#maj-appli), qui télécharge l'APK. Android propose alors de
    l'installer par-dessus : même appli, rien n'est perdu. La croix le
    cache jusqu'à la prochaine ouverture de l'appli. */
-export const VERSION_APK = 3;
+export const VERSION_APK = 4;
 
 // La version notée par js/theme.js au début de la visite (0 : pas l'appli).
 function versionInstallee() {
