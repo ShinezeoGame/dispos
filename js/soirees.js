@@ -4,7 +4,7 @@
    boutons de réponse, et le formulaire pour en proposer une. */
 
 import { etat, quandCaChange, appeler, charger, trouverMembre, caseDe } from './etat.js';
-import { versTexte, depuisTexte, jourRelatif, avatar, annoncer, creer, formater, maintenant, LIEN_PRIX } from './commun.js';
+import { versTexte, depuisTexte, jourRelatif, avatar, annoncer, creer, formater, maintenant, vibrer, LIEN_PRIX } from './commun.js';
 import { ouvrirProfil } from './profil.js';
 import { selecteurJeux, couverture, memeJeu } from './jeux.js';
 import { brancherFiche } from './fiche-jeu.js';
@@ -234,6 +234,7 @@ async function repondre(soiree, reponse, carte, role) {
   for (const bouton of boutons) bouton.disabled = true;
   try {
     const { attente } = await appeler(`/soirees/${soiree.id}`, { methode: 'PUT', corps: { reponse, role } });
+    vibrer(); // mode appli : un tic quand la réponse est enregistrée
     if (attente) annoncer("C'est complet : tu es en liste d'attente. Tu joueras si une place se libère.");
     await charger(); // redessine tout, boutons compris
   } catch (probleme) {

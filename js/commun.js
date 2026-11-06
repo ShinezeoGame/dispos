@@ -301,6 +301,15 @@ export function avatar(membre) {
   return rond;
 }
 
+/* UNE PETITE VIBRATION (mode appli, 6 nov. 2026) : un retour au
+   toucher, comme dans les applis. 10 millièmes de seconde : à peine un
+   « tic ». Seulement dans l'appli (classe « appli », js/theme.js) : dans
+   un navigateur, un site qui vibre surprend. navigator.vibrate n'existe
+   pas sur iPhone : rien ne s'y passe. */
+export function vibrer(duree = 10) {
+  if (document.documentElement.classList.contains('appli') && navigator.vibrate) navigator.vibrate(duree);
+}
+
 /* Le message qui apparaît quelques secondes en bas de l'écran. La zone
    a role="status" dans le HTML : un lecteur d'écran lit chaque
    nouveau message à voix haute. */

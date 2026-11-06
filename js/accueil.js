@@ -4,6 +4,11 @@
 import { api, lireGroupes, retenirGroupe, oublierGroupe, creer, annoncer, fuseauDeLAppareil, LIEN_SOUTIEN } from './commun.js';
 import { messageConnexion, deconnecter } from './compte.js';
 import { debloquerThemes } from './apparence.js'; // le choix de la couleur du site
+import { tirerPourRafraichir } from './tirer.js'; // mode appli : tirer vers le bas pour rafraîchir
+
+// Dans l'appli, tirer vers le bas recharge la page : la liste de tes
+// groupes est redemandée au serveur.
+tirerPourRafraichir(() => location.reload());
 import { quandAppliChange, peutInstaller, installer, androidHorsAppli } from './appli.js'; // le site comme une appli
 
 // « Installer l'appli », en bas, dès que le navigateur le propose.

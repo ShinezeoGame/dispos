@@ -406,6 +406,8 @@ nom de domaine à part reste à choisir.
     js/presence.js             AllReady+ : les soirées passées, « Qui était là ? »
     js/banniere.js             AllReady+ : la bannière en haut de La team, et son réglage
     js/notifications.js        l'invitation aux notifications, et « Me prévenir »
+    js/tirer.js                mode appli : tirer vers le bas pour rafraîchir
+    assets/onglet-*.svg        mode appli : les icônes de la barre d'onglets du bas
     allready.apk               l'appli Android à télécharger (voir « L'appli Android »)
     android/twa-manifest.json  sa configuration, pour la refabriquer
     android/icone/             son icône (trois couches), qui remplace celle de Bubblewrap
@@ -532,6 +534,25 @@ site dans un navigateur ne change pas.
   suivent le thème). La page et les messages du bas sont remontés de
   la hauteur de la barre. Un « ‹ » devant le logo dit qu'il ramène à
   la liste de tes groupes.
+- **Bloc 3, le toucher d'une appli** :
+  - **tirer pour rafraîchir** (`js/tirer.js`, `tirerPourRafraichir()`) :
+    en haut de la page, tirer vers le bas fait descendre un rond
+    (`.tirer`) ; passé 70 px (après résistance), le lâcher recharge
+    (`charger()` dans un groupe, la page sur l'accueil). Ignoré dans
+    l'agenda en mode « Mes dispos » (glisser y coche), dans une
+    fenêtre, une palette ou un champ. `overscroll-behavior-y: contain`
+    empêche le rebond du navigateur par-dessus ;
+  - **vibrer()** (commun.js) : un tic de 10 ms (5 par case cochée en
+    glissant), seulement dans l'appli : changement d'onglet, réponse à
+    une soirée, « Chaud ce soir », seuil de tirer pour rafraîchir.
+    Rien sur iPhone (pas de navigator.vibrate) ;
+  - **les fondus entre les pages** : `@view-transition` dans style.css,
+    partout (coupés pour « moins d'animations »). Quand le navigateur y
+    renonce (après une redirection, comme le retour de Discord), il
+    lance une erreur sans conséquence : js/theme.js l'intercepte, et
+    seulement elle (`unhandledrejection`, InvalidStateError) ;
+  - pas de rectangle bleu au toucher, pas de sélection de texte sur les
+    boutons par un appui long.
 
 ## Mise en ligne (à faire une fois)
 

@@ -20,6 +20,7 @@ import {
 import {
   HEURE_DEBUT, HEURE_FIN, ajouterJours, lundiDe, versTexte, formater,
   libelleHeure, avatar, annoncer, creer, majuscule, animerEntree, maintenant, fuseauDeLAppareil, nomDuFuseau,
+  vibrer,
 } from './commun.js';
 import { proposerSoiree } from './soirees.js';
 import { occupees, preparerAgendaPerso } from './agenda-perso.js'; // ton agenda Google/Apple (AllReady+)
@@ -266,6 +267,7 @@ function dessinerChaud() {
    montre une autre, puis cocher (ou décocher) d'un coup, redessiner
    toute la page (agenda, cartes de la team…) et enregistrer aussitôt. */
 boutonChaud.addEventListener('click', async () => {
+  vibrer(); // mode appli : un tic
   const { semaine, cles } = ceSoir();
   if (etat.semaine.getTime() !== semaine.getTime()) await changerSemaine(semaine);
   const miennes = mesCases();
@@ -600,6 +602,8 @@ let peinture = null;
 
 function peindre(bouton) {
   if (!bouton || bouton.disabled || !bouton.classList.contains('case')) return;
+  // Mode appli : un tic très court à chaque case qui change en glissant.
+  if (bouton.classList.contains('cochee') !== peinture) vibrer(5);
   if (peinture) mesCases().add(bouton.dataset.cle);
   else mesCases().delete(bouton.dataset.cle);
   bouton.classList.toggle('cochee', peinture);

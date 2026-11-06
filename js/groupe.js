@@ -6,7 +6,8 @@
    le premier chargement et le rafraîchissement. */
 
 import { etat, charger, quandCaChange, lienGroupe } from './etat.js';
-import { lireGroupes, retenirGroupe, oublierGroupe, avatar, copier, creer, animerEntree, annoncer } from './commun.js';
+import { lireGroupes, retenirGroupe, oublierGroupe, avatar, copier, creer, animerEntree, annoncer, vibrer } from './commun.js';
+import { tirerPourRafraichir } from './tirer.js'; // mode appli : tirer vers le bas pour rafraîchir
 import { ouvrirProfil } from './profil.js';
 import { messageConnexion } from './compte.js';
 import './agenda.js';
@@ -70,7 +71,10 @@ function afficherOnglet(choisi) {
 }
 
 for (const onglet of onglets) {
-  onglet.addEventListener('click', () => afficherOnglet(onglet));
+  onglet.addEventListener('click', () => {
+    if (onglet.getAttribute('aria-selected') !== 'true') vibrer(); // mode appli : un tic
+    afficherOnglet(onglet);
+  });
   onglet.addEventListener('keydown', (evenement) => {
     const sens = { ArrowRight: 1, ArrowLeft: -1 }[evenement.key];
     if (!sens) return;
@@ -183,6 +187,17 @@ async function demarrer() {
   else if (messageConnexion) annoncer(messageConnexion, 'erreur');
 }
 if (codeValable) demarrer();
+
+/* TIRER POUR RAFRAÎCHIR (mode appli, js/tirer.js) : recharge les
+   données du groupe, sans quitter l'onglet ouvert. Une coupure réseau
+   le dit en bas de l'écran au lieu de laisser le rond tourner. */
+tirerPourRafraichir(async () => {
+  try {
+    await charger();
+  } catch (probleme) {
+    annoncer(probleme.message, 'erreur');
+  }
+});
 
 
 /* 6. LE RAFRAÎCHISSEMENT

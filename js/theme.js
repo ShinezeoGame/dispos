@@ -77,3 +77,31 @@ try {
     // Stockage bloqué ou très vieux navigateur : le site normal.
   }
 })();
+
+
+/* LES FONDUS ENTRE LES PAGES (style.css, @view-transition, 6 nov. 2026)
+
+   Quand le navigateur doit renoncer à un fondu (la page suivante ne
+   s'y prête pas, au retour de Discord par exemple), il le signale par
+   une erreur sans conséquence, que personne n'attrape. On la fait taire
+   ici : l'événement « pagereveal » arrive avant le premier affichage,
+   seul un script du <head> l'entend à temps. « pageswap » : la même
+   chose côté page qu'on quitte. */
+['pageswap', 'pagereveal'].forEach(function (nom) {
+  window.addEventListener(nom, function (evenement) {
+    const transition = evenement.viewTransition;
+    if (!transition) return;
+    transition.ready.catch(function () {});
+    transition.finished.catch(function () {});
+    if (transition.updateCallbackDone) transition.updateCallbackDone.catch(function () {});
+  });
+});
+/* Parfois, le navigateur y renonce avant même « pagereveal » (après
+   une redirection, comme le retour de Discord). L'erreur arrive alors
+   comme une promesse rejetée que personne n'attend : on l'intercepte
+   ici, et seulement elle (InvalidStateError, « Transition … »). Toute
+   autre erreur reste visible. */
+window.addEventListener('unhandledrejection', function (evenement) {
+  const raison = evenement.reason;
+  if (raison && raison.name === 'InvalidStateError' && /transition/i.test(raison.message)) evenement.preventDefault();
+});

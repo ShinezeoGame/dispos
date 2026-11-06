@@ -2597,6 +2597,67 @@ button.tag-jeu:hover { border-color: var(--accent); }
   .appli .annonce { bottom: calc(4.9rem + env(safe-area-inset-bottom)); }
 }
 
+/* BLOC 3 : LE TOUCHER D'UNE APPLI.
+
+   Tirer pour rafraîchir (js/tirer.js) : un rond qui attend caché
+   au-dessus de l'écran et descend avec le doigt (--distance), en
+   tournant (--tour). Passé le seuil (classe « pret »), sa flèche prend
+   la couleur du thème ; pendant le rechargement (« charge »), il tourne
+   tout seul. La remontée est animée (« retour »), pas la descente :
+   pendant le geste, il doit coller au doigt.
+
+   overscroll-behavior-y: contain : le navigateur n'ajoute pas son
+   propre rebond ou son propre rafraîchissement par-dessus le nôtre.
+   -webkit-tap-highlight-color : pas de rectangle bleu au toucher (celui
+   des sites) ; les boutons ont déjà leur effet enfoncé. user-select:
+   none sur les boutons et les onglets : un appui long n'y sélectionne
+   pas le texte, comme dans une appli. */
+.appli { overscroll-behavior-y: contain; -webkit-tap-highlight-color: transparent; }
+.appli button, .appli .onglets, .appli .bouton { -webkit-user-select: none; user-select: none; }
+.tirer {
+  position: fixed;
+  left: 50%;
+  top: 0;
+  z-index: 30;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-left: -1.25rem;
+  border: 1px solid var(--bordure);
+  border-radius: 50%;
+  background: var(--surface-haute);
+  box-shadow: 0 6px 18px -6px rgb(0 0 0 / 0.6);
+  /* Caché au-dessus de l'écran, puis descendu de --distance. */
+  transform: translateY(calc(var(--distance, 0px) - 3rem)) rotate(var(--tour, 0deg));
+  pointer-events: none;
+}
+/* La flèche qui tourne : un arc de cercle dessiné en bordure, grise
+   tant que le seuil n'est pas franchi. */
+.tirer::after {
+  content: '';
+  position: absolute;
+  inset: 0.6rem;
+  border: 2.5px solid var(--texte-doux);
+  border-top-color: transparent;
+  border-radius: 50%;
+}
+.tirer.pret::after, .tirer.charge::after { border-color: var(--accent); border-top-color: transparent; }
+.tirer.retour { transition: transform 0.25s ease; }
+.tirer.charge { animation: tourner-tirer 0.7s linear infinite; }
+@keyframes tourner-tirer {
+  from { transform: translateY(calc(var(--distance, 0px) - 3rem)) rotate(0deg); }
+  to { transform: translateY(calc(var(--distance, 0px) - 3rem)) rotate(360deg); }
+}
+
+/* Les fondus entre les pages (de la liste de tes groupes à un groupe,
+   et retour) : le navigateur les fait seul, pour les pages d'un même
+   site (« view transitions »). Un navigateur qui ne connaît pas
+   @view-transition change de page comme avant. Partout, pas seulement
+   dans l'appli : c'est aussi plus doux sur le site. Coupé pour
+   « moins d'animations », comme le reste. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+}
+
 
 /* 14 BIS. LES ANIMATIONS
 
