@@ -191,6 +191,12 @@ if (codeValable) demarrer();
 /* TIRER POUR RAFRAÎCHIR (mode appli, js/tirer.js) : recharge les
    données du groupe, sans quitter l'onglet ouvert. Une coupure réseau
    le dit en bas de l'écran au lieu de laisser le rond tourner. */
+/* Le réseau revient (après « Hors ligne », js/appli.js) : on recharge
+   le groupe tout de suite, sans attendre qu'on tire pour rafraîchir. */
+window.addEventListener('online', () => {
+  if (etat.groupe) charger().catch(() => {});
+});
+
 tirerPourRafraichir(async () => {
   try {
     await charger();

@@ -301,6 +301,20 @@ export function avatar(membre) {
   return rond;
 }
 
+/* OUBLIER LES DONNÉES GARDÉES POUR LE HORS-LIGNE (mode appli, 6 nov.
+   2026) : le service worker (sw.js) garde une copie des groupes et du
+   compte pour les montrer sans réseau. À la déconnexion et à la
+   suppression du compte, on l'efface : un autre compte, sur le même
+   appareil, ne doit pas voir les tiennes. Même nom que CACHE_DONNEES
+   dans sw.js. */
+export async function oublierDonneesHorsLigne() {
+  try {
+    if ('caches' in window) await caches.delete('allready-donnees');
+  } catch {
+    // Rien de gardé, ou stockage bloqué : rien à effacer.
+  }
+}
+
 /* UNE PETITE VIBRATION (mode appli, 6 nov. 2026) : un retour au
    toucher, comme dans les applis. 10 millièmes de seconde : à peine un
    « tic ». Seulement dans l'appli (classe « appli », js/theme.js) : dans

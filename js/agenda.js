@@ -278,8 +278,9 @@ boutonChaud.addEventListener('click', async () => {
   }
   redessiner();
   programmerSauvegarde();
-  await sauvegarder();
-  annoncer(retirer ? 'Plus dispo ce soir.' : 'Chaud ce soir ! Ça se voit sur l\'agenda.');
+  // Le message de réussite seulement si c'est vraiment enregistré : en
+  // cas d'échec, sauvegarder() a déjà affiché l'erreur.
+  if (await sauvegarder()) annoncer(retirer ? 'Plus dispo ce soir.' : 'Chaud ce soir ! Ça se voit sur l\'agenda.');
 });
 
 
@@ -342,6 +343,7 @@ const observateur = new ResizeObserver(ajusterHauteur);
 observateur.observe(document.getElementById('vue-agenda'));
 observateur.observe(document.getElementById('invitation-notifs'));
 observateur.observe(document.getElementById('maj-appli')); // la mise à jour de l'appli (appli.js)
+observateur.observe(document.getElementById('hors-ligne')); // la pastille « Hors ligne » (appli.js)
 
 function dessinerSemaine() {
   const ecart = Math.round((etat.semaine - lundiDe(maintenant())) / (7 * 86400000));
@@ -726,9 +728,14 @@ function programmerSauvegarde() {
   minuterie = setTimeout(sauvegarder, 800);
 }
 
+/* Renvoie true si tout est enregistré (ou s'il n'y avait rien à
+   envoyer), false si l'envoi a échoué. Un envoi raté reste « en
+   attente » (6 nov. 2026, mode appli) : sans réseau, tes cases restent
+   cochées à l'écran, et l'envoi repart tout seul au retour du réseau
+   (plus bas, « online »). Avant, il était perdu sans bruit. */
 async function sauvegarder() {
   clearTimeout(minuterie);
-  if (!etat.sauvegardeEnAttente) return;
+  if (!etat.sauvegardeEnAttente) return true;
   etat.sauvegardeEnAttente = false;
   statut.textContent = 'Enregistrement…';
   // "4-21" → [4, 21], le format attendu par le serveur.
@@ -741,11 +748,21 @@ async function sauvegarder() {
     await appeler('/dispos', { methode: 'PUT', corps });
     if ('repeter' in corps) etat.semaineType = corps.repeter;
     statut.textContent = 'Enregistré ✓';
+    return true;
   } catch (probleme) {
-    statut.textContent = '';
+    // Raté : on le garde pour la prochaine fois, « Répéter » compris.
+    etat.sauvegardeEnAttente = true;
+    if ('repeter' in corps && repeterAEnvoyer === null) repeterAEnvoyer = corps.repeter;
+    statut.textContent = navigator.onLine ? '' : 'En attente du réseau…';
     annoncer(probleme.message, 'erreur');
+    return false;
   }
 }
+
+// Le réseau revient : ce qui n'a pas pu partir part maintenant.
+window.addEventListener('online', () => {
+  if (etat.sauvegardeEnAttente) sauvegarder();
+});
 
 /* LA SEMAINE TYPE (2 nov. 2026) : cocher « Répéter chaque semaine »
    fait de la semaine affichée ton modèle ; les semaines où tu n'as rien

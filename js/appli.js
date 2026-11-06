@@ -110,6 +110,19 @@ if (bandeauMaj) {
   });
 }
 
+/* HORS LIGNE (mode appli, 6 nov. 2026) : la pastille #hors-ligne, en
+   haut de la page, tant que l'appareil n'a pas de réseau. Ce qui
+   s'affiche vient alors des copies gardées par le service worker
+   (sw.js), et rien ne peut s'enregistrer. Le navigateur prévient quand
+   le réseau part (« offline ») et revient (« online »). */
+const pastilleHorsLigne = document.getElementById('hors-ligne');
+if (pastilleHorsLigne) {
+  const majHorsLigne = () => { pastilleHorsLigne.hidden = navigator.onLine; };
+  window.addEventListener('online', majHorsLigne);
+  window.addEventListener('offline', majHorsLigne);
+  majHorsLigne();
+}
+
 // 3. Les notifications.
 export const notificationsPossibles = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 

@@ -8,7 +8,7 @@
    2. lire le message laissé au retour de Discord en cas d'échec ;
    3. la déconnexion. */
 
-import { api, annoncer } from './commun.js';
+import { api, annoncer, oublierDonneesHorsLigne } from './commun.js';
 
 
 /* 1. LES LIENS DE CONNEXION
@@ -46,6 +46,7 @@ if (messageConnexion) history.replaceState(null, '', retour);
 export async function deconnecter() {
   try {
     await api('/compte/deconnexion', { methode: 'POST' });
+    await oublierDonneesHorsLigne(); // les copies gardées pour le hors-ligne (sw.js)
     location.href = '/';
   } catch (probleme) {
     annoncer(probleme.message, 'erreur');

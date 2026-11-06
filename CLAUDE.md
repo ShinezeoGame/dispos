@@ -146,8 +146,9 @@ nom de domaine à part reste à choisir.
   jour (demandé : seule, la tuile avait l'air d'un bouton bizarre).
 - **Le site installable, avec notifications** (2 nov. 2026) :
   `manifest.webmanifest` (nom, couleurs, icônes `assets/icone-*.png`
-  tirées de `assets/icone.svg`) et `sw.js` (le service worker, qui ne
-  fait qu'afficher les notifications : aucun cache). « Sur cet
+  tirées de `assets/icone.svg`) et `sw.js` (le service worker : il
+  affiche les notifications et, depuis le 6 nov. 2026, garde des copies
+  pour le hors-ligne, le réseau d'abord ; voir « Le mode appli »). « Sur cet
   appareil », dans Le groupe : « Installer l'appli » quand le navigateur
   le propose (aussi en bas de l'accueil), « Activer les notifications »
   (compte Discord requis), puis « Couper ». Sur iPhone, une aide :
@@ -355,6 +356,7 @@ nom de domaine à part reste à choisir.
     index.html                 accueil : créer / rejoindre un groupe
     groupe.html                la page d'un groupe (/groupe?g=CODE)
     404.html
+    hors-ligne.html            « Pas de connexion » (mode appli, servie par sw.js)
     css/style.css              toute la mise en forme, commentée
     js/commun.js               réglages, api(), localStorage, dates, avatar
     js/accueil.js              la page d'accueil
@@ -553,6 +555,18 @@ site dans un navigateur ne change pas.
     seulement elle (`unhandledrejection`, InvalidStateError) ;
   - pas de rectangle bleu au toucher, pas de sélection de texte sur les
     boutons par un appui long.
+- **Bloc 4, sans réseau** (sw.js, voir « Ce qui casse ») : les pages,
+  le style, les scripts et les données déjà vues restent consultables.
+  La pastille « Hors ligne · tu vois les dernières infos connues »
+  (`#hors-ligne`, js/appli.js) s'affiche tant que le réseau manque. Une
+  page jamais vue donne `hors-ligne.html` (« Pas de connexion », gardée
+  dès l'installation avec son style et ses polices). Une modification
+  échoue proprement (« Impossible de joindre le serveur »). Les dispos
+  cochées hors ligne restent en attente (« En attente du réseau… ») et
+  partent seules au retour du réseau (`sauvegarder()` renvoie false et
+  garde `sauvegardeEnAttente`) ; « Chaud ce soir » n'annonce sa réussite
+  que si c'est vraiment enregistré. Au retour du réseau, le groupe se
+  recharge (groupe.js, « online »).
 
 ## Mise en ligne (à faire une fois)
 
@@ -650,8 +664,16 @@ site dans un navigateur ne change pas.
   Apple ou Microsoft (`adressePushValable()`) : jamais une adresse
   collée telle quelle. 404 ou 410 au dépôt = abonnement oublié.
 - **`sw.js` reste à la racine du site** : un service worker ne
-  s'occupe que des pages rangées sous son dossier. Il ne met rien en
-  cache exprès : un cache oublié servirait de vieilles pages.
+  s'occupe que des pages rangées sous son dossier. **Le réseau d'abord,
+  toujours** (6 nov. 2026) : chaque demande part au serveur, la copie ne
+  sert que sans réseau. Ne jamais passer au « cache d'abord » : un cache
+  oublié servirait de vieilles pages (la règle d'avant était « aucun
+  cache » pour cette raison). Seules les lectures (GET) sont gardées ;
+  dans l'API, seulement les adresses de `DONNEES` (un groupe, ton
+  compte, photos, jaquettes). `CACHE_DONNEES` (`allready-donnees`) est
+  écrit aussi dans `oublierDonneesHorsLigne()` (commun.js), appelé à la
+  déconnexion et à la suppression du compte : les deux noms doivent
+  rester les mêmes.
 - **Le numéro de l'appli Android est écrit trois fois** :
   `appVersionCode` et `startUrl` (`/?appli=N`) dans
   `android/twa-manifest.json`, et `VERSION_APK` dans js/appli.js. Les
@@ -703,8 +725,9 @@ site dans un navigateur ne change pas.
   `jeu` (le nom) et `jeu_cover`.
 - **La clé du localStorage reste `dispos`**, l'ancien nom. La renommer
   ferait perdre à tout le monde son jeton, donc l'accès à son profil.
-- **Le logo est écrit trois fois** (index.html, groupe.html, 404.html) :
-  le modifier aux trois endroits, et dans `assets/favicon.svg`.
+- **Le logo est écrit quatre fois** (index.html, groupe.html, 404.html,
+  hors-ligne.html) : le modifier aux quatre endroits, et dans
+  `assets/favicon.svg`.
 - **L'icône de l'onglet suit le thème** (2 nov. 2026, demandé) :
   `colorerIcone()` (js/apparence.js) relit `assets/favicon.svg`, y
   remplace l'orange `#ff7a3d` par l'accent du thème et la donne à
@@ -793,7 +816,8 @@ site dans un navigateur ne change pas.
   laissait un petit défilement inutile sur les portables (2 nov. 2026).
   Recalculée au redessin, au redimensionnement, à l'arrivée de la police
   et quand l'onglet réapparaît (ResizeObserver, qui surveille aussi
-  l'invitation aux notifications : tout nouvel élément posé au-dessus de
+  l'invitation aux notifications, le bandeau de mise à jour de l'appli
+  et la pastille « Hors ligne » : tout nouvel élément posé au-dessus de
   la grille doit y être ajouté, sinon l'agenda dépasse de l'écran quand
   il apparaît). Ne pas fixer de hauteur
   en dur sur `.case` : seulement le repli `var(--hauteur-case, 1,9rem)`.

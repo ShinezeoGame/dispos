@@ -1,7 +1,7 @@
 /* LA PAGE D'ACCUEIL : créer un groupe, en rejoindre un, retrouver
    les siens, se connecter. */
 
-import { api, lireGroupes, retenirGroupe, oublierGroupe, creer, annoncer, fuseauDeLAppareil, LIEN_SOUTIEN } from './commun.js';
+import { api, lireGroupes, retenirGroupe, oublierGroupe, creer, annoncer, fuseauDeLAppareil, oublierDonneesHorsLigne, LIEN_SOUTIEN } from './commun.js';
 import { messageConnexion, deconnecter } from './compte.js';
 import { debloquerThemes } from './apparence.js'; // le choix de la couleur du site
 import { tirerPourRafraichir } from './tirer.js'; // mode appli : tirer vers le bas pour rafraîchir
@@ -172,6 +172,7 @@ boutonSupprimer.addEventListener('click', async () => {
     return;
   }
   for (const { code } of groupesDuCompte) oublierGroupe(code);
+  await oublierDonneesHorsLigne(); // les copies gardées pour le hors-ligne (sw.js)
   groupesDuCompte = [];
   document.getElementById('compte').hidden = true;
   boutonSupprimer.hidden = true;

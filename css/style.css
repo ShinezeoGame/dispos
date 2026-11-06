@@ -2648,6 +2648,24 @@ button.tag-jeu:hover { border-color: var(--accent); }
   to { transform: translateY(calc(var(--distance, 0px) - 3rem)) rotate(360deg); }
 }
 
+/* BLOC 4 : HORS LIGNE. La pastille en haut de la page (js/appli.js)
+   tant que l'appareil n'a pas de réseau : discrète, mais visible, pour
+   qu'on sache pourquoi rien ne s'enregistre. Dans le flux de la page
+   (pas en surimpression) : elle ne cache rien. */
+.hors-ligne {
+  justify-self: center;
+  width: fit-content;
+  margin: 0 auto 1rem;
+  padding: 0.35rem 0.9rem;
+  border: 1px solid var(--bordure);
+  border-radius: 99px;
+  background: var(--surface-haute);
+  color: var(--texte-doux);
+  font-size: 0.85rem;
+  text-align: center;
+}
+.accueil > .hors-ligne { margin-bottom: 0; }
+
 /* Les fondus entre les pages (de la liste de tes groupes à un groupe,
    et retour) : le navigateur les fait seul, pour les pages d'un même
    site (« view transitions »). Un navigateur qui ne connaît pas
